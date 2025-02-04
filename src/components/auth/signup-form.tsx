@@ -3,12 +3,14 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
-export function LoginForm() {
+export function SignupForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,22 +18,18 @@ export function LoginForm() {
     setError(null)
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       })
 
-      if (signInError) {
-        setError(signInError.message)
-        setLoading(false)
-        return
-      }
-
-      if (data?.session) {
-        window.location.href = '/dashboard'
-      }
+      if (signUpError) throw signUpError
+      
+      router.push('/dashboard')
+      router.refresh()
     } catch (error) {
-      setError('An error occurred during sign in')
+      setError(error instanceof Error ? error.message : 'An error occurred')
+    } finally {
       setLoading(false)
     }
   }
@@ -39,9 +37,9 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Welcome back</h1>
+        <h1 className="text-3xl font-bold">Create an account</h1>
         <p className="text-gray-500 dark:text-gray-400">
-          Enter your credentials to sign in
+          Enter your details to get started
         </p>
       </div>
       
@@ -92,14 +90,14 @@ export function LoginForm() {
           className="w-full" 
           disabled={loading}
         >
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading ? 'Creating account...' : 'Sign up'}
         </Button>
       </form>
 
       <div className="text-center text-sm">
-        Don't have an account?{" "}
-        <a className="underline underline-offset-4 hover:text-gray-600" href="/signup">
-          Sign up
+        Already have an account?{" "}
+        <a className="underline underline-offset-4 hover:text-gray-600" href="/login">
+          Sign in
         </a>
       </div>
     </div>

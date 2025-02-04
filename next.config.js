@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // your config options here
+  // Remove experimental config since Server Actions are now default
 }
 
 module.exports = nextConfig 
