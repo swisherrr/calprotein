@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ACalories",
-  description: "Track your nutrition journey",
+  title: "calprotein",
+  description: "Calorie and Protein Tracking",
 };
 
 export default function RootLayout({

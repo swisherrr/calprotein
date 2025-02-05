@@ -6,11 +6,11 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="max-w-3xl text-center space-y-8">
         <h1 className="text-6xl font-bold">
-          Track Your Nutrition Journey
+          Just The Numbers You Need
         </h1>
         
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          Monitor your calories, track macros, and achieve your fitness goals with ACalories
+          A minimalistic approach to tracking your calories and protein.
         </p>
 
         <div className="flex gap-4 justify-center">
