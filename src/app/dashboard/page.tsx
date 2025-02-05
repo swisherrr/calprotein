@@ -7,7 +7,6 @@ import { UsualsSection } from "@/components/dashboard/usuals-section"
 import { ManualEntry } from "@/components/dashboard/manual-entry"
 import { useEntries } from "@/hooks/use-entries"
 import { useUserSettings } from "@/hooks/use-user-settings"
-import { SettingsButton } from "@/components/dashboard/settings-button"
 
 export default function DashboardPage() {
   const { entries, loading: entriesLoading, addEntry } = useEntries()
@@ -88,10 +87,6 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex gap-2">
-          <SettingsButton />
-          <Button>Add Entry</Button>
-        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
