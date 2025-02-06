@@ -26,9 +26,11 @@ export default function DashboardLayout({
             calprotein
           </Link>
           <nav className="flex items-center gap-4">
-            <Button variant="outline" size="sm">
-              Profile
-            </Button>
+            <Link href="/profile">
+              <Button variant="outline" size="sm">
+                Profile
+              </Button>
+            </Link>
             <Button 
               variant="outline" 
               size="sm"
