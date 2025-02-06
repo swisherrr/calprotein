@@ -61,9 +61,10 @@ export function useEntries() {
         throw error
       }
 
-      console.log('Added entry:', data)
+      // Update local state immediately
       setEntries(prev => [data, ...prev])
-      await fetchEntries() // Refresh the entries after adding
+      
+      // No need to fetch all entries again
       return data
     } catch (error) {
       console.error('Error adding entry:', error)
