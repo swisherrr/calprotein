@@ -30,3 +30,20 @@ body {
 .dark .bg-gray-50 {
   background-color: #1a1a1a;
 }
+
+.progress-border {
+  background-clip: padding-box !important;
+  position: relative;
+}
+
+.progress-border::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  bottom: -2px;
+  left: -2px;
+  z-index: -1;
+  border-radius: 0.5rem;
+  background: var(--progress-gradient);
+}

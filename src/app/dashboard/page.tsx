@@ -8,6 +8,20 @@ import { ManualEntry } from "@/components/dashboard/manual-entry"
 import { useEntries } from "@/hooks/use-entries"
 import { useUserSettings } from "@/hooks/use-user-settings"
 
+function calculateGradient(current: number, target: number) {
+  const percentage = Math.min((current / target) * 100, 100)
+  if (percentage === 0) return 'rgb(34, 197, 94)' // All green
+  if (percentage === 100) return 'rgb(239, 68, 68)' // All red
+  
+  // Calculate the gradient stop point
+  const gradientStop = Math.round(percentage)
+  return `linear-gradient(90deg, 
+    rgb(34, 197, 94) 0%, 
+    rgb(34, 197, 94) ${100 - gradientStop}%, 
+    rgb(239, 68, 68) ${100 - gradientStop}%, 
+    rgb(239, 68, 68) 100%)`
+}
+
 export default function DashboardPage() {
   const { entries, loading: entriesLoading, addEntry } = useEntries()
   const { settings, loading: settingsLoading, updateSettings } = useUserSettings()
@@ -79,6 +93,24 @@ export default function DashboardPage() {
     }
   }
 
+  const handleReset = async (entries: Entry[], addEntry: (entry: any) => Promise<any>) => {
+    try {
+      // Add a negative entry that cancels out all today's entries
+      const totalCals = entries.reduce((sum, entry) => sum + entry.calories, 0)
+      const totalProt = entries.reduce((sum, entry) => sum + entry.protein, 0)
+      
+      if (totalCals > 0 || totalProt > 0) {
+        await addEntry({
+          name: "Reset",
+          calories: -totalCals,
+          protein: -totalProt
+        })
+      }
+    } catch (error) {
+      console.error('Failed to reset:', error)
+    }
+  }
+
   if (entriesLoading || settingsLoading) {
     return <div>Loading...</div>
   }
@@ -90,14 +122,32 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="p-6 border rounded-lg relative">
-          <button 
-            onClick={() => setEditingCalories(true)}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          >
-            <Pen className="h-4 w-4" />
-          </button>
-          <h2 className="font-semibold mb-2">Today's Calories</h2>
+        <div 
+          className="p-6 rounded-lg relative bg-background progress-border"
+          style={{
+            border: '2px solid transparent',
+            '--progress-gradient': calculateGradient(totalCalories, settings.daily_calories)
+          } as any}
+        >
+          <div className="flex justify-between items-start mb-2">
+            <h2 className="font-semibold">Today's Calories</h2>
+            <div className="flex gap-2">
+              {totalCalories > 0 && (
+                <button
+                  onClick={() => handleReset(todayEntries, addEntry)}
+                  className="text-gray-400 hover:text-red-500"
+                >
+                  Reset
+                </button>
+              )}
+              <button 
+                onClick={() => setEditingCalories(true)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <Pen className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
           <p className="text-3xl font-bold">
             {totalCalories} / {editingCalories ? (
               <form onSubmit={handleCaloriesSubmit} className="inline">
@@ -115,13 +165,25 @@ export default function DashboardPage() {
         </div>
         
         <div className="p-6 border rounded-lg relative">
-          <button 
-            onClick={() => setEditingProtein(true)}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          >
-            <Pen className="h-4 w-4" />
-          </button>
-          <h2 className="font-semibold mb-2">Protein</h2>
+          <div className="flex justify-between items-start mb-2">
+            <h2 className="font-semibold">Protein</h2>
+            <div className="flex gap-2">
+              {totalProtein > 0 && (
+                <button
+                  onClick={() => handleReset(todayEntries, addEntry)}
+                  className="text-gray-400 hover:text-red-500"
+                >
+                  Reset
+                </button>
+              )}
+              <button 
+                onClick={() => setEditingProtein(true)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <Pen className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
           <p className="text-3xl font-bold">
             {totalProtein}g / {editingProtein ? (
               <form onSubmit={handleProteinSubmit} className="inline">
