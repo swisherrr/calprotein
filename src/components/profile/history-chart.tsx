@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { useEntries } from '@/hooks/use-entries'
 import { useUserSettings } from '@/hooks/use-user-settings'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Info } from "lucide-react"
 
 type TimeFrame = '7days' | '30days' | '90days'
 
@@ -127,8 +134,18 @@ export function HistoryChart() {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Daily Calories</h3>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 flex items-center gap-1">
               Average: {caloriesAvg} cal
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 opacity-50 hover:opacity-100" />
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p className="w-[200px]">Days with no entries are excluded from average</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           <div className="h-[300px] w-full">
@@ -163,8 +180,18 @@ export function HistoryChart() {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Daily Protein</h3>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 flex items-center gap-1">
               Average: {proteinAvg}g
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 opacity-50 hover:opacity-100" />
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p className="w-[200px]">Days with no entries are excluded from average</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           <div className="h-[300px] w-full">
