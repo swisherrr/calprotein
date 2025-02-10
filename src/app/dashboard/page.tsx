@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Pen } from "lucide-react"
 import { UsualsSection } from "@/components/dashboard/usuals-section"
 import { ManualEntry } from "@/components/dashboard/manual-entry"
-import { useEntries } from "@/hooks/use-entries"
+import { useEntries, Entry } from "@/hooks/use-entries"
 import { useUserSettings } from "@/hooks/use-user-settings"
 
 function calculateGradient(current: number, target: number) {

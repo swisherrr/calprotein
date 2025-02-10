@@ -119,8 +119,6 @@ export function HistoryChart() {
             <BarChart
               {...chartProps}
               margin={{ left: 40, right: 40 }}
-              categoryGapRatio={0.4}
-              barGapRatio={0.2}
               xAxis={[{ 
                 scaleType: 'band',
                 data: dates,
@@ -142,22 +140,6 @@ export function HistoryChart() {
                 color: '#ef4444',
                 valueFormatter: (value) => `${value} cal`
               }]}
-              axisHighlight={{
-                y: 'line'
-              }}
-              referenceLines={[
-                {
-                  y: settings.daily_calories,
-                  label: 'Goal',
-                  labelStyle: {
-                    fill: isDarkMode ? '#fff' : '#000'
-                  },
-                  lineStyle: {
-                    stroke: isDarkMode ? '#666' : '#ccc',
-                    strokeDasharray: '5 5'
-                  }
-                }
-              ]}
             />
           </div>
         </div>
@@ -168,8 +150,6 @@ export function HistoryChart() {
             <BarChart
               {...chartProps}
               margin={{ left: 40, right: 40 }}
-              categoryGapRatio={0.4}
-              barGapRatio={0.2}
               xAxis={[{ 
                 scaleType: 'band',
                 data: dates,
@@ -191,22 +171,6 @@ export function HistoryChart() {
                 color: '#3b82f6',
                 valueFormatter: (value) => `${value}g`
               }]}
-              axisHighlight={{
-                y: 'line'
-              }}
-              referenceLines={[
-                {
-                  y: settings.daily_protein,
-                  label: 'Goal',
-                  labelStyle: {
-                    fill: isDarkMode ? '#fff' : '#000'
-                  },
-                  lineStyle: {
-                    stroke: isDarkMode ? '#666' : '#ccc',
-                    strokeDasharray: '5 5'
-                  }
-                }
-              ]}
             />
           </div>
         </div>
