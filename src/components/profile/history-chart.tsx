@@ -30,14 +30,18 @@ export function HistoryChart() {
     const days = timeFrame === '7days' ? 7 : timeFrame === '30days' ? 30 : 90
     const startDate = new Date(now.setDate(now.getDate() - days))
 
-    // Filter entries within timeframe
-    const filteredEntries = entries.filter(entry => {
-      const entryDate = new Date(entry.created_at)
-      return entryDate >= startDate
+    // Create array of all dates in range
+    const allDates = Array.from({ length: days }, (_, i) => {
+      const date = new Date(startDate)
+      date.setDate(startDate.getDate() + i)
+      return date.toLocaleDateString(undefined, {
+        month: 'numeric',
+        day: 'numeric'
+      })
     })
 
-    // Group by date
-    const dailyData = filteredEntries.reduce((acc, entry) => {
+    // Group entries by date
+    const dailyData = entries.reduce((acc, entry) => {
       const date = new Date(entry.created_at).toLocaleDateString(undefined, {
         month: 'numeric',
         day: 'numeric'
@@ -50,16 +54,11 @@ export function HistoryChart() {
       return acc
     }, {} as Record<string, { calories: number; protein: number }>)
 
-    // Convert to arrays for chart and sort by date
-    const dates = Object.keys(dailyData).sort((a, b) => {
-      const dateA = new Date(a)
-      const dateB = new Date(b)
-      return dateA.getTime() - dateB.getTime() // Ascending order (older to newer)
-    })
-    const calories = dates.map(date => dailyData[date].calories)
-    const protein = dates.map(date => dailyData[date].protein)
+    // Map all dates to values, using 0 for missing dates
+    const calories = allDates.map(date => dailyData[date]?.calories || 0)
+    const protein = allDates.map(date => dailyData[date]?.protein || 0)
 
-    return { dates, calories, protein }
+    return { dates: allDates, calories, protein }
   }
 
   const { dates, calories, protein } = processData()
