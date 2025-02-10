@@ -58,10 +58,22 @@ export function HistoryChart() {
     const calories = allDates.map(date => dailyData[date]?.calories || 0)
     const protein = allDates.map(date => dailyData[date]?.protein || 0)
 
-    return { dates: allDates, calories, protein }
+    // Calculate averages excluding zero values
+    const caloriesAvg = calories.filter(val => val > 0).reduce((sum, val) => sum + val, 0) / 
+      calories.filter(val => val > 0).length || 0
+    const proteinAvg = protein.filter(val => val > 0).reduce((sum, val) => sum + val, 0) / 
+      protein.filter(val => val > 0).length || 0
+
+    return { 
+      dates: allDates, 
+      calories, 
+      protein, 
+      caloriesAvg: Math.round(caloriesAvg), 
+      proteinAvg: Math.round(proteinAvg) 
+    }
   }
 
-  const { dates, calories, protein } = processData()
+  const { dates, calories, protein, caloriesAvg, proteinAvg } = processData()
 
   const chartProps = {
     width: undefined as any,
@@ -113,7 +125,12 @@ export function HistoryChart() {
 
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium mb-4">Daily Calories</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Daily Calories</h3>
+            <div className="text-sm text-gray-500">
+              Average: {caloriesAvg} cal
+            </div>
+          </div>
           <div className="h-[300px] w-full">
             <BarChart
               {...chartProps}
@@ -144,7 +161,12 @@ export function HistoryChart() {
         </div>
 
         <div>
-          <h3 className="text-lg font-medium mb-4">Daily Protein</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Daily Protein</h3>
+            <div className="text-sm text-gray-500">
+              Average: {proteinAvg}g
+            </div>
+          </div>
           <div className="h-[300px] w-full">
             <BarChart
               {...chartProps}
