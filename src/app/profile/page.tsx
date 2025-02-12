@@ -1,4 +1,5 @@
 import { HistoryChart } from "@/components/profile/history-chart"
+import { StatsSection } from "@/components/profile/stats-section"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -15,7 +16,10 @@ export default function ProfilePage() {
         </Link>
         <h1 className="text-3xl font-bold">Profile</h1>
       </div>
-      <HistoryChart />
+      <div className="space-y-8">
+        <StatsSection />
+        <HistoryChart />
+      </div>
     </div>
   )
 } 
