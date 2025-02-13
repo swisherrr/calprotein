@@ -21,8 +21,8 @@ export default function Home() {
         <div className="flex gap-4 justify-center">
           <Link href="/signup">
             <HoverBorderGradient
-              containerClassName="rounded-full"
-              className="dark:bg-black bg-white text-black dark:text-white px-8 py-3 font-medium"
+              containerClassName="rounded-full opacity-95 hover:opacity-90"
+              className="dark:bg-white bg-black text-white dark:text-black px-8 py-3 font-medium"
             >
               Get Started
             </HoverBorderGradient>
