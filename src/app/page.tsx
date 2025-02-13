@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
 import { Boxes } from "@/components/ui/background-boxes"
 import Link from "next/link"
 
@@ -20,10 +20,20 @@ export default function Home() {
 
         <div className="flex gap-4 justify-center">
           <Link href="/signup">
-            <Button size="lg">Get Started</Button>
+            <HoverBorderGradient
+              containerClassName="rounded-full"
+              className="dark:bg-black bg-white text-black dark:text-white px-8 py-3 font-medium"
+            >
+              Get Started
+            </HoverBorderGradient>
           </Link>
           <Link href="/login">
-            <Button variant="outline" size="lg">Sign In</Button>
+            <HoverBorderGradient
+              containerClassName="rounded-full"
+              className="dark:bg-black bg-white text-black dark:text-white px-8 py-3 font-medium"
+            >
+              Sign In
+            </HoverBorderGradient>
           </Link>
         </div>
       </div>
