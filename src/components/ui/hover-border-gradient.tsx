@@ -15,11 +15,11 @@ export const HoverBorderGradient = ({
   ...props
 }: {
   children: React.ReactNode;
-  containerClassName?: string;
-  className?: string;
+    containerClassName?: string;
+    className?: string;
   as?: any;
-  duration?: number;
-  clockwise?: boolean;
+    duration?: number;
+    clockwise?: boolean;
 } & React.HTMLAttributes<HTMLElement>) => {
   const [hovered, setHovered] = useState<boolean>(false);
   const [direction, setDirection] = useState<Direction>("TOP");
