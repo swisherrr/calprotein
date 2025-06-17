@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { supabase } from "@/lib/supabase"
 
 interface Exercise {
   name: string
@@ -15,11 +17,25 @@ interface WorkoutTemplate {
   exercises: Exercise[]
 }
 
+interface CheckIn {
+  weight?: number
+  bodyFatPercentage?: number
+  chestMeasurement?: number
+  waistMeasurement?: number
+  hipMeasurement?: number
+  armMeasurement?: number
+  thighMeasurement?: number
+  notes?: string
+}
+
 export default function WorkoutPage() {
   const [selectedDay, setSelectedDay] = useState("")
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [savedTemplates, setSavedTemplates] = useState<WorkoutTemplate[]>([])
   const [isEditing, setIsEditing] = useState(false)
+  const [isCheckInOpen, setIsCheckInOpen] = useState(false)
+  const [checkInData, setCheckInData] = useState<CheckIn>({})
+  const [totalVolume, setTotalVolume] = useState(0)
 
   const daysOfWeek = [
     "Monday",
@@ -31,6 +47,12 @@ export default function WorkoutPage() {
     "Sunday"
   ]
 
+  const calculateVolume = (exercises: Exercise[]) => {
+    return exercises.reduce((total, exercise) => {
+      return total + (exercise.sets * exercise.reps * exercise.weight)
+    }, 0)
+  }
+
   const handleAddExercise = () => {
     setExercises([...exercises, { name: "", sets: 0, reps: 0, weight: 0 }])
   }
@@ -39,6 +61,36 @@ export default function WorkoutPage() {
     const newExercises = [...exercises]
     newExercises[index] = { ...newExercises[index], [field]: value }
     setExercises(newExercises)
+    setTotalVolume(calculateVolume(newExercises))
+  }
+
+  const handleCheckInChange = (field: keyof CheckIn, value: string | number) => {
+    setCheckInData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleCheckInSubmit = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('check_ins')
+        .insert([{
+          user_id: user.id,
+          date: new Date().toISOString().split('T')[0],
+          ...checkInData
+        }])
+
+      if (error) throw error
+
+      setIsCheckInOpen(false)
+      setCheckInData({})
+    } catch (error) {
+      console.error('Error saving check-in:', error)
+    }
   }
 
   const handleSaveTemplate = () => {
@@ -68,7 +120,15 @@ export default function WorkoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Workout Logger</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Workout Logger</h1>
+        <Button 
+          onClick={() => alert('Check In clicked')}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
+        >
+          Check In
+        </Button>
+      </div>
       
       <div className="mb-8">
         <h2 className="text-lg font-medium mb-4">Select Day</h2>
@@ -96,36 +156,47 @@ export default function WorkoutPage() {
             <div className="space-y-4">
               {exercises.map((exercise, index) => (
                 <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
-                  <input
-                    type="text"
-                    placeholder="Exercise name"
-                    value={exercise.name}
-                    onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
-                    className="rounded-md border border-gray-200 px-3 py-2 dark:border-gray-700"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Sets"
-                    value={exercise.sets}
-                    onChange={(e) => handleExerciseChange(index, "sets", parseInt(e.target.value))}
-                    className="rounded-md border border-gray-200 px-3 py-2 dark:border-gray-700"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Reps"
-                    value={exercise.reps}
-                    onChange={(e) => handleExerciseChange(index, "reps", parseInt(e.target.value))}
-                    className="rounded-md border border-gray-200 px-3 py-2 dark:border-gray-700"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Weight (lbs)"
-                    value={exercise.weight}
-                    onChange={(e) => handleExerciseChange(index, "weight", parseInt(e.target.value))}
-                    className="rounded-md border border-gray-200 px-3 py-2 dark:border-gray-700"
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Exercise</label>
+                    <input
+                      type="text"
+                      value={exercise.name}
+                      onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Sets</label>
+                    <input
+                      type="number"
+                      value={exercise.sets}
+                      onChange={(e) => handleExerciseChange(index, "sets", parseInt(e.target.value))}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Reps</label>
+                    <input
+                      type="number"
+                      value={exercise.reps}
+                      onChange={(e) => handleExerciseChange(index, "reps", parseInt(e.target.value))}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Weight (lbs)</label>
+                    <input
+                      type="number"
+                      value={exercise.weight}
+                      onChange={(e) => handleExerciseChange(index, "weight", parseInt(e.target.value))}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2"
+                    />
+                  </div>
                 </div>
               ))}
+              <div className="text-right text-lg font-medium">
+                Total Volume: {totalVolume.toLocaleString()} lbs
+              </div>
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400">No exercises added yet. Click "Add Exercise" to start.</p>
