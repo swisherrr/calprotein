@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import Link from 'next/link'
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -103,7 +104,27 @@ export function LoginForm() {
             )}
           </button>
         </div>
-
+        <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            name="remember-me"
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-100">
+            Remember me
+          </label>
+        </div>
+        <div className="text-sm pl-8">
+          <Link 
+            href="/reset-password" 
+            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            Forgot your password?
+          </Link>
+        </div>
+        </div>
         <Button 
           type="submit" 
           className="w-full" 
