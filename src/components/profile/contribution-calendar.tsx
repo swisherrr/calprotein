@@ -101,12 +101,7 @@ export function ContributionCalendar() {
       <h3 className="text-lg font-medium">Activity</h3>
       <TooltipProvider>
         <div>
-          {/* Day labels on top */}
-          <div className="flex text-xs text-gray-500">
-            <div className="ml-[49px]">M</div>
-            <div className="ml-[22px]">W</div>
-            <div className="ml-[22px]">F</div>
-          </div>
+
 
           <div className="flex">
             {/* Month labels on the left */}
