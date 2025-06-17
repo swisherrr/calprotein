@@ -4,15 +4,36 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { useEffect, useState } from "react"
 
 export function Navbar() {
   const router = useRouter()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setIsLoggedIn(!!session)
+    }
+    
+    checkAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
   }
+
+  if (!isLoggedIn) return null
 
   return (
     <header className="border-b">
