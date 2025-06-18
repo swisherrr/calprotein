@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
-import { toast } from "sonner"
 
 interface Exercise {
   name: string
@@ -28,7 +27,6 @@ interface WorkoutLog {
   start_time: string
   end_time: string
   exercises: Exercise[]
-  total_volume: number
 }
 
 export function WorkoutLogger() {
@@ -40,13 +38,6 @@ export function WorkoutLogger() {
   useEffect(() => {
     loadTemplates()
   }, [])
-
-  const calculateTotalVolume = (exercises: Exercise[]): number => {
-    return exercises.reduce((total, exercise) => {
-      const volume = (exercise.sets || 0) * (exercise.reps || 0) * (exercise.weight || 0)
-      return total + volume
-    }, 0)
-  }
 
   const loadTemplates = async () => {
     try {
@@ -62,7 +53,6 @@ export function WorkoutLogger() {
       setTemplates(data || [])
     } catch (error) {
       console.error('Error loading templates:', error)
-      toast.error("Failed to load workout templates")
     }
   }
 
@@ -77,8 +67,7 @@ export function WorkoutLogger() {
       exercises: template.exercises.map(ex => ({
         name: ex.name,
         sets: ex.sets
-      })),
-      total_volume: 0
+      }))
     })
     setSelectedTemplate(template)
     setIsWorkoutActive(true)
@@ -89,8 +78,7 @@ export function WorkoutLogger() {
 
     const newExercises = [...currentWorkout.exercises]
     newExercises[index] = { ...newExercises[index], [field]: value }
-    const totalVolume = calculateTotalVolume(newExercises)
-    setCurrentWorkout({ ...currentWorkout, exercises: newExercises, total_volume: totalVolume })
+    setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
   }
 
   const finishWorkout = async () => {
@@ -98,11 +86,9 @@ export function WorkoutLogger() {
 
     try {
       const now = new Date()
-      const totalVolume = calculateTotalVolume(currentWorkout.exercises)
       const workoutToSave = {
         ...currentWorkout,
-        end_time: now.toISOString(),
-        total_volume: totalVolume
+        end_time: now.toISOString()
       }
 
       const { error } = await supabase
@@ -111,13 +97,11 @@ export function WorkoutLogger() {
 
       if (error) throw error
 
-      toast.success("Workout saved successfully!")
       setCurrentWorkout(null)
       setSelectedTemplate(null)
       setIsWorkoutActive(false)
     } catch (error) {
       console.error('Error saving workout:', error)
-      toast.error("Failed to save workout")
     }
   }
 
@@ -126,14 +110,9 @@ export function WorkoutLogger() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Current Workout: {selectedTemplate?.name}</h2>
-          <div className="flex items-center space-x-4">
-            <div className="text-lg font-medium">
-              Total Volume: {currentWorkout.total_volume.toLocaleString()} lbs
-            </div>
-            <Button onClick={finishWorkout}>
-              Finish Workout
-            </Button>
-          </div>
+          <Button onClick={finishWorkout}>
+            Finish Workout
+          </Button>
         </div>
 
         <div className="space-y-4">
