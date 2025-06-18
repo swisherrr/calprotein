@@ -10,8 +10,8 @@ export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
 
-  // Hide navbar on homepage
-  if (pathname === "/") {
+  // Hide navbar on homepage and auth pages
+  if (pathname === "/" || pathname.startsWith("/auth/")) {
     return null
   }
 

@@ -1,5 +1,7 @@
 "use client"
 
+import { Navbar } from "@/components/navbar"
+
 export default function DashboardLayout({
   children,
 }: {
@@ -7,6 +9,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
+      <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8">
         {children}
       </main>
