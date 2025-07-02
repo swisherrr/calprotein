@@ -225,12 +225,14 @@ export function TemplateManager() {
         <p className="text-gray-600 dark:text-gray-400 font-light mb-8">
           Manage and organize your workout templates
         </p>
-        <Button 
-          onClick={() => setIsEditing(true)}
-          className="btn-apple text-lg px-8 py-4"
-        >
-          Create New Template
-        </Button>
+        <div className="flex justify-center">
+          <Button 
+            onClick={() => setIsEditing(true)}
+            className="btn-apple text-lg px-8 py-4 flex items-center justify-center"
+          >
+            Create New Template
+          </Button>
+        </div>
       </div>
 
       {templates.length === 0 ? (

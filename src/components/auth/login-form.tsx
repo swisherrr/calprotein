@@ -134,7 +134,7 @@ export function LoginForm() {
 
           <Button 
             type="submit" 
-            className="btn-apple w-full text-lg py-4" 
+            className="btn-apple w-full text-lg py-4 flex items-center justify-center" 
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign in'}
