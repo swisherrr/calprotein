@@ -86,9 +86,19 @@ export function WorkoutLogger() {
 
     try {
       const now = new Date()
+      
+      // Calculate total volume (sets × reps × weight)
+      const totalVolume = currentWorkout.exercises.reduce((total, exercise) => {
+        const sets = exercise.sets || 0
+        const reps = exercise.reps || 0
+        const weight = exercise.weight || 0
+        return total + (sets * reps * weight)
+      }, 0)
+
       const workoutToSave = {
         ...currentWorkout,
-        end_time: now.toISOString()
+        end_time: now.toISOString(),
+        total_volume: totalVolume
       }
 
       const { error } = await supabase
