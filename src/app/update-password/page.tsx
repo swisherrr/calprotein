@@ -22,6 +22,7 @@ function UpdatePasswordForm() {
         // Check if we have access_token in URL (from reset email)
         const accessToken = searchParams.get('access_token')
         const refreshToken = searchParams.get('refresh_token')
+        const code = searchParams.get('code')
         
         if (accessToken && refreshToken) {
           // Set the session from the URL tokens
@@ -32,6 +33,24 @@ function UpdatePasswordForm() {
           
           if (error) {
             console.error('Session set error:', error)
+            toast.error('Invalid or expired reset link')
+            router.push('/reset-password')
+            return
+          }
+          
+          if (data.session) {
+            setIsValidSession(true)
+          } else {
+            toast.error('Invalid reset link')
+            router.push('/reset-password')
+          }
+        } else if (code) {
+          // Handle code parameter from auth callback
+          console.log('Processing code parameter for password reset...')
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+          
+          if (error) {
+            console.error('Code exchange error:', error)
             toast.error('Invalid or expired reset link')
             router.push('/reset-password')
             return
