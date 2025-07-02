@@ -168,12 +168,14 @@ export function WorkoutLogger() {
           </div>
 
           <div className="text-center mt-12">
-            <Button 
-              onClick={finishWorkout} 
-              className="btn-apple text-lg px-12 py-4"
-            >
-              Finish Workout
-            </Button>
+            <div className="flex justify-center">
+              <Button 
+                onClick={finishWorkout} 
+                className="btn-apple text-lg px-12 py-4 flex items-center justify-center"
+              >
+                Finish Workout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
