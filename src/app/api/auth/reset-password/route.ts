@@ -28,14 +28,19 @@ export async function POST(request: Request) {
       }
     )
 
-    // Get the current URL from the request headers
-    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL
+    // Dynamic URL detection for development vs production
+    const origin = request.headers.get('origin') || 
+                   process.env.NEXT_PUBLIC_SITE_URL || 
+                   'http://localhost:3001'
+    
+    const redirectTo = `${origin}/auth/callback?next=/update-password`
 
-    // Make sure to use the full URL with the correct path
-    const redirectTo = `${origin}/update-password`
-
-    console.log('Attempting to send reset email to:', email)
-    console.log('Using redirect URL:', redirectTo)
+    console.log('Reset password request details:')
+    console.log('- Email:', email)
+    console.log('- Origin:', origin)
+    console.log('- Redirect URL:', redirectTo)
+    console.log('- Environment:', process.env.NODE_ENV)
+    console.log('- Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

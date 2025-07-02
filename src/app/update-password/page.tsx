@@ -1,20 +1,80 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isValidSession, setIsValidSession] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        // Check if we have access_token in URL (from reset email)
+        const accessToken = searchParams.get('access_token')
+        const refreshToken = searchParams.get('refresh_token')
+        
+        if (accessToken && refreshToken) {
+          // Set the session from the URL tokens
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          
+          if (error) {
+            console.error('Session set error:', error)
+            toast.error('Invalid or expired reset link')
+            router.push('/reset-password')
+            return
+          }
+          
+          if (data.session) {
+            setIsValidSession(true)
+          } else {
+            toast.error('Invalid reset link')
+            router.push('/reset-password')
+          }
+        } else {
+          // Check existing session
+          const { data: { session }, error } = await supabase.auth.getSession()
+          
+          if (error || !session) {
+            console.log('No valid session found')
+            toast.error('Invalid or expired reset link')
+            router.push('/reset-password')
+            return
+          }
+          
+          setIsValidSession(true)
+        }
+      } catch (error) {
+        console.error('Session validation error:', error)
+        toast.error('Error validating reset link')
+        router.push('/reset-password')
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    checkSession()
+  }, [router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!isValidSession) {
+      toast.error('Invalid session')
+      return
+    }
     
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters long')
@@ -36,6 +96,10 @@ export default function UpdatePasswordPage() {
       if (error) throw error
 
       toast.success('Password updated successfully')
+      
+      // Sign out the user after password update
+      await supabase.auth.signOut()
+      
       router.push('/login')
     } catch (error) {
       console.error('Password update error:', error)
@@ -45,11 +109,26 @@ export default function UpdatePasswordPage() {
     }
   }
 
+  if (isChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-600">Validating reset link...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isValidSession) {
+    return null // Will redirect to reset-password
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Update Password</h2>
+          <h2 className="text-2xl font-bold">Set New Password</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Enter your new password below.
           </p>
