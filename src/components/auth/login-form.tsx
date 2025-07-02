@@ -17,16 +17,12 @@ export function LoginForm() {
     e.preventDefault()
     e.stopPropagation()
     
-    // Prevent multiple submissions
     if (loading) return
     
     setLoading(true)
     setError(null)
 
     try {
-      // Add a small delay to ensure mobile touch events are processed
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -48,16 +44,6 @@ export function LoginForm() {
       console.error('Login error:', error)
       setError('An error occurred during sign in. Please try again.')
       setLoading(false)
-    }
-  }
-
-  const handleButtonClick = (e: React.MouseEvent) => {
-    // Prevent default button behavior and manually submit form
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (formRef.current && !loading) {
-      formRef.current.requestSubmit()
     }
   }
 
@@ -156,8 +142,7 @@ export function LoginForm() {
           </div>
 
           <Button 
-            type="button"
-            onClick={handleButtonClick}
+            type="submit"
             className="btn-apple w-full text-lg py-4 flex items-center justify-center" 
             disabled={loading}
           >

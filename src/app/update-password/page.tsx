@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('')
@@ -29,7 +29,6 @@ export default function UpdatePasswordPage() {
     setIsLoading(true)
 
     try {
-      const supabase = createClient()
       const { error } = await supabase.auth.updateUser({
         password: password
       })
