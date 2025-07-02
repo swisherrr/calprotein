@@ -10,8 +10,12 @@ export default function WorkoutPage() {
   return (
     <div className="container-apple section-apple">
       <div className="animate-fade-in-up">
+        {/* Matrix-style Workout Title */}
+        <div className="matrix-container mb-12">
+          <h1 className="matrix-text" data-text="WORKOUT">WORKOUT</h1>
+        </div>
+
         <div className="text-center mb-12">
-          <h1 className="mb-4">Workout</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 font-light">
             Manage your templates and log your workouts
           </p>
