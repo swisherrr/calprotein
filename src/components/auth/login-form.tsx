@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import Link from 'next/link'
@@ -11,59 +11,102 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<string[]>([])
+
+  const addDebugInfo = (info: string) => {
+    console.log(`[DEBUG] ${info}`)
+    setDebugInfo(prev => [...prev, `${new Date().toLocaleTimeString()}: ${info}`])
+  }
+
+  useEffect(() => {
+    addDebugInfo('LoginForm component mounted')
+    // Test Supabase connection
+    addDebugInfo(`Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing'}`)
+    addDebugInfo(`Supabase Key: ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing'}`)
+  }, [])
+
+  const testSupabase = async () => {
+    addDebugInfo('Testing Supabase connection...')
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      addDebugInfo(`Session test - Data: ${!!data}, Error: ${error?.message || 'none'}`)
+      if (data.session) {
+        addDebugInfo(`Current user: ${data.session.user.email}`)
+      }
+    } catch (err) {
+      addDebugInfo(`Supabase test error: ${err}`)
+    }
+  }
 
   const handleLogin = async () => {
-    if (loading || !email || !password) return
+    addDebugInfo('handleLogin called')
     
+    if (loading) {
+      addDebugInfo('Already loading, returning early')
+      return
+    }
+    
+    if (!email || !password) {
+      addDebugInfo('Email or password empty')
+      return
+    }
+    
+    addDebugInfo(`Starting login process for email: ${email}`)
     setLoading(true)
     setError(null)
 
     try {
-      console.log('Attempting login with:', { email, password: '***' })
+      addDebugInfo('Calling supabase.auth.signInWithPassword')
       
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
       })
 
-      console.log('Login response:', { data: !!data, error: signInError })
+      addDebugInfo(`Supabase response received. Data: ${!!data}, Error: ${signInError?.message || 'none'}`)
 
       if (signInError) {
-        console.error('Login error:', signInError)
+        addDebugInfo(`Login error: ${signInError.message}`)
         setError(signInError.message)
         setLoading(false)
         return
       }
 
       if (data?.session) {
-        console.log('Login successful, redirecting...')
-        // Force a hard redirect for mobile compatibility
-        window.location.replace('/dashboard')
+        addDebugInfo('Login successful, session exists')
+        addDebugInfo(`Session user: ${data.session.user.email}`)
+        addDebugInfo('About to redirect to /dashboard')
+        
+        // Use setTimeout to ensure state updates before redirect
+        setTimeout(() => {
+          addDebugInfo('Executing redirect now')
+          window.location.href = '/dashboard'
+        }, 100)
       } else {
-        console.error('No session after login')
+        addDebugInfo('No session after login')
         setError('Login failed. Please try again.')
         setLoading(false)
       }
     } catch (error) {
+      addDebugInfo(`Exception caught: ${error}`)
       console.error('Login exception:', error)
       setError('An error occurred during sign in. Please try again.')
       setLoading(false)
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    handleLogin()
-  }
-
   const handleButtonClick = (e: React.MouseEvent) => {
+    addDebugInfo('Button clicked')
     e.preventDefault()
+    e.stopPropagation()
     handleLogin()
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      addDebugInfo('Enter key pressed')
       e.preventDefault()
+      e.stopPropagation()
       handleLogin()
     }
   }
@@ -85,6 +128,22 @@ export function LoginForm() {
             </div>
           )}
           
+          {/* Debug info for development */}
+          {process.env.NODE_ENV === 'development' && debugInfo.length > 0 && (
+            <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded max-h-32 overflow-y-auto">
+              <strong>Debug Info:</strong>
+              {debugInfo.slice(-5).map((info, i) => (
+                <div key={i}>{info}</div>
+              ))}
+              <button 
+                onClick={testSupabase}
+                className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded"
+              >
+                Test Supabase
+              </button>
+            </div>
+          )}
+          
           <div className="space-y-2">
             <label 
               htmlFor="email"
@@ -100,7 +159,6 @@ export function LoginForm() {
               onKeyPress={handleKeyPress}
               placeholder="Enter your email"
               className="input-apple"
-              required
               autoComplete="email"
               autoCapitalize="none"
               spellCheck="false"
@@ -123,7 +181,6 @@ export function LoginForm() {
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your password"
                 className="input-apple pr-12"
-                required
                 autoComplete="current-password"
               />
               <button
