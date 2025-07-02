@@ -19,10 +19,15 @@ function UpdatePasswordForm() {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log('Update password page loaded')
+        console.log('Search params:', Object.fromEntries(searchParams.entries()))
+        
         // Check if we have access_token in URL (from reset email)
         const accessToken = searchParams.get('access_token')
         const refreshToken = searchParams.get('refresh_token')
         const code = searchParams.get('code')
+        
+        console.log('Tokens found:', { accessToken: !!accessToken, refreshToken: !!refreshToken, code: !!code })
         
         if (accessToken && refreshToken) {
           // Set the session from the URL tokens
@@ -140,7 +145,20 @@ function UpdatePasswordForm() {
   }
 
   if (!isValidSession) {
-    return null // Will redirect to reset-password
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Invalid Reset Link</h1>
+          <p className="mt-4 text-sm text-gray-600">The reset link is invalid or has expired.</p>
+          <Button 
+            onClick={() => router.push('/reset-password')}
+            className="mt-4"
+          >
+            Request New Reset
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
