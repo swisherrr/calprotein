@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { EXERCISE_GROUPS } from "@/lib/exercises"
 
 interface Exercise {
   name: string
@@ -162,13 +163,22 @@ export function TemplateManager() {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Exercise Name
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={exercise.name}
                           onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
                           className="input-apple"
-                          placeholder="Exercise name..."
-                        />
+                        >
+                          <option value="">Select exercise</option>
+                          {EXERCISE_GROUPS.map((group) => (
+                            <optgroup key={group.label} label={group.label}>
+                              {group.exercises.map((exerciseName) => (
+                                <option key={exerciseName} value={exerciseName}>
+                                  {exerciseName}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
                       </div>
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -190,13 +200,13 @@ export function TemplateManager() {
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Button 
                   onClick={handleAddExercise}
-                  className="btn-apple-outline"
+                  className="btn-apple-outline flex items-center justify-center"
                 >
                   Add Exercise
                 </Button>
                 <Button 
                   onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
-                  className="btn-apple"
+                  className="btn-apple flex items-center justify-center"
                 >
                   {currentTemplate.id ? 'Update Template' : 'Save Template'}
                 </Button>
@@ -206,7 +216,7 @@ export function TemplateManager() {
                     setIsEditing(false)
                     setCurrentTemplate({ name: "", exercises: [], user_id: "" })
                   }}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 flex items-center justify-center"
                 >
                   Cancel
                 </Button>
@@ -260,14 +270,14 @@ export function TemplateManager() {
                   <Button 
                     variant="outline" 
                     onClick={() => handleEditTemplate(template)}
-                    className="text-sm px-4 py-2"
+                    className="text-sm px-4 py-2 flex items-center justify-center"
                   >
                     Edit
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => handleDeleteTemplate(template.id!)}
-                    className="text-sm px-4 py-2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+                    className="text-sm px-4 py-2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20 flex items-center justify-center"
                   >
                     Delete
                   </Button>

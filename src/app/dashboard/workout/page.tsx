@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
+import { EXERCISE_GROUPS } from "@/lib/exercises"
 
 interface Exercise {
   name: string
@@ -158,12 +159,22 @@ export default function WorkoutPage() {
                 <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Exercise</label>
-                    <input
-                      type="text"
+                    <select
                       value={exercise.name}
                       onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
                       className="w-full rounded-md border border-gray-200 px-3 py-2"
-                    />
+                    >
+                      <option value="">Select exercise</option>
+                      {EXERCISE_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.exercises.map((exerciseName) => (
+                            <option key={exerciseName} value={exerciseName}>
+                              {exerciseName}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Sets</label>
@@ -205,11 +216,11 @@ export default function WorkoutPage() {
       )}
 
       <div className="space-x-4">
-        <Button onClick={handleAddExercise}>
+        <Button onClick={handleAddExercise} className="flex items-center justify-center">
           Add Exercise
         </Button>
         {exercises.length > 0 && (
-          <Button onClick={handleSaveTemplate}>
+          <Button onClick={handleSaveTemplate} className="flex items-center justify-center">
             Save Workout Template
           </Button>
         )}
