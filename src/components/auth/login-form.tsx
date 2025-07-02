@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import Link from 'next/link'
@@ -11,39 +11,60 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const formRef = useRef<HTMLFormElement>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (loading) return
+  const handleLogin = async () => {
+    if (loading || !email || !password) return
     
     setLoading(true)
     setError(null)
 
     try {
+      console.log('Attempting login with:', { email, password: '***' })
+      
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password,
       })
 
+      console.log('Login response:', { data: !!data, error: signInError })
+
       if (signInError) {
+        console.error('Login error:', signInError)
         setError(signInError.message)
         setLoading(false)
         return
       }
 
       if (data?.session) {
-        window.location.href = '/dashboard'
+        console.log('Login successful, redirecting...')
+        // Force a hard redirect for mobile compatibility
+        window.location.replace('/dashboard')
       } else {
+        console.error('No session after login')
         setError('Login failed. Please try again.')
         setLoading(false)
       }
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('Login exception:', error)
       setError('An error occurred during sign in. Please try again.')
       setLoading(false)
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleLogin()
+  }
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    handleLogin()
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleLogin()
     }
   }
 
@@ -57,7 +78,7 @@ export function LoginForm() {
           </p>
         </div>
         
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
           {error && (
             <div className="text-sm text-red-500 text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">
               {error}
@@ -76,9 +97,13 @@ export function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="Enter your email"
               className="input-apple"
               required
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck="false"
             />
           </div>
           
@@ -95,9 +120,11 @@ export function LoginForm() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="Enter your password"
                 className="input-apple pr-12"
                 required
+                autoComplete="current-password"
               />
               <button
                 type="button"
@@ -142,13 +169,14 @@ export function LoginForm() {
           </div>
 
           <Button 
-            type="submit"
+            type="button"
+            onClick={handleButtonClick}
             className="btn-apple w-full text-lg py-4 flex items-center justify-center" 
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
-        </form>
+        </div>
 
         <div className="text-center mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">

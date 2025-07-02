@@ -26,6 +26,23 @@ body {
   background-color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Mobile touch improvements */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in inputs and textareas */
+input, textarea {
+  -webkit-user-select: text;
+  -khtml-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 /* Apple-inspired typography */
@@ -97,15 +114,29 @@ h3 {
 /* Apple-inspired button styles */
 .btn-apple {
   @apply bg-black text-white font-medium px-8 py-4 rounded-full transition-all duration-300 hover:bg-gray-800 hover:scale-105 active:scale-95;
+  /* Mobile touch improvements */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 44px; /* Minimum touch target size */
 }
 
 .btn-apple-outline {
   @apply border-2 border-black text-black font-medium px-8 py-4 rounded-full transition-all duration-300 hover:bg-black hover:text-white hover:scale-105 active:scale-95;
+  /* Mobile touch improvements */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 44px; /* Minimum touch target size */
 }
 
 /* Apple-inspired input styles */
 .input-apple {
   @apply w-full px-6 py-4 border border-gray-200 rounded-2xl bg-white text-black font-medium transition-all duration-300 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10;
+  /* Mobile improvements */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-size: 16px; /* Prevent zoom on iOS */
+  min-height: 44px; /* Minimum touch target size */
 }
 
 /* Container with Apple-style margins */
@@ -121,6 +152,27 @@ h3 {
 /* Card styles */
 .card-apple {
   @apply bg-white rounded-3xl shadow-sm border border-gray-100 p-8 transition-all duration-300 hover:shadow-lg hover:scale-[1.02];
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  .btn-apple,
+  .btn-apple-outline {
+    min-height: 48px; /* Larger touch targets on mobile */
+    font-size: 16px;
+  }
+  
+  .input-apple {
+    min-height: 48px; /* Larger touch targets on mobile */
+    font-size: 16px;
+  }
+  
+  /* Prevent zoom on input focus */
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    font-size: 16px;
+  }
 }
 
 /* Dark mode support */
