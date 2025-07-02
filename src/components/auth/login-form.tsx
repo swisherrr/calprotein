@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import Link from 'next/link'
@@ -11,13 +11,22 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
+    
+    // Prevent multiple submissions
+    if (loading) return
+    
     setLoading(true)
     setError(null)
 
     try {
+      // Add a small delay to ensure mobile touch events are processed
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -31,10 +40,24 @@ export function LoginForm() {
 
       if (data?.session) {
         window.location.href = '/dashboard'
+      } else {
+        setError('Login failed. Please try again.')
+        setLoading(false)
       }
     } catch (error) {
-      setError('An error occurred during sign in')
+      console.error('Login error:', error)
+      setError('An error occurred during sign in. Please try again.')
       setLoading(false)
+    }
+  }
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    // Prevent default button behavior and manually submit form
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (formRef.current && !loading) {
+      formRef.current.requestSubmit()
     }
   }
 
@@ -48,7 +71,7 @@ export function LoginForm() {
           </p>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <div className="text-sm text-red-500 text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl">
               {error}
@@ -133,7 +156,8 @@ export function LoginForm() {
           </div>
 
           <Button 
-            type="submit" 
+            type="button"
+            onClick={handleButtonClick}
             className="btn-apple w-full text-lg py-4 flex items-center justify-center" 
             disabled={loading}
           >
