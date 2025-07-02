@@ -7,6 +7,8 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
 
+  console.log('Auth callback received:', { code: !!code, next, origin })
+
   if (code) {
     const cookieStore = cookies()
     const supabase = createServerClient(
@@ -31,12 +33,28 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+    try {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (error) {
+        console.error('Auth callback error:', error)
+        return NextResponse.redirect(`${origin}/reset-password?error=invalid_code`)
+      }
+
+      if (data.session) {
+        console.log('Auth callback successful, redirecting to:', next)
+        return NextResponse.redirect(`${origin}${next}`)
+      } else {
+        console.error('No session after code exchange')
+        return NextResponse.redirect(`${origin}/reset-password?error=no_session`)
+      }
+    } catch (error) {
+      console.error('Auth callback exception:', error)
+      return NextResponse.redirect(`${origin}/reset-password?error=exception`)
     }
   }
 
-  // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+  // No code provided
+  console.error('No code provided in auth callback')
+  return NextResponse.redirect(`${origin}/reset-password?error=no_code`)
 } 
