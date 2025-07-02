@@ -107,93 +107,118 @@ export function WorkoutLogger() {
 
   if (isWorkoutActive && currentWorkout) {
     return (
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-semibold">Current Workout: {selectedTemplate?.name}</h2>
-          <Button onClick={finishWorkout} className="w-full py-3">
-            Finish Workout
-          </Button>
-        </div>
+      <div className="container-apple section-apple">
+        <div className="animate-fade-in-up">
+          <div className="text-center mb-12">
+            <h1 className="mb-4">Current Workout</h1>
+            <p className="text-xl text-gray-600 dark:text-gray-400 font-light">
+              {selectedTemplate?.name}
+            </p>
+          </div>
 
-        <div className="space-y-4">
-          {currentWorkout.exercises.map((exercise, index) => (
-            <div key={index} className="space-y-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Exercise</label>
-                <div className="text-gray-900 dark:text-gray-100 font-medium">{exercise.name}</div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sets</label>
+          <div className="space-y-6">
+            {currentWorkout.exercises.map((exercise, index) => (
+              <div key={index} className="card-apple animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="mb-6">
+                  <h3 className="text-2xl font-semibold mb-2">{exercise.name}</h3>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Sets</label>
+                    <input
+                      type="number"
+                      value={exercise.sets}
+                      onChange={(e) => handleExerciseUpdate(index, "sets", parseInt(e.target.value))}
+                      className="input-apple text-center text-lg"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Reps</label>
+                    <input
+                      type="number"
+                      value={exercise.reps || ''}
+                      onChange={(e) => handleExerciseUpdate(index, "reps", parseInt(e.target.value))}
+                      className="input-apple text-center text-lg"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Weight</label>
+                    <input
+                      type="number"
+                      value={exercise.weight || ''}
+                      onChange={(e) => handleExerciseUpdate(index, "weight", parseInt(e.target.value))}
+                      className="input-apple text-center text-lg"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Notes</label>
                   <input
-                    type="number"
-                    value={exercise.sets}
-                    onChange={(e) => handleExerciseUpdate(index, "sets", parseInt(e.target.value))}
-                    className="w-full rounded-md border border-gray-200 px-3 py-3 !text-gray-900 dark:!text-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-center"
+                    type="text"
+                    value={exercise.notes || ''}
+                    onChange={(e) => handleExerciseUpdate(index, "notes", e.target.value)}
+                    className="input-apple"
+                    placeholder="Add any notes about this exercise..."
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reps</label>
-                  <input
-                    type="number"
-                    value={exercise.reps || ''}
-                    onChange={(e) => handleExerciseUpdate(index, "reps", parseInt(e.target.value))}
-                    className="w-full rounded-md border border-gray-200 px-3 py-3 !text-gray-900 dark:!text-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-center"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Weight</label>
-                  <input
-                    type="number"
-                    value={exercise.weight || ''}
-                    onChange={(e) => handleExerciseUpdate(index, "weight", parseInt(e.target.value))}
-                    className="w-full rounded-md border border-gray-200 px-3 py-3 !text-gray-900 dark:!text-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-center"
-                  />
-                </div>
               </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
-                <input
-                  type="text"
-                  value={exercise.notes || ''}
-                  onChange={(e) => handleExerciseUpdate(index, "notes", e.target.value)}
-                  className="w-full rounded-md border border-gray-200 px-3 py-3 !text-gray-900 dark:!text-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800"
-                  placeholder="Add notes..."
-                />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button 
+              onClick={finishWorkout} 
+              className="btn-apple text-lg px-12 py-4"
+            >
+              Finish Workout
+            </Button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Start a Workout</h2>
-      <div className="space-y-4">
-        {templates.map((template) => (
-          <div key={template.id} className="p-4 border rounded-lg bg-white dark:bg-gray-800">
-            <div className="flex flex-col gap-4 mb-4">
-              <h3 className="font-medium text-lg">{template.name}</h3>
-              <Button onClick={() => startWorkout(template)} className="w-full py-3">
-                Start Workout
-              </Button>
+    <div className="container-apple section-apple">
+      <div className="animate-fade-in-up">
+        <div className="text-center mb-16">
+          <h1 className="mb-4">Start a Workout</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 font-light max-w-2xl mx-auto">
+            Choose a workout template to begin your fitness journey
+          </p>
+        </div>
+
+        <div className="grid gap-8 max-w-4xl mx-auto">
+          {templates.map((template, index) => (
+            <div key={template.id} className="card-apple animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-semibold mb-4">{template.name}</h3>
+                <Button 
+                  onClick={() => startWorkout(template)} 
+                  className="btn-apple text-lg px-12 py-4"
+                >
+                  Start Workout
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-gray-600 dark:text-gray-400 text-center mb-6">
+                  Exercises
+                </h4>
+                {template.exercises.map((exercise, idx) => (
+                  <div key={idx} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+                    <span className="text-lg font-medium">{exercise.name}</span>
+                    <span className="text-gray-500 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full text-sm font-medium">
+                      {exercise.sets} sets
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <ul className="space-y-3">
-              {template.exercises.map((exercise, idx) => (
-                <li key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                  <span className="font-medium">{exercise.name}</span>
-                  <span className="text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">
-                    {exercise.sets} sets
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )

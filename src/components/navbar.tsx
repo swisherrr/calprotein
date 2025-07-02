@@ -22,31 +22,33 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/dashboard" className="font-bold text-lg">
-          calprotein
-        </Link>
-        <nav className="flex items-center gap-2">
-          <Link href="/workout">
-            <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-              Workout
-            </Button>
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 dark:bg-black/80 dark:border-gray-800">
+      <div className="container-apple">
+        <div className="flex items-center justify-between h-16">
+          <Link href="/dashboard" className="text-xl font-semibold tracking-tight">
+            calprotein
           </Link>
-          <Link href="/profile">
-            <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-              Profile
+          
+          <nav className="flex items-center space-x-6">
+            <Link href="/workout">
+              <Button variant="ghost" className="font-medium text-sm px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200">
+                Workout
+              </Button>
+            </Link>
+            <Link href="/profile">
+              <Button variant="ghost" className="font-medium text-sm px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200">
+                Profile
+              </Button>
+            </Link>
+            <Button 
+              variant="ghost"
+              onClick={handleSignOut}
+              className="font-medium text-sm px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200"
+            >
+              Sign Out
             </Button>
-          </Link>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleSignOut}
-            className="text-xs px-2 py-1"
-          >
-            Sign Out
-          </Button>
-        </nav>
+          </nav>
+        </div>
       </div>
     </header>
   )
