@@ -37,15 +37,14 @@ export async function POST(request: Request) {
       origin = request.headers.get('origin') || 'http://localhost:3001'
     }
     
-    // Ensure we're using the correct callback route
-    const redirectTo = `${origin}/auth/callback?next=/update-password`
+    // Direct redirect to update password page - no auth callback
+    const redirectTo = `${origin}/update-password`
 
     console.log('Reset password request details:')
     console.log('- Email:', email)
     console.log('- Origin:', origin)
     console.log('- Redirect URL:', redirectTo)
     console.log('- Environment:', process.env.NODE_ENV)
-    console.log('- Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
