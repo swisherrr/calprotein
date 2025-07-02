@@ -56,34 +56,25 @@ function UpdatePasswordForm() {
             router.push('/reset-password')
           }
         } else if (code) {
-          // Handle code parameter from auth callback
+          // For password reset with code, we need to handle it differently
           console.log('Processing code parameter for password reset...')
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
           
-          if (error) {
-            console.error('Code exchange error:', error)
-            // For password reset, try to handle it differently
-            if (type === 'recovery') {
-              console.log('Recovery type detected, setting session manually')
-              setIsValidSession(true)
-              return
-            }
-            toast.error('Invalid or expired reset link')
-            router.push('/reset-password')
-            return
+          // Check if we have a valid session first
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+          
+          if (sessionError) {
+            console.error('Session check error:', sessionError)
           }
           
-          if (data.session) {
+          if (session) {
+            // We have a valid session, allow password reset
+            console.log('Valid session found, allowing password reset')
             setIsValidSession(true)
           } else {
-            // For password reset, allow it even without session
-            if (type === 'recovery') {
-              console.log('Recovery type detected, allowing password reset')
-              setIsValidSession(true)
-            } else {
-              toast.error('Invalid reset link')
-              router.push('/reset-password')
-            }
+            // No session, but this might be a password reset flow
+            // For password reset, we'll allow it and handle the session during password update
+            console.log('No session found, but allowing password reset flow')
+            setIsValidSession(true)
           }
         } else {
           // Check existing session
@@ -91,15 +82,8 @@ function UpdatePasswordForm() {
           
           if (error || !session) {
             console.log('No valid session found')
-            // For password reset, we might not have a session yet
-            // Let's check if this is a recovery flow
-            if (type === 'recovery') {
-              console.log('Recovery type detected, allowing password reset')
-              setIsValidSession(true)
-            } else {
-              toast.error('Invalid or expired reset link')
-              router.push('/reset-password')
-            }
+            toast.error('Invalid or expired reset link')
+            router.push('/reset-password')
             return
           }
           
