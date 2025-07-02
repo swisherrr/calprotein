@@ -28,10 +28,14 @@ export async function POST(request: Request) {
       }
     )
 
-    // Get the current URL from the request headers
-    const origin = request.headers.get('origin') || 
-                   process.env.NEXT_PUBLIC_SITE_URL || 
-                   'http://localhost:3001'
+    // Get the correct origin based on environment
+    let origin: string
+    if (process.env.NODE_ENV === 'production') {
+      origin = 'https://liftayltics.net'
+    } else {
+      // For development, use the request origin or fallback to localhost:3001
+      origin = request.headers.get('origin') || 'http://localhost:3001'
+    }
     
     // Ensure we're using the correct callback route
     const redirectTo = `${origin}/auth/callback?next=/update-password`
