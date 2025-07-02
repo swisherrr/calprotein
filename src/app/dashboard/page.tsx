@@ -7,11 +7,11 @@ import { UsualsSection } from "@/components/dashboard/usuals-section"
 import { ManualEntry } from "@/components/dashboard/manual-entry"
 import { useEntries, Entry } from "@/hooks/use-entries"
 import { useUserSettings } from "@/hooks/use-user-settings"
-import { ContributionCalendar } from "@/components/profile/contribution-calendar"
+
 
 function calculateGradient(current: number, target: number) {
   const percentage = Math.min((current / target) * 100, 100)
-  if (percentage === 0) return 'rgb(34, 197, 94)' // All green
+  if (percentage === 0) return 'rgb(0, 255, 0)' // All green
   if (percentage === 100) return 'rgb(239, 68, 68)' // All red
   
   // Calculate the gradient stop point
@@ -122,14 +122,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold">Dashboard</h1>
       </div>
 
-      <div className="flex gap-8">
-        {/* Calendar on the left */}
-        <div className="w-48 border rounded-lg p-6 h-fit">
-          <ContributionCalendar />
-        </div>
-
-        {/* Main content on the right */}
-        <div className="flex-1 space-y-8">
+      <div className="space-y-8">
           <div className="grid gap-6 md:grid-cols-3">
             <div 
               className="p-6 rounded-lg relative bg-background progress-border"
@@ -254,7 +247,6 @@ export default function DashboardPage() {
             ) : (
               <p className="text-gray-500">No meals logged today</p>
             )}
-          </div>
         </div>
       </div>
     </div>
