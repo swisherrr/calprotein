@@ -195,12 +195,14 @@ export function WorkoutLogger() {
             <div key={template.id} className="card-apple animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-semibold mb-4">{template.name}</h3>
-                <Button 
-                  onClick={() => startWorkout(template)} 
-                  className="btn-apple text-lg px-12 py-4"
-                >
-                  Start Workout
-                </Button>
+                <div className="flex justify-center">
+                  <Button 
+                    onClick={() => startWorkout(template)} 
+                    className="btn-apple text-lg px-12 py-4 flex items-center justify-center"
+                  >
+                    Start Workout
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-4">
