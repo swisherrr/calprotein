@@ -28,11 +28,12 @@ export async function POST(request: Request) {
       }
     )
 
-    // Dynamic URL detection for development vs production
+    // Get the current URL from the request headers
     const origin = request.headers.get('origin') || 
                    process.env.NEXT_PUBLIC_SITE_URL || 
                    'http://localhost:3001'
     
+    // Ensure we're using the correct callback route
     const redirectTo = `${origin}/auth/callback?next=/update-password`
 
     console.log('Reset password request details:')
