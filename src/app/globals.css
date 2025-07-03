@@ -146,7 +146,7 @@ h3 {
 
 /* Section spacing */
 .section-apple {
-  @apply py-20 sm:py-32;
+  @apply py-12 sm:py-16;
 }
 
 /* Card styles */

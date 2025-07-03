@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { EXERCISE_GROUPS } from "@/lib/exercises"
 
@@ -25,6 +26,8 @@ export function TemplateManager() {
     exercises: [],
     user_id: ""
   })
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     loadTemplates()
@@ -111,16 +114,25 @@ export function TemplateManager() {
     }
   }
 
-  const handleDeleteTemplate = async (templateId: string) => {
+  const handleDeleteTemplate = (templateId: string) => {
+    setTemplateToDelete(templateId)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!templateToDelete) return
+
     try {
       const { error } = await supabase
         .from('workout_templates')
         .delete()
-        .eq('id', templateId)
+        .eq('id', templateToDelete)
 
       if (error) throw error
 
       await loadTemplates()
+      setDeleteConfirmOpen(false)
+      setTemplateToDelete(null)
     } catch (error) {
       console.error('Error deleting template:', error)
     }
@@ -298,6 +310,37 @@ export function TemplateManager() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900">
+          <DialogHeader>
+            <DialogTitle>Delete Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-600 dark:text-gray-400">
+              Are you sure you want to delete this template? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setDeleteConfirmOpen(false)
+                  setTemplateToDelete(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

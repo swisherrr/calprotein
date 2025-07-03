@@ -34,6 +34,7 @@ export function WorkoutLogger() {
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null)
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutLog | null>(null)
   const [isWorkoutActive, setIsWorkoutActive] = useState(false)
+  const [lastWorkoutData, setLastWorkoutData] = useState<Record<string, { reps?: number, weight?: number }>>({})
 
   useEffect(() => {
     loadTemplates()
@@ -56,8 +57,53 @@ export function WorkoutLogger() {
     }
   }
 
-  const startWorkout = (template: WorkoutTemplate) => {
+  const fetchLastWorkoutData = async (exerciseNames: string[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number }> = {}
+
+      for (const exerciseName of exerciseNames) {
+        const { data, error } = await supabase
+          .from('workout_logs')
+          .select('exercises')
+          .eq('user_id', user.id)
+          .not('exercises', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (error) {
+          console.error('Error fetching last workout data:', error)
+          continue
+        }
+
+        // Find the most recent workout that contains this exercise
+        for (const workout of data || []) {
+          const exercise = workout.exercises?.find((ex: any) => ex.name === exerciseName)
+          if (exercise && (exercise.reps || exercise.weight)) {
+            lastWorkoutDataMap[exerciseName] = {
+              reps: exercise.reps,
+              weight: exercise.weight
+            }
+            break
+          }
+        }
+      }
+
+      setLastWorkoutData(lastWorkoutDataMap)
+    } catch (error) {
+      console.error('Error fetching last workout data:', error)
+    }
+  }
+
+  const startWorkout = async (template: WorkoutTemplate) => {
     const now = new Date()
+    const exerciseNames = template.exercises.map(ex => ex.name)
+    
+    // Fetch last workout data for all exercises in this template
+    await fetchLastWorkoutData(exerciseNames)
+    
     setCurrentWorkout({
       template_id: template.id,
       user_id: template.user_id,
@@ -151,6 +197,11 @@ export function WorkoutLogger() {
                       onChange={(e) => handleExerciseUpdate(index, "reps", parseInt(e.target.value))}
                       className="input-apple text-center text-lg"
                     />
+                    {lastWorkoutData[exercise.name]?.reps && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Last: {lastWorkoutData[exercise.name].reps} reps
+                      </p>
+                    )}
                   </div>
                   <div className="text-center">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Weight</label>
@@ -160,6 +211,11 @@ export function WorkoutLogger() {
                       onChange={(e) => handleExerciseUpdate(index, "weight", parseInt(e.target.value))}
                       className="input-apple text-center text-lg"
                     />
+                    {lastWorkoutData[exercise.name]?.weight && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Last: {lastWorkoutData[exercise.name].weight} lbs
+                      </p>
+                    )}
                   </div>
                 </div>
                 
@@ -195,10 +251,10 @@ export function WorkoutLogger() {
   return (
     <div className="container-apple section-apple">
       <div className="animate-fade-in-up">
-        <div className="text-center mb-16">
+        <div className="text-center mb-8">
           <h1 className="mb-4">Start a Workout</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 font-light max-w-2xl mx-auto">
-            Choose a workout template to begin your fitness journey
+            Choose a workout template to begin tracking your workout.
           </p>
         </div>
 
