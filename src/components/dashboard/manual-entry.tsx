@@ -45,20 +45,20 @@ export function ManualEntry({
   }
 
   return (
-    <div className="border rounded-lg p-6">
+    <div className="p-6 bg-gray-800/50 inset-1">
       <h2 className="font-semibold mb-4">Manual Entry</h2>
       <div className="flex gap-2 mb-4">
         <Button
           variant={mode === "simple" ? "default" : "outline"}
           onClick={() => setMode("simple")}
-          size="sm"
+          className={mode === "simple" ? "btn-apple" : "btn-apple-outline"}
         >
           Simple
         </Button>
         <Button
           variant={mode === "byWeight" ? "default" : "outline"}
           onClick={() => setMode("byWeight")}
-          size="sm"
+          className={mode === "byWeight" ? "btn-apple" : "btn-apple-outline"}
         >
           By Weight
         </Button>

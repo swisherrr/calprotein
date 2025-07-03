@@ -65,7 +65,7 @@ export function UsualsSection({
   if (loading) return <div>Loading...</div>
 
   return (
-    <div className="border rounded-lg p-6">
+    <div className="p-6 bg-gray-800/50 inset-1">
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold">The Usuals</h2>
         <Button 

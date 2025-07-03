@@ -12,7 +12,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "rounded-md font-medium transition-colors",
+          "font-medium transition-colors inline-flex items-center justify-center",
           variant === 'default' && "bg-foreground text-background hover:opacity-90",
           variant === 'outline' && "border border-foreground hover:bg-foreground hover:text-background",
           variant === 'ghost' && "hover:bg-gray-100 dark:hover:bg-gray-800",

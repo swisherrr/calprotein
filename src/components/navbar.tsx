@@ -35,11 +35,6 @@ export function Navbar() {
                 Workout
               </Button>
             </Link>
-            <Link href="/profile">
-              <Button variant="ghost" className="font-medium text-sm px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200">
-                Profile
-              </Button>
-            </Link>
             <Button 
               variant="ghost"
               onClick={handleSignOut}
