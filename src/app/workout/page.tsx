@@ -3,9 +3,10 @@
 import { useState } from "react"
 import { TemplateManager } from "@/components/workout/template-manager"
 import { WorkoutLogger } from "@/components/workout/workout-logger"
+import { WorkoutAnalytics } from "@/components/workout/workout-analytics"
 
 export default function WorkoutPage() {
-  const [activeTab, setActiveTab] = useState<"templates" | "workout">("templates")
+  const [activeTab, setActiveTab] = useState<"templates" | "workout" | "data">("templates")
 
   return (
     <div className="container-apple section-apple">
@@ -22,10 +23,10 @@ export default function WorkoutPage() {
         </div>
 
         <div className="flex justify-center mb-12">
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-1 inline-flex">
+          <div className="bg-gray-100 dark:bg-gray-800 p-1 inline-flex">
             <button
               onClick={() => setActiveTab("templates")}
-              className={`px-8 py-3 rounded-full font-medium transition-all duration-200 ${
+              className={`min-w-[160px] px-6 py-3 font-medium transition-all duration-200 border-0 ${
                 activeTab === "templates"
                   ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
@@ -35,7 +36,7 @@ export default function WorkoutPage() {
             </button>
             <button
               onClick={() => setActiveTab("workout")}
-              className={`px-8 py-3 rounded-full font-medium transition-all duration-200 ${
+              className={`min-w-[160px] px-6 py-3 font-medium transition-all duration-200 border-0 ${
                 activeTab === "workout"
                   ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
@@ -43,13 +44,25 @@ export default function WorkoutPage() {
             >
               Log Workout
             </button>
+            <button
+              onClick={() => setActiveTab("data")}
+              className={`min-w-[160px] px-6 py-3 font-medium transition-all duration-200 border-0 ${
+                activeTab === "data"
+                  ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              }`}
+            >
+              Data
+            </button>
           </div>
         </div>
 
         {activeTab === "templates" ? (
           <TemplateManager />
-        ) : (
+        ) : activeTab === "workout" ? (
           <WorkoutLogger />
+        ) : (
+          <WorkoutAnalytics />
         )}
       </div>
     </div>
