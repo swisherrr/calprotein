@@ -341,7 +341,6 @@ export function WorkoutLogger() {
       <div className="container-apple section-apple">
         <div className="animate-fade-in-up">
           <div className="text-center mb-8">
-            <h1 className="mb-4">Current Workout</h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 font-light mb-4">
               {selectedTemplate?.name}
             </p>
@@ -355,7 +354,7 @@ export function WorkoutLogger() {
                   <h3 className="text-2xl font-semibold mb-2">{exercise.name}</h3>
                 </div>
                 
-                <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="text-center">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Sets</label>
                     <input
@@ -392,14 +391,6 @@ export function WorkoutLogger() {
                         Last: {lastWorkoutData[exercise.name].weight} lbs
                       </p>
                     )}
-                  </div>
-                  <div className="text-center">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Volume</label>
-                    <div className="input-apple text-center text-lg bg-gray-50 dark:bg-gray-800 py-2 px-3">
-                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
-                        {exercise.volume?.toLocaleString() || '0'} lbs
-                      </span>
-                    </div>
                   </div>
                 </div>
                 
