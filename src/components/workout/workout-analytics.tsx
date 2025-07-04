@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LineChart } from "@mui/x-charts/LineChart"
+import { ScatterChart } from "@mui/x-charts/ScatterChart"
 import { supabase } from "@/lib/supabase"
 import { EXERCISE_GROUPS } from "@/lib/exercises"
 
@@ -87,7 +87,8 @@ export function WorkoutAnalytics() {
     
     workoutData.forEach(workout => {
       workout.exercises.forEach(exercise => {
-        if (exercisesInGroup.includes(exercise.name)) {
+        // Only include exercises that were actually performed (volume > 0)
+        if (exercisesInGroup.includes(exercise.name) && exercise.volume && exercise.volume > 0) {
           chartData.push({
             date: workout.date,
             volume: exercise.volume,
@@ -105,11 +106,14 @@ export function WorkoutAnalytics() {
     
     workoutData.forEach(workout => {
       workout.exercises.forEach(exercise => {
-        chartData.push({
-          date: workout.date,
-          volume: exercise.volume,
-          exercise: exercise.name
-        })
+        // Only include exercises that were actually performed (volume > 0)
+        if (exercise.volume && exercise.volume > 0) {
+          chartData.push({
+            date: workout.date,
+            volume: exercise.volume,
+            exercise: exercise.name
+          })
+        }
       })
     })
 
@@ -134,54 +138,41 @@ export function WorkoutAnalytics() {
   }
 
   const formatChartData = (data: ChartData[]) => {
-    // Convert all date fields to Date objects
-    const dataWithDates = data.map(item => ({
-      ...item,
-      date: new Date(item.date)
-    }))
-
     if (chartType === "total-volume") {
       return {
         xAxis: [{
-          dataKey: 'date',
           scaleType: 'time' as const,
-          valueFormatter: (value: Date) => value.toLocaleDateString()
+          valueFormatter: (value: number) => new Date(value).toLocaleDateString()
         }],
         series: [{
-          dataKey: 'volume',
           label: 'Total Volume (lbs)',
+          data: data.map((d, idx) => ({
+            id: idx,
+            x: new Date(d.date).getTime(),
+            y: d.volume
+          })),
           color: '#3b82f6'
-        }],
-        dataset: dataWithDates
+        }]
       }
     } else {
-      const exercises = getUniqueExercises(data)
-      const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316']
-      
-      // Merge all datasets by date
-      const allDates = [...new Set(data.map(item => item.date))].sort()
-      const mergedData: any[] = []
-      allDates.forEach(date => {
-        const entry: any = { date: new Date(date) } // Ensure Date object
-        exercises.forEach(exercise => {
-          const exerciseEntry = data.find(item => item.date === date && item.exercise === exercise)
-          entry[exercise] = exerciseEntry?.volume || 0
-        })
-        mergedData.push(entry)
-      })
-      
+      const exercises = getUniqueExercises(data);
+      const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
       return {
         xAxis: [{
-          dataKey: 'date',
           scaleType: 'time' as const,
-          valueFormatter: (value: Date) => value.toLocaleDateString()
+          valueFormatter: (value: number) => new Date(value).toLocaleDateString()
         }],
         series: exercises.map((exercise, index) => ({
-          dataKey: exercise,
           label: exercise,
+          data: data
+            .filter(d => d.exercise === exercise)
+            .map((d, idx) => ({
+              id: `${exercise}-${idx}`,
+              x: new Date(d.date).getTime(),
+              y: d.volume
+            })),
           color: colors[index % colors.length]
-        })),
-        dataset: mergedData
+        }))
       }
     }
   }
@@ -252,10 +243,9 @@ export function WorkoutAnalytics() {
         {/* Chart */}
         <div style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: 0, padding: '2rem' }}>
           <div className="h-96">
-            <LineChart
+            <ScatterChart
               xAxis={chartConfig.xAxis}
               series={chartConfig.series}
-              dataset={chartConfig.dataset}
               height={350}
               margin={{ top: 20, bottom: 30, left: 40, right: 20 }}
               tooltip={{ trigger: 'none' }}

@@ -262,13 +262,19 @@ export function WorkoutLogger() {
       const startTime = new Date(currentWorkout.start_time)
       const duration = now.getTime() - startTime.getTime()
       
+      // Filter out exercises that weren't actually performed (no reps or weight)
+      const performedExercises = currentWorkout.exercises.filter(exercise => 
+        (exercise.reps && exercise.reps > 0) && (exercise.weight && exercise.weight > 0)
+      )
+      
       // Calculate total volume from individual exercise volumes
-      const totalVolume = currentWorkout.exercises.reduce((total, exercise) => {
+      const totalVolume = performedExercises.reduce((total, exercise) => {
         return total + (exercise.volume || 0)
       }, 0)
 
       const workoutToSave = {
         ...currentWorkout,
+        exercises: performedExercises, // Only save performed exercises
         end_time: now.toISOString(),
         total_volume: totalVolume
       }
@@ -280,10 +286,10 @@ export function WorkoutLogger() {
       if (error) throw error
 
       // Calculate personal records
-      const personalRecords = await calculatePersonalRecords(currentWorkout.exercises)
+      const personalRecords = await calculatePersonalRecords(performedExercises)
 
       // Calculate exercise statistics
-      const exerciseStats = currentWorkout.exercises.map(exercise => {
+      const exerciseStats = performedExercises.map(exercise => {
         const totalSets = exercise.sets || 0
         const totalReps = (exercise.reps || 0) * totalSets
         const totalWeight = (exercise.weight || 0) * totalSets
