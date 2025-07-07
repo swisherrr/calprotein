@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Bar chart (left) -->
+  <rect x="8" y="32" width="6" height="20" rx="2" fill="#3b82f6"/>
+  <rect x="20" y="24" width="6" height="28" rx="2" fill="#10b981"/>
+  <rect x="32" y="16" width="6" height="36" rx="2" fill="#f59e0b"/>
+  <!-- Dumbbell (right) -->
+  <rect x="46" y="28" width="12" height="8" rx="2" fill="#222"/>
+  <rect x="44" y="30" width="4" height="4" rx="1" fill="#888"/>
+  <rect x="58" y="30" width="4" height="4" rx="1" fill="#888"/>
+</svg> 
