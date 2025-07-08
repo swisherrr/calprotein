@@ -486,13 +486,20 @@ export function WorkoutLogger() {
                 
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-4">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Sets</label>
-                    <input
-                      type="number"
-                      value={exercise.sets}
-                      onChange={(e) => handleExerciseUpdate(exerciseIndex, "sets", parseInt(e.target.value))}
-                      className="input-apple text-center text-lg w-20"
-                    />
+                    <div className="flex items-center space-x-3">
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Sets</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={exercise.sets}
+                          onChange={(e) => handleExerciseUpdate(exerciseIndex, "sets", parseInt(e.target.value))}
+                          className="text-center text-lg w-20 bg-transparent border-none outline-none border-b-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Total: {exercise.volume ? exercise.volume.toLocaleString() : '0'} lbs
+                    </div>
                   </div>
                   
                   {/* Individual Set Inputs */}
