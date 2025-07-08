@@ -86,7 +86,7 @@ export function WorkoutLogger() {
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null)
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutLog | null>(null)
   const [isWorkoutActive, setIsWorkoutActive] = useState(false)
-  const [lastWorkoutData, setLastWorkoutData] = useState<Record<string, { reps?: number, weight?: number }>>({})
+  const [lastWorkoutData, setLastWorkoutData] = useState<Record<string, { reps?: number, weight?: number, volume?: number }>>({})
   const [showSummary, setShowSummary] = useState(false)
   const [workoutSummary, setWorkoutSummary] = useState<{
     totalVolume: number
@@ -134,7 +134,7 @@ export function WorkoutLogger() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number }> = {}
+      const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number, volume?: number }> = {}
 
       for (const exerciseName of exerciseNames) {
         const { data, error } = await supabase
@@ -156,20 +156,33 @@ export function WorkoutLogger() {
           if (exercise) {
             // Handle both old format (single reps/weight) and new format (setData)
             if (exercise.setData && exercise.setData.length > 0) {
-              // New format: use the first set's data
-              const firstSet = exercise.setData[0]
-              if (firstSet.reps || firstSet.weight) {
+              // New format: calculate total volume from all sets
+              let totalVolume = 0
+              let hasValidSets = false
+              
+              for (const set of exercise.setData) {
+                if (set.reps && set.weight) {
+                  totalVolume += set.reps * set.weight
+                  hasValidSets = true
+                }
+              }
+              
+              if (hasValidSets) {
+                const firstSet = exercise.setData[0]
                 lastWorkoutDataMap[exerciseName] = {
                   reps: firstSet.reps,
-                  weight: firstSet.weight
+                  weight: firstSet.weight,
+                  volume: totalVolume
                 }
                 break
               }
             } else if (exercise.reps || exercise.weight) {
               // Old format: use the single reps/weight values
+              const volume = (exercise.reps || 0) * (exercise.weight || 0)
               lastWorkoutDataMap[exerciseName] = {
                 reps: exercise.reps,
-                weight: exercise.weight
+                weight: exercise.weight,
+                volume: volume
               }
               break
             }
@@ -511,28 +524,18 @@ export function WorkoutLogger() {
                             />
                           </div>
                         </div>
-                        {set.reps && set.weight && (
-                          <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                            {set.reps * set.weight} lbs
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
                   
                   {/* Last workout data hint */}
                   {lastWorkoutData[exercise.name] && (
-                    <div className="mt-3 text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 p-2 rounded">
-                      Last workout: {lastWorkoutData[exercise.name].reps} reps × {lastWorkoutData[exercise.name].weight} lbs
+                    <div className="mt-3 text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 p-2 rounded text-center">
+                      Last workout: {lastWorkoutData[exercise.name].reps} reps × {lastWorkoutData[exercise.name].weight} lbs ({lastWorkoutData[exercise.name].volume?.toLocaleString()} lbs total volume)
                     </div>
                   )}
                   
-                  {/* Total volume for this exercise */}
-                  {typeof exercise.volume === 'number' && exercise.volume > 0 && (
-                    <div className="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
-                      Total volume: {exercise.volume.toLocaleString()} lbs
-                    </div>
-                  )}
+
                 </div>
                 
                 <div>
