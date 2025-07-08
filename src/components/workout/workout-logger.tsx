@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 
+interface Set {
+  reps?: number
+  weight?: number
+}
+
 interface Exercise {
   name: string
   sets: number
-  reps?: number
-  weight?: number
+  setData: Set[]
   volume?: number
   notes?: string
 }
@@ -144,12 +148,26 @@ export function WorkoutLogger() {
         // Find the most recent workout that contains this exercise
         for (const workout of data || []) {
           const exercise = workout.exercises?.find((ex: any) => ex.name === exerciseName)
-          if (exercise && (exercise.reps || exercise.weight)) {
-            lastWorkoutDataMap[exerciseName] = {
-              reps: exercise.reps,
-              weight: exercise.weight
+          if (exercise) {
+            // Handle both old format (single reps/weight) and new format (setData)
+            if (exercise.setData && exercise.setData.length > 0) {
+              // New format: use the first set's data
+              const firstSet = exercise.setData[0]
+              if (firstSet.reps || firstSet.weight) {
+                lastWorkoutDataMap[exerciseName] = {
+                  reps: firstSet.reps,
+                  weight: firstSet.weight
+                }
+                break
+              }
+            } else if (exercise.reps || exercise.weight) {
+              // Old format: use the single reps/weight values
+              lastWorkoutDataMap[exerciseName] = {
+                reps: exercise.reps,
+                weight: exercise.weight
+              }
+              break
             }
-            break
           }
         }
       }
@@ -179,26 +197,57 @@ export function WorkoutLogger() {
       // Process all historical workouts
       for (const workout of data || []) {
         for (const exercise of workout.exercises || []) {
-          const { name, reps = 0, weight = 0 } = exercise
-          const volume = reps * weight
+          const { name, setData } = exercise
+          
+          // Handle both old and new format
+          if (setData && setData.length > 0) {
+            // New format: process each set
+            for (const set of setData) {
+              const { reps = 0, weight = 0 } = set
+              const volume = reps * weight
 
-          if (!records[name]) {
-            records[name] = {
-              exercise: name,
-              maxWeight: 0,
-              maxReps: 0,
-              maxVolume: 0
+              if (!records[name]) {
+                records[name] = {
+                  exercise: name,
+                  maxWeight: 0,
+                  maxReps: 0,
+                  maxVolume: 0
+                }
+              }
+
+              if (weight > records[name].maxWeight) {
+                records[name].maxWeight = weight
+              }
+              if (reps > records[name].maxReps) {
+                records[name].maxReps = reps
+              }
+              if (volume > records[name].maxVolume) {
+                records[name].maxVolume = volume
+              }
             }
-          }
+          } else {
+            // Old format: use single reps/weight values
+            const { reps = 0, weight = 0 } = exercise
+            const volume = reps * weight
 
-          if (weight > records[name].maxWeight) {
-            records[name].maxWeight = weight
-          }
-          if (reps > records[name].maxReps) {
-            records[name].maxReps = reps
-          }
-          if (volume > records[name].maxVolume) {
-            records[name].maxVolume = volume
+            if (!records[name]) {
+              records[name] = {
+                exercise: name,
+                maxWeight: 0,
+                maxReps: 0,
+                maxVolume: 0
+              }
+            }
+
+            if (weight > records[name].maxWeight) {
+              records[name].maxWeight = weight
+            }
+            if (reps > records[name].maxReps) {
+              records[name].maxReps = reps
+            }
+            if (volume > records[name].maxVolume) {
+              records[name].maxVolume = volume
+            }
           }
         }
       }
@@ -229,26 +278,71 @@ export function WorkoutLogger() {
       end_time: '',
       exercises: template.exercises.map(ex => ({
         name: ex.name,
-        sets: ex.sets
+        sets: ex.sets,
+        setData: Array(ex.sets).fill(null).map(() => ({ reps: undefined, weight: undefined }))
       }))
     })
     setSelectedTemplate(template)
     setIsWorkoutActive(true)
   }
 
+  const handleSetUpdate = (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number | undefined | string) => {
+    if (!currentWorkout) return
+
+    const newExercises = [...currentWorkout.exercises]
+    const exercise = { ...newExercises[exerciseIndex] }
+    const newSetData = [...exercise.setData]
+    
+    // If the value is an empty string, set to undefined
+    const parsedValue = value === '' ? undefined : value
+    newSetData[setIndex] = { ...newSetData[setIndex], [field]: parsedValue }
+    exercise.setData = newSetData
+    
+    // Calculate total volume for this exercise
+    const totalVolume = newSetData.reduce((total, set) => {
+      const setVolume = (set.reps || 0) * (set.weight || 0)
+      return total + setVolume
+    }, 0)
+    exercise.volume = totalVolume
+    
+    newExercises[exerciseIndex] = exercise
+    setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
+  }
+
   const handleExerciseUpdate = (index: number, field: keyof Exercise, value: string | number) => {
     if (!currentWorkout) return
 
     const newExercises = [...currentWorkout.exercises]
-    const updatedExercise = { ...newExercises[index], [field]: value }
+    const updatedExercise = { ...newExercises[index] }
     
-    // Calculate volume when reps or weight changes
-    if (field === 'reps' || field === 'weight' || field === 'sets') {
-      const sets = field === 'sets' ? value as number : (updatedExercise.sets || 0)
-      const reps = field === 'reps' ? value as number : (updatedExercise.reps || 0)
-      const weight = field === 'weight' ? value as number : (updatedExercise.weight || 0)
-      updatedExercise.volume = sets * reps * weight
+    if (field === 'sets') {
+      const newSets = value as number
+      const currentSetData = updatedExercise.setData || []
+      
+      // Adjust setData array size
+      if (newSets > currentSetData.length) {
+        // Add new sets
+        const newSetData = [...currentSetData]
+        for (let i = currentSetData.length; i < newSets; i++) {
+          newSetData.push({ reps: undefined, weight: undefined })
+        }
+        updatedExercise.setData = newSetData
+      } else if (newSets < currentSetData.length) {
+        // Remove excess sets
+        updatedExercise.setData = currentSetData.slice(0, newSets)
+      }
+      
+      updatedExercise.sets = newSets
+    } else if (field === 'notes') {
+      updatedExercise.notes = value as string
     }
+    
+    // Recalculate volume
+    const totalVolume = updatedExercise.setData.reduce((total, set) => {
+      const setVolume = (set.reps || 0) * (set.weight || 0)
+      return total + setVolume
+    }, 0)
+    updatedExercise.volume = totalVolume
     
     newExercises[index] = updatedExercise
     setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
@@ -262,10 +356,10 @@ export function WorkoutLogger() {
       const startTime = new Date(currentWorkout.start_time)
       const duration = now.getTime() - startTime.getTime()
       
-      // Filter out exercises that weren't actually performed (no reps or weight)
-      const performedExercises = currentWorkout.exercises.filter(exercise => 
-        (exercise.reps && exercise.reps > 0) && (exercise.weight && exercise.weight > 0)
-      )
+      // Filter out exercises that weren't actually performed (no sets with reps and weight)
+      const performedExercises = currentWorkout.exercises.filter(exercise => {
+        return exercise.setData.some(set => (set.reps && set.reps > 0) && (set.weight && set.weight > 0))
+      })
       
       // Calculate total volume from individual exercise volumes
       const totalVolume = performedExercises.reduce((total, exercise) => {
@@ -290,11 +384,11 @@ export function WorkoutLogger() {
 
       // Calculate exercise statistics
       const exerciseStats = performedExercises.map(exercise => {
-        const totalSets = exercise.sets || 0
-        const totalReps = (exercise.reps || 0) * totalSets
-        const totalWeight = (exercise.weight || 0) * totalSets
-        const maxWeight = exercise.weight || 0
-        const maxReps = exercise.reps || 0
+        const totalSets = exercise.setData.filter(set => (set.reps && set.reps > 0) && (set.weight && set.weight > 0)).length
+        const totalReps = exercise.setData.reduce((total, set) => total + (set.reps || 0), 0)
+        const totalWeight = exercise.setData.reduce((total, set) => total + (set.weight || 0), 0)
+        const maxWeight = Math.max(...exercise.setData.map(set => set.weight || 0))
+        const maxReps = Math.max(...exercise.setData.map(set => set.reps || 0))
         const volume = exercise.volume || 0
 
         return {
@@ -348,50 +442,74 @@ export function WorkoutLogger() {
           </div>
 
           <div className="space-y-6">
-            {currentWorkout.exercises.map((exercise, index) => (
-              <div key={index} className="card-apple animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+            {currentWorkout.exercises.map((exercise, exerciseIndex) => (
+              <div key={exerciseIndex} className="card-apple animate-scale-in" style={{ animationDelay: `${exerciseIndex * 0.1}s` }}>
                 <div className="mb-6">
                   <h3 className="text-2xl font-semibold mb-2">{exercise.name}</h3>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Sets</label>
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Sets</label>
                     <input
                       type="number"
                       value={exercise.sets}
-                      onChange={(e) => handleExerciseUpdate(index, "sets", parseInt(e.target.value))}
-                      className="input-apple text-center text-lg"
+                      onChange={(e) => handleExerciseUpdate(exerciseIndex, "sets", parseInt(e.target.value))}
+                      className="input-apple text-center text-lg w-20"
                     />
                   </div>
-                  <div className="text-center">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Reps</label>
-                    <input
-                      type="number"
-                      value={exercise.reps || ''}
-                      onChange={(e) => handleExerciseUpdate(index, "reps", parseInt(e.target.value))}
-                      className="input-apple text-center text-lg"
-                    />
-                    {lastWorkoutData[exercise.name]?.reps && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Last: {lastWorkoutData[exercise.name].reps} reps
-                      </p>
-                    )}
+                  
+                  {/* Individual Set Inputs */}
+                  <div className="space-y-3">
+                    {exercise.setData.map((set, setIndex) => (
+                      <div key={setIndex} className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[60px]">
+                          Set {setIndex + 1}
+                        </div>
+                        <div className="flex-1 grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Reps</label>
+                            <input
+                              type="number"
+                              value={set.reps === undefined ? '' : set.reps}
+                              onChange={(e) => handleSetUpdate(exerciseIndex, setIndex, "reps", e.target.value)}
+                              className="input-apple text-center text-sm"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Weight (lbs)</label>
+                            <input
+                              type="number"
+                              value={set.weight === undefined ? '' : set.weight}
+                              onChange={(e) => handleSetUpdate(exerciseIndex, setIndex, "weight", e.target.value)}
+                              className="input-apple text-center text-sm"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                        {set.reps && set.weight && (
+                          <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                            {set.reps * set.weight} lbs
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-center">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Weight</label>
-                    <input
-                      type="number"
-                      value={exercise.weight || ''}
-                      onChange={(e) => handleExerciseUpdate(index, "weight", parseInt(e.target.value))}
-                      className="input-apple text-center text-lg"
-                    />
-                    {lastWorkoutData[exercise.name]?.weight && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Last: {lastWorkoutData[exercise.name].weight} lbs
-                      </p>
-                    )}
-                  </div>
+                  
+                  {/* Last workout data hint */}
+                  {lastWorkoutData[exercise.name] && (
+                    <div className="mt-3 text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                      Last workout: {lastWorkoutData[exercise.name].reps} reps × {lastWorkoutData[exercise.name].weight} lbs
+                    </div>
+                  )}
+                  
+                  {/* Total volume for this exercise */}
+                  {typeof exercise.volume === 'number' && exercise.volume > 0 && (
+                    <div className="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
+                      Total volume: {exercise.volume.toLocaleString()} lbs
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -399,7 +517,7 @@ export function WorkoutLogger() {
                   <input
                     type="text"
                     value={exercise.notes || ''}
-                    onChange={(e) => handleExerciseUpdate(index, "notes", e.target.value)}
+                    onChange={(e) => handleExerciseUpdate(exerciseIndex, "notes", e.target.value)}
                     className="input-apple"
                     placeholder="Add any notes about this exercise..."
                   />
