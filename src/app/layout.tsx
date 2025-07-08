@@ -4,6 +4,7 @@ import "./globals.css";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 import { Toaster } from 'sonner'
 import { Navbar } from "@/components/navbar"
+import Link from "next/link"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +26,10 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased`}>
         <SupabaseProvider>
           <Navbar />
-          {children}
+          <div className="relative min-h-screen">
+            {/* Profile Button removed from here */}
+            {children}
+          </div>
         </SupabaseProvider>
         <Toaster />
       </body>

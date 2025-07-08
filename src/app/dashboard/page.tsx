@@ -123,7 +123,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Link href="/profile">
+        <Link href="/macrostats">
           <Button variant="outline" className="font-medium">
             Data
           </Button>

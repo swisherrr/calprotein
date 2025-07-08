@@ -35,13 +35,16 @@ export function Navbar() {
                 Workout
               </Button>
             </Link>
-            <Button 
-              variant="ghost"
-              onClick={handleSignOut}
-              className="font-medium text-sm px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200"
-            >
-              Sign Out
-            </Button>
+            <Link href="/profile">
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-900 cursor-pointer ml-2">
+                <img
+                  src="/profile-placeholder.png"
+                  alt="Profile"
+                  className="w-8 h-8 object-cover rounded-full"
+                  style={{ display: 'block' }}
+                />
+              </div>
+            </Link>
           </nav>
         </div>
       </div>
