@@ -45,6 +45,7 @@ interface PersonalRecord {
 // Timer component
 function WorkoutTimer({ startTime }: { startTime: string }) {
   const [elapsed, setElapsed] = useState(0)
+  const [isRed, setIsRed] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -55,6 +56,13 @@ function WorkoutTimer({ startTime }: { startTime: string }) {
 
     return () => clearInterval(interval)
   }, [startTime])
+
+  const handleTimerClick = () => {
+    setIsRed(true)
+    setTimeout(() => {
+      setIsRed(false)
+    }, 2 * 60 * 1000) // 2 minutes
+  }
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000)
@@ -72,8 +80,19 @@ function WorkoutTimer({ startTime }: { startTime: string }) {
 
   return (
     <div className="text-center mb-6">
-      <div className="inline-block bg-gray-100 dark:bg-gray-800 rounded-full px-6 py-3">
-        <span className="text-2xl font-mono font-bold text-gray-800 dark:text-gray-200">
+      <div 
+        className={`inline-block rounded-full px-6 py-3 cursor-pointer transition-colors duration-300 ${
+          isRed 
+            ? 'bg-red-100 dark:bg-red-900' 
+            : 'bg-gray-100 dark:bg-gray-800'
+        }`}
+        onClick={handleTimerClick}
+      >
+        <span className={`text-2xl font-mono font-bold transition-colors duration-300 ${
+          isRed 
+            ? 'text-red-800 dark:text-red-200' 
+            : 'text-gray-800 dark:text-gray-200'
+        }`}>
           {formatTime(elapsed)}
         </span>
       </div>
