@@ -59,7 +59,7 @@ export default function ProfilePage() {
       {/* Profile Picture */}
       <div className="w-28 h-28 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-900 mb-6">
         <img
-          src="/profile-placeholder.png"
+          src="/profile-placeholder.jpg"
           alt="Profile"
           className="w-24 h-24 object-cover rounded-full"
           style={{ display: 'block' }}

@@ -38,7 +38,7 @@ export function Navbar() {
             <Link href="/profile">
               <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-900 cursor-pointer ml-2">
                 <img
-                  src="/profile-placeholder.png"
+                  src="/profile-placeholder.jpg"
                   alt="Profile"
                   className="w-8 h-8 object-cover rounded-full"
                   style={{ display: 'block' }}
