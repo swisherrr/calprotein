@@ -102,9 +102,14 @@ export function WorkoutLogger() {
       volume: number
     }>
   } | null>(null)
+  const [autoLoadReps, setAutoLoadReps] = useState(false)
+  const [autoLoadWeight, setAutoLoadWeight] = useState(false)
 
   useEffect(() => {
     loadTemplates()
+    // Load settings from localStorage
+    setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
+    setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
   }, [])
 
   const loadTemplates = async () => {
@@ -296,6 +301,24 @@ export function WorkoutLogger() {
     // If the value is an empty string, set to undefined
     const parsedValue = value === '' ? undefined : value
     newSetData[setIndex] = { ...newSetData[setIndex], [field]: parsedValue }
+
+    // Auto load logic: if first set is changed and auto load is enabled, fill the rest
+    if (setIndex === 0) {
+      if (field === 'reps' && autoLoadReps && parsedValue !== undefined && parsedValue !== '') {
+        for (let i = 1; i < newSetData.length; i++) {
+          if (newSetData[i].reps === undefined) {
+            newSetData[i].reps = parsedValue as number
+          }
+        }
+      }
+      if (field === 'weight' && autoLoadWeight && parsedValue !== undefined && parsedValue !== '') {
+        for (let i = 1; i < newSetData.length; i++) {
+          if (newSetData[i].weight === undefined) {
+            newSetData[i].weight = parsedValue as number
+          }
+        }
+      }
+    }
     exercise.setData = newSetData
     
     // Calculate total volume for this exercise
