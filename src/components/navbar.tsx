@@ -1,19 +1,21 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import React, { useState } from "react";
+import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
+import {
+  BarChart3,
+  Settings,
+  User,
+  LogOut,
+  Dumbbell,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
   const router = useRouter()
-  const pathname = usePathname()
-
-  // Don't show navbar on auth pages and home page
-  const hideNavbarPaths = ['/', '/login', '/signup', '/reset-password', '/update-password']
-  if (hideNavbarPaths.includes(pathname)) {
-    return null
-  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -21,33 +23,112 @@ export function Navbar() {
     router.refresh()
   }
 
+  const links = [
+    {
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: (
+        <BarChart3 className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Workout",
+      href: "/workout",
+      icon: (
+        <Dumbbell className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Profile",
+      href: "/profile",
+      icon: (
+        <User className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Settings",
+      href: "/settings",
+      icon: (
+        <Settings className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+  ];
+
+  const [open, setOpen] = useState(false);
+  
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 dark:bg-black/80 dark:border-gray-800">
-      <div className="container-apple">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/dashboard" className="text-xl font-semibold tracking-tight">
-          gainerithm
-          </Link>
-          
-          <nav className="flex items-center space-x-6">
-            <Link href="/workout">
-              <Button variant="ghost" className="font-medium text-sm px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-200">
-                Workout
-              </Button>
-            </Link>
-            <Link href="/profile">
-              <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-900 cursor-pointer ml-2">
+    <Sidebar open={open} setOpen={setOpen}>
+      <SidebarBody className="justify-between gap-10" logo={<Logo />}>
+        <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
+          {open ? <Logo /> : <LogoIcon />}
+          <div className="mt-8 flex flex-col gap-2">
+            {links.map((link, idx) => (
+              <SidebarLink key={idx} link={link} />
+            ))}
+            <button
+              onClick={handleSignOut}
+              className="flex items-center justify-start gap-2 group/sidebar py-2 text-neutral-700 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-neutral-100"
+            >
+              <LogOut className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+              <motion.span
+                animate={{
+                  display: open ? "inline-block" : "none",
+                  opacity: open ? 1 : 0,
+                }}
+                className="text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+              >
+                Logout
+              </motion.span>
+            </button>
+          </div>
+        </div>
+        <div>
+          <SidebarLink
+            link={{
+              label: "Profile",
+              href: "/profile",
+              icon: (
                 <img
                   src="/profile-placeholder.jpg"
-                  alt="Profile"
-                  className="w-8 h-8 object-cover rounded-full"
-                  style={{ display: 'block' }}
+                  className="h-7 w-7 shrink-0 rounded-full"
+                  width={50}
+                  height={50}
+                  alt="Avatar"
                 />
-              </div>
-            </Link>
-          </nav>
+              ),
+            }}
+          />
         </div>
-      </div>
-    </header>
-  )
-} 
+      </SidebarBody>
+    </Sidebar>
+  );
+}
+
+export const Logo = () => {
+  return (
+    <a
+      href="/dashboard"
+      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+    >
+      <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+      <motion.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="font-medium whitespace-pre text-black dark:text-white"
+      >
+        gainerithm
+      </motion.span>
+    </a>
+  );
+};
+
+export const LogoIcon = () => {
+  return (
+    <a
+      href="/dashboard"
+      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+    >
+      <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+    </a>
+  );
+}; 

@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 import { Toaster } from 'sonner'
-import { Navbar } from "@/components/navbar"
+import { LayoutWrapper } from "@/components/layout-wrapper"
 import Link from "next/link"
 
 const inter = Inter({
@@ -25,11 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         <SupabaseProvider>
-          <Navbar />
-          <div className="relative min-h-screen">
-            {/* Profile Button removed from here */}
+          <LayoutWrapper>
             {children}
-          </div>
+          </LayoutWrapper>
         </SupabaseProvider>
         <Toaster />
       </body>
