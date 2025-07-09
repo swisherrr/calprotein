@@ -11,11 +11,11 @@ export default function Home() {
       
       <div className="max-w-3xl text-center space-y-8 relative z-30">
         <h1 className="text-6xl font-bold">
-          liftalytics
+        gainerithm
         </h1>
         
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          Data-driven fitness.
+          The algorithm for gains. Nutrition tracking + progressive overload analysis.
         </p>
 
         <div className="flex gap-4 justify-center">

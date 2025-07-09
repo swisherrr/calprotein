@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "liftalytics",
+  title: "gainerithm",
   description: "Data-driven fitness",
 };
 

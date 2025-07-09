@@ -26,7 +26,7 @@ export function Navbar() {
       <div className="container-apple">
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="text-xl font-semibold tracking-tight">
-            liftalytics
+          gainerithm
           </Link>
           
           <nav className="flex items-center space-x-6">

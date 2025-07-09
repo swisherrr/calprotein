@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     // Get the correct origin based on environment
     let origin: string
     if (process.env.NODE_ENV === 'production') {
-      origin = 'https://liftalytics.net'
+      origin = 'https://www.gainerithm.com/'
     } else {
       // For development, use the request origin or fallback to localhost:3001
       origin = request.headers.get('origin') || 'http://localhost:3001'
