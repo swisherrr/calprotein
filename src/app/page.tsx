@@ -1,6 +1,7 @@
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
 import { Boxes } from "@/components/ui/background-boxes"
 import { TextHoverEffect } from "@/components/ui/text-hover-effect"
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import Link from "next/link"
 
 export default function Home() {
@@ -14,9 +15,10 @@ export default function Home() {
           <TextHoverEffect text="gainerithm" />
         </div>
         
-        <p className="text-xl text-gray-600 dark:text-gray-400">
-          The algorithm for gains. Nutrition tracking + progressive overload analysis.
-        </p>
+        <TextGenerateEffect 
+          words="The algorithm for gains. Nutrition tracking + progressive overload analysis."
+          className="text-xl text-gray-600 dark:text-gray-400 font-normal"
+        />
 
         <div className="flex gap-4 justify-center">
           <Link href="/signup">
