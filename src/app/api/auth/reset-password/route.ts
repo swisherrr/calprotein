@@ -31,10 +31,10 @@ export async function POST(request: Request) {
     // Force the correct production URL for password reset
     let redirectTo: string
     if (process.env.NODE_ENV === 'production') {
-      redirectTo = 'https://gainerithm.com/update-password'
+      redirectTo = 'https://gainerithm.com/auth/callback?next=/update-password'
     } else {
       const origin = request.headers.get('origin') || 'http://localhost:3001'
-      redirectTo = `${origin}/update-password`
+      redirectTo = `${origin}/auth/callback?next=/update-password`
     }
 
     console.log('Reset password request details:')
@@ -43,12 +43,23 @@ export async function POST(request: Request) {
     console.log('- Redirect URL:', redirectTo)
     console.log('- Environment:', process.env.NODE_ENV)
 
+    console.log('About to call Supabase resetPasswordForEmail with:', {
+      email,
+      redirectTo,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL
+    })
+
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     })
 
     if (error) {
       console.error('Supabase reset password error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        name: error.name
+      })
       return NextResponse.json(
         { error: error.message },
         { status: 400 }
