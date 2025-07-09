@@ -28,20 +28,14 @@ export async function POST(request: Request) {
       }
     )
 
-    // Force the correct production URL for password reset
+    // Use the correct production URL for password reset
     let redirectTo: string
     if (process.env.NODE_ENV === 'production') {
-      redirectTo = 'https://gainerithm.com/auth/callback?next=/update-password'
+      redirectTo = 'https://gainerithm.com/update-password'
     } else {
       const origin = request.headers.get('origin') || 'http://localhost:3001'
-      redirectTo = `${origin}/auth/callback?next=/update-password`
+      redirectTo = `${origin}/update-password`
     }
-
-    console.log('Reset password request details:')
-    console.log('- Email:', email)
-    console.log('- Origin:', origin)
-    console.log('- Redirect URL:', redirectTo)
-    console.log('- Environment:', process.env.NODE_ENV)
 
     console.log('About to call Supabase resetPasswordForEmail with:', {
       email,
