@@ -1,5 +1,6 @@
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
 import { Boxes } from "@/components/ui/background-boxes"
+import { TextHoverEffect } from "@/components/ui/text-hover-effect"
 import Link from "next/link"
 
 export default function Home() {
@@ -7,12 +8,11 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background relative overflow-hidden">
       <div className="absolute inset-0 w-full h-full bg-background z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
       
-      <Boxes />
       
       <div className="max-w-3xl text-center space-y-8 relative z-30">
-        <h1 className="text-6xl font-bold">
-        gainerithm
-        </h1>
+        <div className="h-32 flex items-center justify-center">
+          <TextHoverEffect text="gainerithm" />
+        </div>
         
         <p className="text-xl text-gray-600 dark:text-gray-400">
           The algorithm for gains. Nutrition tracking + progressive overload analysis.
