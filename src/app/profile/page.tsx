@@ -24,14 +24,37 @@ function SettingToggle({ label, value, onChange }: { label: string, value: boole
 
 export default function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null)
+  const [username, setUsername] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
   const [autoLoadReps, setAutoLoadReps] = useState(false)
   const [autoLoadWeight, setAutoLoadWeight] = useState(false)
 
   useEffect(() => {
     async function fetchUser() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setEmail(user?.email || null)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setEmail(user.email || null)
+          
+          // Fetch user profile to get username
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('username')
+            .eq('user_id', user.id)
+            .single()
+
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', error)
+          } else if (profile) {
+            setUsername(profile.username)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
     fetchUser()
     // Load settings from localStorage
@@ -65,10 +88,23 @@ export default function ProfilePage() {
           style={{ display: 'block' }}
         />
       </div>
-      {/* Email */}
+      
+      {/* Username */}
       <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        {loading ? (
+          <span className="text-gray-400">Loading...</span>
+        ) : username ? (
+          `@${username}`
+        ) : (
+          <span className="text-gray-400">No username set</span>
+        )}
+      </div>
+      
+      {/* Email */}
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8">
         {email ? email : <span className="text-gray-400">Loading...</span>}
       </div>
+      
       {/* Settings Section */}
       <div className="w-full max-w-md mt-10">
         <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4 pl-1">Settings</h2>
