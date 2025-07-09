@@ -28,11 +28,14 @@ export async function POST(request: Request) {
       }
     )
 
-    // Get the correct origin from the request
-    const origin = request.headers.get('origin') || 'http://localhost:3001'
-    
-    // Direct redirect to update password page - no auth callback
-    const redirectTo = `${origin}/update-password`
+    // Force the correct production URL for password reset
+    let redirectTo: string
+    if (process.env.NODE_ENV === 'production') {
+      redirectTo = 'https://gainerithm.com/update-password'
+    } else {
+      const origin = request.headers.get('origin') || 'http://localhost:3001'
+      redirectTo = `${origin}/update-password`
+    }
 
     console.log('Reset password request details:')
     console.log('- Email:', email)

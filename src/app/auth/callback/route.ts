@@ -6,6 +6,14 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
+  
+  // If we're on the wrong domain, redirect to the correct one
+  if (origin.includes('www.gainerithm.com')) {
+    const redirectUrl = new URL('https://gainerithm.com/auth/callback', request.url)
+    redirectUrl.searchParams.set('code', code || '')
+    if (next) redirectUrl.searchParams.set('next', next)
+    return NextResponse.redirect(redirectUrl)
+  }
 
   console.log('Auth callback received:', { 
     code: code ? `${code.substring(0, 8)}...` : null, 

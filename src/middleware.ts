@@ -3,6 +3,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
+  // Redirect from www.gainerithm.com to gainerithm.com
+  if (req.nextUrl.hostname === 'www.gainerithm.com') {
+    const newUrl = new URL(req.nextUrl.pathname + req.nextUrl.search, 'https://gainerithm.com')
+    return NextResponse.redirect(newUrl)
+  }
+  
   let res = NextResponse.next({
     request: {
       headers: req.headers,
