@@ -487,7 +487,7 @@ export function WorkoutLogger() {
 
   if (isWorkoutActive && currentWorkout) {
     return (
-      <div className="container-apple section-apple">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="animate-fade-in-up">
           <div className="text-center mb-8">
             <p className="text-xl text-gray-600 dark:text-gray-400 font-light mb-4">
@@ -522,30 +522,30 @@ export function WorkoutLogger() {
                   </div>
                   
                   {/* Individual Set Inputs */}
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {exercise.setData.map((set, setIndex) => (
                       <div key={setIndex} className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div className="text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[60px]">
+                        <div className="text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[50px] sm:min-w-[60px]">
                           Set {setIndex + 1}
                         </div>
-                        <div className="flex-1 grid grid-cols-2 gap-4">
+                        <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4">
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Reps</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-2">Reps</label>
                             <input
                               type="number"
                               value={set.reps === undefined ? '' : set.reps}
                               onChange={(e) => handleSetUpdate(exerciseIndex, setIndex, "reps", e.target.value)}
-                              className="input-apple text-center text-sm"
+                              className="input-apple text-center text-base sm:text-sm w-full py-3 sm:py-2"
                               placeholder="0"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Weight (lbs)</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-2">Weight (lbs)</label>
                             <input
                               type="number"
                               value={set.weight === undefined ? '' : set.weight}
                               onChange={(e) => handleSetUpdate(exerciseIndex, setIndex, "weight", e.target.value)}
-                              className="input-apple text-center text-sm"
+                              className="input-apple text-center text-base sm:text-sm w-full py-3 sm:py-2"
                               placeholder="0"
                             />
                           </div>
