@@ -330,23 +330,32 @@ export function WorkoutLogger() {
     const exercise = { ...newExercises[exerciseIndex] }
     const newSetData = [...exercise.setData]
     
-    // If the value is an empty string, set to undefined
-    const parsedValue = value === '' ? undefined : value
+    // Parse the value properly - convert string to number if needed
+    let parsedValue: number | undefined
+    if (value === '' || value === undefined) {
+      parsedValue = undefined
+    } else if (typeof value === 'string') {
+      parsedValue = parseFloat(value)
+    } else {
+      parsedValue = value
+    }
+    
     newSetData[setIndex] = { ...newSetData[setIndex], [field]: parsedValue }
 
     // Auto load logic: if first set is changed and auto load is enabled, fill the rest
-    if (setIndex === 0) {
-      if (field === 'reps' && autoLoadReps && parsedValue !== undefined && parsedValue !== '') {
+    // This is now handled in the onBlur event to avoid partial value filling
+    if (setIndex === 0 && typeof parsedValue === 'number') {
+      if (field === 'reps' && autoLoadReps && parsedValue !== undefined && !isNaN(parsedValue)) {
         for (let i = 1; i < newSetData.length; i++) {
           if (newSetData[i].reps === undefined) {
-            newSetData[i].reps = parsedValue as number
+            newSetData[i].reps = parsedValue
           }
         }
       }
-      if (field === 'weight' && autoLoadWeight && parsedValue !== undefined && parsedValue !== '') {
+      if (field === 'weight' && autoLoadWeight && parsedValue !== undefined && !isNaN(parsedValue)) {
         for (let i = 1; i < newSetData.length; i++) {
           if (newSetData[i].weight === undefined) {
-            newSetData[i].weight = parsedValue as number
+            newSetData[i].weight = parsedValue
           }
         }
       }
@@ -535,6 +544,34 @@ export function WorkoutLogger() {
                               type="number"
                               value={set.reps === undefined ? '' : set.reps}
                               onChange={(e) => handleSetUpdate(exerciseIndex, setIndex, "reps", e.target.value)}
+                              onBlur={(e) => {
+                                if (setIndex === 0 && autoLoadReps && e.target.value) {
+                                  const value = parseFloat(e.target.value)
+                                  if (!isNaN(value)) {
+                                    // Auto-fill all subsequent sets with this value
+                                    const newExercises = [...currentWorkout.exercises]
+                                    const exercise = { ...newExercises[exerciseIndex] }
+                                    const newSetData = [...exercise.setData]
+                                    
+                                    // Fill all sets after the first one
+                                    for (let i = 1; i < newSetData.length; i++) {
+                                      newSetData[i] = { ...newSetData[i], reps: value }
+                                    }
+                                    
+                                    exercise.setData = newSetData
+                                    
+                                    // Recalculate volume
+                                    const totalVolume = newSetData.reduce((total, set) => {
+                                      const setVolume = (set.reps || 0) * (set.weight || 0)
+                                      return total + setVolume
+                                    }, 0)
+                                    exercise.volume = totalVolume
+                                    
+                                    newExercises[exerciseIndex] = exercise
+                                    setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
+                                  }
+                                }
+                              }}
                               className="input-apple text-center text-base sm:text-sm w-full py-3 sm:py-2"
                               placeholder="0"
                             />
@@ -545,6 +582,34 @@ export function WorkoutLogger() {
                               type="number"
                               value={set.weight === undefined ? '' : set.weight}
                               onChange={(e) => handleSetUpdate(exerciseIndex, setIndex, "weight", e.target.value)}
+                              onBlur={(e) => {
+                                if (setIndex === 0 && autoLoadWeight && e.target.value) {
+                                  const value = parseFloat(e.target.value)
+                                  if (!isNaN(value)) {
+                                    // Auto-fill all subsequent sets with this value
+                                    const newExercises = [...currentWorkout.exercises]
+                                    const exercise = { ...newExercises[exerciseIndex] }
+                                    const newSetData = [...exercise.setData]
+                                    
+                                    // Fill all sets after the first one
+                                    for (let i = 1; i < newSetData.length; i++) {
+                                      newSetData[i] = { ...newSetData[i], weight: value }
+                                    }
+                                    
+                                    exercise.setData = newSetData
+                                    
+                                    // Recalculate volume
+                                    const totalVolume = newSetData.reduce((total, set) => {
+                                      const setVolume = (set.reps || 0) * (set.weight || 0)
+                                      return total + setVolume
+                                    }, 0)
+                                    exercise.volume = totalVolume
+                                    
+                                    newExercises[exerciseIndex] = exercise
+                                    setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
+                                  }
+                                }
+                              }}
                               className="input-apple text-center text-base sm:text-sm w-full py-3 sm:py-2"
                               placeholder="0"
                             />
