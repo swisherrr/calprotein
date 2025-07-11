@@ -11,13 +11,13 @@ export default function Home() {
       
       
       <div className="max-w-3xl text-center space-y-8 relative z-30">
-        <div className="h-32 flex items-center justify-center">
+        <div className="h-16 md:h-32 flex items-center justify-center">
           <TextHoverEffect text="gainerithm" />
         </div>
         
         <TextGenerateEffect 
           words="The algorithm for gains. Nutrition tracking + progressive overload analysis."
-          className="text-xl text-gray-600 dark:text-gray-400 font-normal"
+          className="text-gray-600 dark:text-gray-400 font-normal pr-2 pl-2"
         />
 
         <div className="flex gap-4 justify-center">
