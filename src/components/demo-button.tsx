@@ -12,7 +12,7 @@ export function DemoButton() {
   }
 
   return (
-    <button onClick={handleDemoClick} className="text-white">
+    <button onClick={handleDemoClick} className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
         Try Demo
     </button>
   )

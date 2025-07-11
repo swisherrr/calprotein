@@ -132,7 +132,7 @@ export const Logo = () => {
         <motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full"
+          className="text-xs bg-gradient-to-r from-blue-800 to-purple-800 text-white px-2 py-1 rounded-full"
         >
           DEMO
         </motion.span>
