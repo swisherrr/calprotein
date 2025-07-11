@@ -319,7 +319,7 @@ export function WorkoutAnalytics() {
         </div>
 
         {/* Chart and Timeframe Dropdowns */}
-        <div className="mb-4 flex flex-col sm:flex-row justify-center gap-2 sm:gap-6">
+        <div className="mb-4 flex flex-col sm:flex-row justify-center gap-2 sm:gap-6 dark:bg-black">
           <div className="inline-flex items-center gap-2 flex-col sm:flex-row">
             <label className="text-sm font-medium">Chart:</label>
             <select
@@ -376,21 +376,21 @@ export function WorkoutAnalytics() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8">
-          <div className="card-apple text-center" style={{ borderRadius: 0 }}>
+          <div className="card-apple text-center dark:bg-black" style={{ borderRadius: 0 }}>
             <h3 className="text-base sm:text-lg font-semibold mb-2">Total Workouts</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-blue-600">
+            <p className="text-2xl sm:text-3xl font-bold text-blue-800">
               {workoutData.length}
             </p>
           </div>
-          <div className="card-apple text-center" style={{ borderRadius: 0 }}>
+          <div className="card-apple text-center dark:bg-black" style={{ borderRadius: 0 }}>
             <h3 className="text-base sm:text-lg font-semibold mb-2">Total Volume</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600">
+            <p className="text-2xl sm:text-3xl font-bold text-blue-800">
               {workoutData.reduce((total, workout) => total + workout.total_volume, 0).toLocaleString()} lbs
             </p>
           </div>
-          <div className="card-apple text-center sm:col-span-2 lg:col-span-1" style={{ borderRadius: 0 }}>
+          <div className="card-apple text-center sm:col-span-2 lg:col-span-1 dark:bg-black" style={{ borderRadius: 0 }}>
             <h3 className="text-base sm:text-lg font-semibold mb-2">Avg Volume/Workout</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-purple-600">
+            <p className="text-2xl sm:text-3xl font-bold text-blue-800">
               {Math.round(workoutData.reduce((total, workout) => total + workout.total_volume, 0) / workoutData.length).toLocaleString()} lbs
             </p>
           </div>

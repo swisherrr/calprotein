@@ -94,36 +94,36 @@ export function TemplateManager() {
 
   if (isEditing) {
     return (
-      <div className="animate-fade-in-up">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold mb-2">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
             {currentTemplate.id ? 'Edit Template' : 'Create New Template'}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 font-light">
+          <p className="text-gray-500 dark:text-gray-400">
             {currentTemplate.id ? 'Update your workout template' : 'Design your perfect workout routine'}
           </p>
         </div>
 
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="card-apple">
+        <div className="space-y-6">
+          <div className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Template Name
-                </label>
-                <input
-                  type="text"
-                  value={currentTemplate.name}
-                  onChange={(e) => setCurrentTemplate(prev => ({ ...prev, name: e.target.value }))}
-                  className="input-apple"
-                  placeholder="Enter template name..."
-                />
-              </div>
+                              <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Template Name
+                  </label>
+                  <input
+                    type="text"
+                    value={currentTemplate.name}
+                    onChange={(e) => setCurrentTemplate(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
+                    placeholder="Enter template name..."
+                  />
+                </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Exercises</h3>
+                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
                 {currentTemplate.exercises.map((exercise, index) => (
-                  <div key={index} className="card-apple bg-gray-50 dark:bg-gray-800">
+                  <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -132,7 +132,7 @@ export function TemplateManager() {
                         <select
                           value={exercise.name}
                           onChange={(e) => handleExerciseChange(index, "name", e.target.value)}
-                          className="input-apple"
+                          className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
                         >
                           <option value="">Select exercise</option>
                           {EXERCISE_GROUPS.map((group) => (
@@ -154,7 +154,7 @@ export function TemplateManager() {
                           type="number"
                           value={exercise.sets}
                           onChange={(e) => handleExerciseChange(index, "sets", parseInt(e.target.value))}
-                          className="input-apple"
+                          className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
                           placeholder="0"
                         />
                       </div>
@@ -166,7 +166,8 @@ export function TemplateManager() {
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Button 
                   onClick={handleAddExercise}
-                  className="btn-apple-outline flex items-center justify-center"
+                  variant="outline"
+                  className="flex items-center justify-center"
                 >
                   Add Exercise
                 </Button>
@@ -175,7 +176,7 @@ export function TemplateManager() {
                     <TooltipTrigger asChild>
                       <Button 
                         onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
-                        className="btn-apple flex items-center justify-center"
+                        className="flex items-center justify-center font-medium"
                       >
                         {currentTemplate.id ? 'Update Template' : 'Save Template'}
                       </Button>
@@ -193,7 +194,7 @@ export function TemplateManager() {
                     setIsEditing(false)
                     setCurrentTemplate({ name: "", exercises: [], user_id: "" })
                   }}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 flex items-center justify-center"
+                  className="flex items-center justify-center"
                 >
                   Cancel
                 </Button>
@@ -206,16 +207,16 @@ export function TemplateManager() {
   }
 
   return (
-    <div className="animate-fade-in-up">
-      <div className="text-center mb-12">
-        <h2 className="text-2xl font-semibold mb-4">Your Templates</h2>
-        <p className="text-gray-600 dark:text-gray-400 font-light mb-8">
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Your Templates</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">
           Manage and organize your workout templates
         </p>
         <div className="flex justify-center">
           <Button 
             onClick={() => setIsEditing(true)}
-            className="btn-apple text-lg px-8 py-4 flex items-center justify-center"
+            className="font-medium"
           >
             Create New Template
           </Button>
@@ -227,19 +228,19 @@ export function TemplateManager() {
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">📝</span>
           </div>
-          <h3 className="text-lg font-semibold mb-2">No templates yet</h3>
-          <p className="text-gray-600 dark:text-gray-400 font-light">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No templates yet</h3>
+          <p className="text-gray-500 dark:text-gray-400">
             Create your first workout template to get started
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 max-w-4xl mx-auto">
+        <div className="grid gap-6">
           {templates.map((template, index) => (
-            <div key={template.id} className="card-apple animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+            <div key={template.id} className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">{template.name}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 font-light">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{template.name}</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
                     {template.exercises.length} exercises
                   </p>
                 </div>
@@ -264,8 +265,8 @@ export function TemplateManager() {
               <div className="space-y-3">
                 {template.exercises.map((exercise, idx) => (
                   <div key={idx} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                    <span className="font-medium">{exercise.name}</span>
-                    <span className="text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
+                    <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-black px-3 py-1 rounded-full text-sm font-medium">
                       {exercise.sets} sets
                     </span>
                   </div>
@@ -278,12 +279,12 @@ export function TemplateManager() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="max-w-md bg-white dark:bg-gray-900">
+        <DialogContent className="max-w-md bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
           <DialogHeader>
-            <DialogTitle>Delete Template</DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-100">Delete Template</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400">
               Are you sure you want to delete this template? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">

@@ -120,31 +120,34 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Link href="/macrostats">
-          <Button variant="outline" className="font-medium">
-            Data
-          </Button>
-        </Link>
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Dashboard</h1>
+          <Link href="/macrostats">
+            <Button variant="outline" className="font-medium">
+              Data
+            </Button>
+          </Link>
+        </div>
+
       </div>
 
-      <div className="space-y-8">
-          <div className="grid gap-6 md:grid-cols-3">
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-3">
             <div 
-              className="p-6 relative bg-gray-800/50 inset-1"
+              className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg"
               style={{
                 '--progress-gradient': calculateGradient(totalCalories, settings.daily_calories)
               } as any}
             >
               <div className="flex justify-between items-start mb-2">
-                <h2 className="font-semibold">Today's Calories</h2>
+                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Today's Calories</h2>
                 <div className="flex gap-2">
                   {totalCalories > 0 && (
                     <button
                       onClick={() => handleReset(todayEntries, addEntry)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="text-gray-400 hover:text-red-500 text-sm"
                     >
                       Reset
                     </button>
@@ -157,14 +160,14 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
-              <p className="text-3xl font-bold">
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 {totalCalories} / {editingCalories ? (
                   <form onSubmit={handleCaloriesSubmit} className="inline">
                     <input
                       type="number"
                       value={newCalories}
                       onChange={(e) => setNewCalories(e.target.value)}
-                      className="w-24 rounded-md border px-2 py-1 text-lg bg-white dark:bg-gray-900 dark:border-gray-700"
+                      className="w-24 rounded-md border border-gray-300 dark:border-gray-600 px-2 py-1 text-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                       autoFocus
                       onBlur={handleCaloriesSubmit}
                     />
@@ -173,14 +176,14 @@ export default function DashboardPage() {
               </p>
             </div>
             
-            <div className="p-6 relative bg-gray-800/50 inset-1">
+            <div className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
               <div className="flex justify-between items-start mb-2">
-                <h2 className="font-semibold">Protein</h2>
+                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Protein</h2>
                 <div className="flex gap-2">
                   {totalProtein > 0 && (
                     <button
                       onClick={() => handleReset(todayEntries, addEntry)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="text-gray-400 hover:text-red-500 text-sm"
                     >
                       Reset
                     </button>
@@ -193,14 +196,14 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
-              <p className="text-3xl font-bold">
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 {totalProtein}g / {editingProtein ? (
                   <form onSubmit={handleProteinSubmit} className="inline">
                     <input
                       type="number"
                       value={newProtein}
                       onChange={(e) => setNewProtein(e.target.value)}
-                      className="w-24 rounded-md border px-2 py-1 text-lg bg-white dark:bg-gray-900 dark:border-gray-700"
+                      className="w-24 rounded-md border border-gray-300 dark:border-gray-600 px-2 py-1 text-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                       autoFocus
                       onBlur={handleProteinSubmit}
                     />
@@ -209,9 +212,9 @@ export default function DashboardPage() {
               </p>
             </div>
             
-            <div className="p-6 bg-gray-800/50 inset-1">
+            <div className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="font-semibold">Recent Entries</h2>
+                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Recent Entries</h2>
                 {todayEntries.length > 0 && (
                   <Dialog open={showAllEntries} onOpenChange={setShowAllEntries}>
                     <DialogTrigger asChild>
@@ -219,23 +222,23 @@ export default function DashboardPage() {
                         See All
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md max-h-[80vh] bg-white dark:bg-gray-900">
+                    <DialogContent className="max-w-md max-h-[80vh] bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
                       <DialogHeader>
-                        <DialogTitle>Today's Entries</DialogTitle>
+                        <DialogTitle className="text-gray-900 dark:text-gray-100">Today's Entries</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-2">
                         {todayEntries.map((entry) => (
-                          <div key={entry.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800">
+                          <div key={entry.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
                             <div>
-                              <span className="font-medium">{entry.name}</span>
-                              <span className="text-sm text-gray-500 ml-2">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">{entry.name}</span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
                                 {new Date(entry.created_at).toLocaleTimeString([], { 
                                   hour: '2-digit', 
                                   minute: '2-digit' 
                                 })}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
                               {entry.calories}cal • {entry.protein}g protein
                             </div>
                           </div>
@@ -248,13 +251,13 @@ export default function DashboardPage() {
               {todayEntries.length > 0 ? (
                 <div className="space-y-2">
                   {todayEntries.slice(-3).map((entry) => (
-                    <div key={entry.id} className="text-sm">
+                    <div key={entry.id} className="text-sm text-gray-600 dark:text-gray-400">
                       {entry.name}: {entry.calories}cal, {entry.protein}g protein
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">No entries yet</p>
+                <p className="text-gray-500 dark:text-gray-400">No entries yet</p>
               )}
             </div>
           </div>

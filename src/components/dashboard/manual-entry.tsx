@@ -45,20 +45,20 @@ export function ManualEntry({
   }
 
   return (
-    <div className="p-6 bg-gray-800/50 inset-1">
-      <h2 className="font-semibold mb-4">Manual Entry</h2>
+    <div className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+      <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Manual Entry</h2>
       <div className="flex gap-2 mb-4">
         <Button
-          variant={mode === "simple" ? "default" : "outline"}
+          variant={mode === "byWeight" ? "default" : "outline"}
           onClick={() => setMode("simple")}
-          className={mode === "simple" ? "btn-apple" : "btn-apple-outline"}
+          size="sm"
         >
           Simple
         </Button>
         <Button
-          variant={mode === "byWeight" ? "default" : "outline"}
+          variant={mode === "simple" ? "default" : "outline"}
           onClick={() => setMode("byWeight")}
-          className={mode === "byWeight" ? "btn-apple" : "btn-apple-outline"}
+          size="sm"
         >
           By Weight
         </Button>
@@ -69,7 +69,7 @@ export function ManualEntry({
           placeholder="Name (optional)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+          className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
         />
 
         {mode === "simple" ? (
@@ -80,7 +80,7 @@ export function ManualEntry({
               required
               value={calories}
               onChange={(e) => setCalories(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
             />
             <input
               placeholder="Protein (g)"
@@ -88,7 +88,7 @@ export function ManualEntry({
               required
               value={protein}
               onChange={(e) => setProtein(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
             />
           </div>
         ) : (
@@ -100,7 +100,7 @@ export function ManualEntry({
                 required
                 value={servingSize}
                 onChange={(e) => setServingSize(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
               />
               <input
                 placeholder="Calories per Serving"
@@ -108,7 +108,7 @@ export function ManualEntry({
                 required
                 value={calories}
                 onChange={(e) => setCalories(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
               />
               <input
                 placeholder="Protein per Serving"
@@ -116,7 +116,7 @@ export function ManualEntry({
                 required
                 value={protein}
                 onChange={(e) => setProtein(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
               />
             </div>
             <input
@@ -125,12 +125,12 @@ export function ManualEntry({
               required
               value={portion}
               onChange={(e) => setPortion(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
             />
           </>
         )}
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full font-medium">
           Add Entry
         </Button>
       </form>

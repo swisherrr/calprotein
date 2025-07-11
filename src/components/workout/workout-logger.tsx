@@ -683,68 +683,66 @@ export function WorkoutLogger() {
 
   return (
     <>
-      <div className="container-apple section-apple">
-        <div className="animate-fade-in-up">
-          <div className="text-center mb-8">
-            <h1 className="mb-4">Start a Workout</h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-light max-w-2xl mx-auto">
-              Choose a workout template to begin tracking your workout.
-            </p>
-          </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Start a Workout</h1>
+          <p className="text-gray-500 dark:text-gray-400 max-w-2xl">
+            Choose a workout template to begin tracking your workout.
+          </p>
+        </div>
 
-          <div className="grid gap-8 max-w-4xl mx-auto">
-            {templates.map((template, index) => (
-              <div key={template.id} className="card-apple animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-semibold mb-4">{template.name}</h3>
-                  <div className="flex justify-center">
-                    <Button 
-                      onClick={() => startWorkout(template)} 
-                      className="btn-apple text-lg px-12 py-4 flex items-center justify-center"
-                    >
-                      Start Workout
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="text-lg font-medium text-gray-600 dark:text-gray-400 text-center mb-6">
-                    Exercises
-                  </h4>
-                  {template.exercises.map((exercise, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                      <span className="text-lg font-medium">{exercise.name}</span>
-                      <span className="text-gray-500 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full text-sm font-medium">
-                        {exercise.sets} sets
-                      </span>
-                    </div>
-                  ))}
+        <div className="grid gap-6">
+          {templates.map((template, index) => (
+            <div key={template.id} className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
+                <div className="flex justify-center">
+                  <Button 
+                    onClick={() => startWorkout(template)} 
+                    className="font-medium bg-white text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-full mt-2"
+                  >
+                    Start Workout
+                  </Button>
                 </div>
               </div>
-            ))}
-          </div>
+              
+              <div className="space-y-4">
+                <h4 className="text-lg font-medium text-gray-800 dark:text-gray-200 text-center mb-6">
+                  Exercises
+                </h4>
+                {template.exercises.map((exercise, idx) => (
+                  <div key={idx} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+                    <span className="text-lg font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
+                    <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-black px-4 py-2 rounded-full text-sm font-medium">
+                      {exercise.sets} sets
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Workout Summary Modal */}
       <Dialog open={showSummary} onOpenChange={setShowSummary}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
           <DialogHeader>
-            <DialogTitle className="text-2xl text-center">Workout Complete! 🎉</DialogTitle>
+            <DialogTitle className="text-2xl text-center text-gray-900 dark:text-gray-100">Workout Complete! 🎉</DialogTitle>
           </DialogHeader>
           
           {workoutSummary && (
             <div className="space-y-6">
               {/* Summary Stats */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="card-apple text-center">
-                  <h3 className="text-lg font-semibold mb-2">Total Volume</h3>
+                <div className="p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-center">
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Total Volume</h3>
                   <p className="text-3xl font-bold text-blue-600">
                     {workoutSummary.totalVolume.toLocaleString()} lbs
                   </p>
                 </div>
-                <div className="card-apple text-center">
-                  <h3 className="text-lg font-semibold mb-2">Duration</h3>
+                <div className="p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg text-center">
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Duration</h3>
                   <p className="text-3xl font-bold text-green-600">
                     {workoutSummary.duration}
                   </p>
@@ -752,19 +750,19 @@ export function WorkoutLogger() {
               </div>
 
               {/* Exercise Breakdown */}
-              <div className="card-apple">
-                <h3 className="text-xl font-semibold mb-4">Exercise Breakdown</h3>
+              <div className="p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+                <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-4">Exercise Breakdown</h3>
                 <div className="space-y-3">
                   {workoutSummary.exerciseStats.map((stat, index) => (
                     <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
                       <div>
-                        <span className="font-medium">{stat.name}</span>
-                        <div className="text-sm text-gray-500">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{stat.name}</span>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {stat.totalSets} sets • {stat.totalReps} reps • {stat.totalWeight} lbs
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           Max: {stat.maxWeight} lbs × {stat.maxReps} reps
                         </div>
                         <div className="text-sm text-blue-600 dark:text-blue-400 font-semibold">
@@ -778,13 +776,13 @@ export function WorkoutLogger() {
 
               {/* Personal Records */}
               {workoutSummary.personalRecords.length > 0 && (
-                <div className="card-apple">
-                  <h3 className="text-xl font-semibold mb-4">Personal Records</h3>
+                <div className="p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+                  <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-4">Personal Records</h3>
                   <div className="space-y-3">
                     {workoutSummary.personalRecords.map((record, index) => (
                       <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                        <span className="font-medium">{record.exercise}</span>
-                        <div className="text-right text-sm">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{record.exercise}</span>
+                        <div className="text-right text-sm text-gray-600 dark:text-gray-400">
                           <div>Max Weight: {record.maxWeight} lbs</div>
                           <div>Max Reps: {record.maxReps}</div>
                           <div>Max Volume: {record.maxVolume} lbs</div>
@@ -798,7 +796,7 @@ export function WorkoutLogger() {
               <div className="text-center pt-4">
                 <Button 
                   onClick={() => setShowSummary(false)}
-                  className="btn-apple text-lg px-8 py-3"
+                  className="font-medium"
                 >
                   Close
                 </Button>

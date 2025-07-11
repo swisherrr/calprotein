@@ -65,9 +65,9 @@ export function UsualsSection({
   if (loading) return <div>Loading...</div>
 
   return (
-    <div className="p-6 bg-gray-800/50 inset-1">
+    <div className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold">The Usuals</h2>
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">The Usuals</h2>
         <Button 
           variant="outline" 
           size="sm"
@@ -80,20 +80,20 @@ export function UsualsSection({
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAddNewUsual} className="space-y-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <form onSubmit={handleAddNewUsual} className="space-y-4 mb-6 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
           <div className="grid grid-cols-2 gap-4">
             <input
               placeholder="Name"
               value={newUsual.name}
               onChange={e => setNewUsual(prev => ({ ...prev, name: e.target.value }))}
-              className="rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               required
             />
             <input
               placeholder="Portion (e.g., 100g)"
               value={newUsual.portion}
               onChange={e => setNewUsual(prev => ({ ...prev, portion: e.target.value }))}
-              className="rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               required
             />
             <input
@@ -101,7 +101,7 @@ export function UsualsSection({
               type="number"
               value={newUsual.calories}
               onChange={e => setNewUsual(prev => ({ ...prev, calories: e.target.value }))}
-              className="rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               required
             />
             <input
@@ -109,7 +109,7 @@ export function UsualsSection({
               type="number"
               value={newUsual.protein}
               onChange={e => setNewUsual(prev => ({ ...prev, protein: e.target.value }))}
-              className="rounded-md border px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               required
             />
           </div>
@@ -134,11 +134,11 @@ export function UsualsSection({
                 onChange={() => handleCheckboxChange(item.id)}
                 className="rounded"
               />
-              <span>{item.name}</span>
-              <span className="text-sm text-gray-500">({item.portion})</span>
+              <span className="text-gray-900 dark:text-gray-100">{item.name}</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">({item.portion})</span>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {item.calories}cal • {item.protein}g protein
               </div>
               <button
