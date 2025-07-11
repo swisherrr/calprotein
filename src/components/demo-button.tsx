@@ -1,7 +1,6 @@
 "use client"
 
 import { useDemo } from "@/components/providers/demo-provider"
-import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
 import { useRouter } from "next/navigation"
 
 export function DemoButton() {

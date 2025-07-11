@@ -13,9 +13,9 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   if (shouldShowNavbar) {
     return (
-      <div className="flex h-screen">
+      <div className="flex min-h-screen">
         <Navbar />
-        <div className="flex-1 flex flex-col md:pt-0 pt-16">
+        <div className="flex-1 flex flex-col md:pt-0 pt-16 overflow-auto">
           <DemoBanner />
           {children}
         </div>

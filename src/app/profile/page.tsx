@@ -3,32 +3,11 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
-function SettingToggle({ label, value, onChange }: { label: string, value: boolean, onChange: (v: boolean) => void }) {
-  return (
-    <div className="flex items-center justify-between py-3">
-      <span className="text-base text-gray-800 dark:text-gray-200 font-medium">{label}</span>
-      <button
-        onClick={() => onChange(!value)}
-        className={`w-11 h-6 flex items-center rounded-full transition-colors duration-200 focus:outline-none ${value ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`}
-        style={{ boxShadow: 'none', border: 'none', padding: 0 }}
-        aria-pressed={value}
-        type="button"
-      >
-        <span
-          className={`inline-block w-5 h-5 transform bg-white dark:bg-black rounded-full shadow transition-transform duration-200 ${value ? 'translate-x-5' : 'translate-x-1'}`}
-        />
-      </button>
-    </div>
-  )
-}
-
 export default function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const [autoLoadReps, setAutoLoadReps] = useState(false)
-  const [autoLoadWeight, setAutoLoadWeight] = useState(false)
 
   useEffect(() => {
     async function fetchUser() {
@@ -57,24 +36,12 @@ export default function ProfilePage() {
       }
     }
     fetchUser()
-    // Load settings from localStorage
-    setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
-    setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
   }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
-  }
-
-  const handleToggleReps = (v: boolean) => {
-    setAutoLoadReps(v)
-    localStorage.setItem('autoLoadReps', v ? 'true' : 'false')
-  }
-  const handleToggleWeight = (v: boolean) => {
-    setAutoLoadWeight(v)
-    localStorage.setItem('autoLoadWeight', v ? 'true' : 'false')
   }
 
   return (
@@ -105,12 +72,6 @@ export default function ProfilePage() {
         {email ? email : <span className="text-gray-400">Loading...</span>}
       </div>
       
-      {/* Settings Section */}
-      <div className="w-full max-w-md mt-10">
-        <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4 pl-1">Settings</h2>
-        <SettingToggle label="Auto load reps" value={autoLoadReps} onChange={handleToggleReps} />
-        <SettingToggle label="Auto load weight" value={autoLoadWeight} onChange={handleToggleWeight} />
-      </div>
       {/* Sign Out Button */}
       <button
         onClick={handleSignOut}
