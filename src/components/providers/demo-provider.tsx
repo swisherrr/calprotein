@@ -31,26 +31,7 @@ const initialDemoData: DemoData = {
     email: 'demo@gainerithm.com',
     username: 'demo_user'
   },
-  entries: [
-    {
-      id: 'demo-entry-1',
-      date: new Date().toISOString().split('T')[0],
-      calories: 1850,
-      protein: 120,
-      carbs: 180,
-      fat: 65,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'demo-entry-2',
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      calories: 2100,
-      protein: 140,
-      carbs: 220,
-      fat: 75,
-      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    }
-  ],
+  entries: [],
   usuals: [
     {
       id: 'demo-usual-1',
@@ -79,7 +60,7 @@ const initialDemoData: DemoData = {
       exercises: [
         {
           name: 'Bench Press',
-          sets: 4
+          sets: 3
         },
         {
           name: 'Pull-ups',
@@ -87,7 +68,7 @@ const initialDemoData: DemoData = {
         },
         {
           name: 'Squats',
-          sets: 4
+          sets: 3
         },
         {
           name: 'Overhead Press',
