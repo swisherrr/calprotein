@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useDemo } from '@/components/providers/demo-provider'
 
 export type Usual = {
   id: number
@@ -13,10 +14,16 @@ export type Usual = {
 export function useUsuals() {
   const [usuals, setUsuals] = useState<Usual[]>([])
   const [loading, setLoading] = useState(true)
+  const { isDemoMode, demoData, updateDemoData } = useDemo()
 
   useEffect(() => {
-    fetchUsuals()
-  }, [])
+    if (isDemoMode) {
+      setUsuals(demoData.usuals)
+      setLoading(false)
+    } else {
+      fetchUsuals()
+    }
+  }, [isDemoMode, demoData.usuals])
 
   const fetchUsuals = async () => {
     try {
@@ -35,6 +42,19 @@ export function useUsuals() {
   }
 
   const addUsual = async (usual: Omit<Usual, 'id' | 'created_at' | 'user_id'>) => {
+    if (isDemoMode) {
+      const newUsual = {
+        id: Date.now(),
+        ...usual,
+        created_at: new Date().toISOString()
+      }
+      
+      const updatedUsuals = [...demoData.usuals, newUsual]
+      updateDemoData({ usuals: updatedUsuals })
+      setUsuals(updatedUsuals)
+      return newUsual
+    }
+
     try {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('Not authenticated')
@@ -58,6 +78,13 @@ export function useUsuals() {
   }
 
   const deleteUsual = async (id: number) => {
+    if (isDemoMode) {
+      const updatedUsuals = demoData.usuals.filter(usual => usual.id !== id)
+      updateDemoData({ usuals: updatedUsuals })
+      setUsuals(updatedUsuals)
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('usuals')

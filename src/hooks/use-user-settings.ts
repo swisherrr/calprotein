@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useDemo } from '@/components/providers/demo-provider'
 
 export type UserSettings = {
   daily_calories: number
@@ -12,10 +13,19 @@ export function useUserSettings() {
     daily_protein: 150
   })
   const [loading, setLoading] = useState(true)
+  const { isDemoMode, demoData, updateDemoData } = useDemo()
 
   useEffect(() => {
-    fetchSettings()
-  }, [])
+    if (isDemoMode) {
+      setSettings({
+        daily_calories: demoData.settings.calorie_goal,
+        daily_protein: demoData.settings.protein_goal
+      })
+      setLoading(false)
+    } else {
+      fetchSettings()
+    }
+  }, [isDemoMode, demoData.settings])
 
   const fetchSettings = async () => {
     try {
@@ -57,6 +67,24 @@ export function useUserSettings() {
   }
 
   const updateSettings = async (newSettings: Partial<UserSettings>) => {
+    if (isDemoMode) {
+      const updatedSettings = {
+        daily_calories: newSettings.daily_calories ?? settings.daily_calories,
+        daily_protein: newSettings.daily_protein ?? settings.daily_protein
+      }
+      
+      updateDemoData({
+        settings: {
+          ...demoData.settings,
+          calorie_goal: updatedSettings.daily_calories,
+          protein_goal: updatedSettings.daily_protein
+        }
+      })
+      
+      setSettings(updatedSettings)
+      return updatedSettings
+    }
+
     try {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('Not authenticated')

@@ -73,15 +73,33 @@ export async function middleware(req: NextRequest) {
   // Debug: Log session state
   console.log('Supabase session:', session)
 
-  // Only protect dashboard routes
-  if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
-    console.log('No session found, redirecting to /login')
+  // Check for demo mode cookie
+  const demoMode = req.cookies.get('demo-mode')?.value === 'true'
+
+  // Allow access to demo route
+  if (req.nextUrl.pathname === '/demo') {
+    return res
+  }
+
+  // Allow dashboard access if in demo mode or authenticated
+  if (!session && !demoMode && req.nextUrl.pathname.startsWith('/dashboard')) {
+    console.log('No session or demo mode, redirecting to /login')
     return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  // Set demo mode cookie if coming from demo route
+  if (req.nextUrl.pathname.startsWith('/dashboard') && demoMode) {
+    res.cookies.set('demo-mode', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 // 24 hours
+    })
   }
 
   return res
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*']
+  matcher: ['/dashboard/:path*', '/demo']
 } 

@@ -13,14 +13,22 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useDemo } from "@/components/providers/demo-provider";
 
 export function Navbar() {
   const router = useRouter()
+  const { isDemoMode, exitDemoMode } = useDemo()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
+    if (isDemoMode) {
+      exitDemoMode()
+      router.push('/')
+      router.refresh()
+    } else {
+      await supabase.auth.signOut()
+      router.push('/login')
+      router.refresh()
+    }
   }
 
   const links = [
@@ -77,7 +85,7 @@ export function Navbar() {
                 }}
                 className="text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
               >
-                Logout
+                {isDemoMode ? 'Exit Demo' : 'Logout'}
               </motion.span>
             </button>
           </div>
@@ -105,6 +113,8 @@ export function Navbar() {
 }
 
 export const Logo = () => {
+  const { isDemoMode } = useDemo()
+  
   return (
     <a
       href="/dashboard"
@@ -118,6 +128,15 @@ export const Logo = () => {
       >
         gainerithm
       </motion.span>
+      {isDemoMode && (
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full"
+        >
+          DEMO
+        </motion.span>
+      )}
     </a>
   );
 };

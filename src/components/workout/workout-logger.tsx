@@ -4,6 +4,10 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
+import { useDemo } from "@/components/providers/demo-provider"
+import { useWorkoutTemplates } from "@/hooks/use-workout-templates"
+import { useWorkoutLogs } from "@/hooks/use-workout-logs"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Set {
   reps?: number
@@ -19,7 +23,7 @@ interface Exercise {
 }
 
 interface WorkoutTemplate {
-  id: string
+  id?: string
   name: string
   exercises: Exercise[]
   user_id: string
@@ -101,7 +105,9 @@ function WorkoutTimer({ startTime }: { startTime: string }) {
 }
 
 export function WorkoutLogger() {
-  const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
+  const { isDemoMode, demoData } = useDemo()
+  const { templates, loading: templatesLoading } = useWorkoutTemplates()
+  const { logs, addLog } = useWorkoutLogs()
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null)
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutLog | null>(null)
   const [isWorkoutActive, setIsWorkoutActive] = useState(false)
@@ -125,30 +131,36 @@ export function WorkoutLogger() {
   const [autoLoadWeight, setAutoLoadWeight] = useState(false)
 
   useEffect(() => {
-    loadTemplates()
     // Load settings from localStorage
     setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
     setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
   }, [])
 
-  const loadTemplates = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('workout_templates')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (error) throw error
-      setTemplates(data || [])
-    } catch (error) {
-      console.error('Error loading templates:', error)
-    }
-  }
-
   const fetchLastWorkoutData = async (exerciseNames: string[]) => {
+    if (isDemoMode) {
+      // Use demo workout logs for last workout data
+      const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number, volume?: number }> = {}
+      
+      for (const exerciseName of exerciseNames) {
+        // Find the most recent workout that contains this exercise
+        for (const workout of demoData.workoutLogs) {
+          const exercise = workout.exercises?.find((ex: any) => ex.name === exerciseName)
+          if (exercise && exercise.setData && exercise.setData.length > 0) {
+            const firstSet = exercise.setData[0]
+            lastWorkoutDataMap[exerciseName] = {
+              reps: firstSet.reps,
+              weight: firstSet.weight,
+              volume: exercise.volume || 0
+            }
+            break
+          }
+        }
+      }
+      
+            setLastWorkoutData(lastWorkoutDataMap)
+      return
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -308,7 +320,7 @@ export function WorkoutLogger() {
     await fetchLastWorkoutData(exerciseNames)
     
     setCurrentWorkout({
-      template_id: template.id,
+      template_id: template.id || '',
       user_id: template.user_id,
       date: now.toISOString().split('T')[0],
       start_time: now.toISOString(),
@@ -645,12 +657,23 @@ export function WorkoutLogger() {
 
           <div className="text-center mt-12">
             <div className="flex justify-center">
-              <Button 
-                onClick={finishWorkout} 
-                className="btn-apple text-lg px-12 py-4 flex items-center justify-center"
-              >
-                Finish Workout
-              </Button>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={finishWorkout} 
+                      className="btn-apple text-lg px-12 py-4 flex items-center justify-center"
+                    >
+                      Finish Workout
+                    </Button>
+                  </TooltipTrigger>
+                  {isDemoMode && (
+                    <TooltipContent className="bg-black text-white px-4 py-2 text-sm font-medium">
+                      <p>Make an account to log workouts</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </div>

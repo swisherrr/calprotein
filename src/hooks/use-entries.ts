@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useDemo } from '@/components/providers/demo-provider'
 
 export type Entry = {
   id: number
@@ -12,10 +13,16 @@ export type Entry = {
 export function useEntries() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
+  const { isDemoMode, demoData, updateDemoData } = useDemo()
 
   useEffect(() => {
-    fetchEntries()
-  }, [])
+    if (isDemoMode) {
+      setEntries(demoData.entries)
+      setLoading(false)
+    } else {
+      fetchEntries()
+    }
+  }, [isDemoMode, demoData.entries])
 
   const fetchEntries = async () => {
     try {
@@ -43,6 +50,19 @@ export function useEntries() {
   }
 
   const addEntry = async (entry: Omit<Entry, 'id' | 'created_at' | 'user_id'>) => {
+    if (isDemoMode) {
+      const newEntry = {
+        id: Date.now(),
+        ...entry,
+        created_at: new Date().toISOString()
+      }
+      
+      const updatedEntries = [newEntry, ...demoData.entries]
+      updateDemoData({ entries: updatedEntries })
+      setEntries(updatedEntries)
+      return newEntry
+    }
+
     try {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('Not authenticated')

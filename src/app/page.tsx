@@ -3,6 +3,7 @@ import { Boxes } from "@/components/ui/background-boxes"
 import { TextHoverEffect } from "@/components/ui/text-hover-effect"
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import Link from "next/link"
+import { DemoButton } from "@/components/demo-button"
 
 export default function Home() {
   return (
@@ -38,6 +39,7 @@ export default function Home() {
             </HoverBorderGradient>
           </Link>
         </div>
+        <DemoButton />
       </div>
     </div>
   )

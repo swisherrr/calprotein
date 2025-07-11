@@ -5,21 +5,19 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import { EXERCISE_GROUPS } from "@/lib/exercises"
+import { useWorkoutTemplates, WorkoutTemplate } from "@/hooks/use-workout-templates"
+import { useDemo } from "@/components/providers/demo-provider"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Exercise {
   name: string
   sets: number
-}
-
-interface WorkoutTemplate {
-  id?: string
-  name: string
-  exercises: Exercise[]
-  user_id: string
+  setData: any[]
 }
 
 export function TemplateManager() {
-  const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
+  const { isDemoMode } = useDemo()
+  const { templates, loading, addTemplate, updateTemplate, deleteTemplate } = useWorkoutTemplates()
   const [isEditing, setIsEditing] = useState(false)
   const [currentTemplate, setCurrentTemplate] = useState<WorkoutTemplate>({
     name: "",
@@ -29,31 +27,12 @@ export function TemplateManager() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadTemplates()
-  }, [])
 
-  const loadTemplates = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('workout_templates')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (error) throw error
-      setTemplates(data || [])
-    } catch (error) {
-      console.error('Error loading templates:', error)
-    }
-  }
 
   const handleAddExercise = () => {
     setCurrentTemplate(prev => ({
       ...prev,
-      exercises: [...prev.exercises, { name: "", sets: 0 }]
+      exercises: [...prev.exercises, { name: "", sets: 0, setData: [] }]
     }))
   }
 
@@ -73,17 +52,9 @@ export function TemplateManager() {
         user_id: user.id
       }
 
-      const { data, error } = await supabase
-        .from('workout_templates')
-        .insert([templateToSave])
-        .select()
-
-      if (error) throw error
-
-      setTemplates([...templates, data[0]])
+      await addTemplate(templateToSave)
       setCurrentTemplate({ name: "", exercises: [], user_id: "" })
       setIsEditing(false)
-      await loadTemplates()
     } catch (error) {
       console.error('Error saving template:', error)
     }
@@ -96,19 +67,9 @@ export function TemplateManager() {
 
   const handleUpdateTemplate = async () => {
     try {
-      const { error } = await supabase
-        .from('workout_templates')
-        .update(currentTemplate)
-        .eq('id', currentTemplate.id)
-
-      if (error) throw error
-
-      setTemplates(templates.map(t => 
-        t.id === currentTemplate.id ? currentTemplate : t
-      ))
+      await updateTemplate(currentTemplate)
       setCurrentTemplate({ name: "", exercises: [], user_id: "" })
       setIsEditing(false)
-      await loadTemplates()
     } catch (error) {
       console.error('Error updating template:', error)
     }
@@ -123,14 +84,7 @@ export function TemplateManager() {
     if (!templateToDelete) return
 
     try {
-      const { error } = await supabase
-        .from('workout_templates')
-        .delete()
-        .eq('id', templateToDelete)
-
-      if (error) throw error
-
-      await loadTemplates()
+      await deleteTemplate(templateToDelete)
       setDeleteConfirmOpen(false)
       setTemplateToDelete(null)
     } catch (error) {
@@ -216,12 +170,23 @@ export function TemplateManager() {
                 >
                   Add Exercise
                 </Button>
-                <Button 
-                  onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
-                  className="btn-apple flex items-center justify-center"
-                >
-                  {currentTemplate.id ? 'Update Template' : 'Save Template'}
-                </Button>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
+                        className="btn-apple flex items-center justify-center"
+                      >
+                        {currentTemplate.id ? 'Update Template' : 'Save Template'}
+                      </Button>
+                    </TooltipTrigger>
+                    {isDemoMode && (
+                      <TooltipContent className="bg-black text-white px-4 py-2 text-sm font-medium">
+                        <p>Make an account to save templates</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
                 <Button 
                   variant="outline" 
                   onClick={() => {

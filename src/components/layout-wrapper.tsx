@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import { Navbar } from "./navbar"
+import { DemoBanner } from "./demo-banner"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -15,6 +16,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen">
         <Navbar />
         <div className="flex-1 flex flex-col md:pt-0 pt-16">
+          <DemoBanner />
           {children}
         </div>
       </div>
