@@ -1,5 +1,4 @@
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
-import { Boxes } from "@/components/ui/background-boxes"
 import { TextHoverEffect } from "@/components/ui/text-hover-effect"
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
 import Link from "next/link"
