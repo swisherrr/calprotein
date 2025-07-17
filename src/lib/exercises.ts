@@ -16,7 +16,13 @@ export const EXERCISE_LIST = [
   // Arms
   "Preacher Curl",
   "Preacher Hammer Curl",
-  "Tricep Pushdown"
+  "Tricep Pushdown",
+  
+  // Legs
+  "RDL",
+  "Hip Thrust",
+  "Sumo Squat",
+  "Squat"
 ]
 
 // Exercise groups for dropdown organization
@@ -36,5 +42,9 @@ export const EXERCISE_GROUPS = [
   {
     label: "Arms",
     exercises: ["Preacher Curl", "Preacher Hammer Curl", "Tricep Pushdown"]
+  },
+  {
+    label: "Legs",
+    exercises: ["RDL", "Hip Thrust", "Sumo Squat", "Squat"]
   }
 ] 
