@@ -699,7 +699,7 @@ export function WorkoutLogger() {
                 <div className="flex justify-center">
                   <Button 
                     onClick={() => startWorkout(template)} 
-                    className="font-medium bg-white text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-full mt-2"
+                    className="font-medium bg-blue-600 text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-full mt-2"
                   >
                     Start Workout
                   </Button>

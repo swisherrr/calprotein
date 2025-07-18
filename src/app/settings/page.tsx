@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useDemo } from "@/components/providers/demo-provider"
+import { ThemeSelector } from "@/components/ui/theme-selector"
 
 function SettingToggle({ 
   label, 
@@ -63,6 +64,11 @@ export default function SettingsPage() {
         <p className="text-gray-500 dark:text-gray-400">
           Customize your workout experience and app preferences.
         </p>
+      </div>
+
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Appearance</h2>
+        <ThemeSelector />
       </div>
 
       <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">

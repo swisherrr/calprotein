@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SupabaseProvider from "@/components/providers/supabase-provider";
 import { DemoProvider } from "@/components/providers/demo-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from 'sonner'
 import { LayoutWrapper } from "@/components/layout-wrapper"
 import Link from "next/link"
@@ -25,13 +26,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-        <SupabaseProvider>
-          <DemoProvider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
-          </DemoProvider>
-        </SupabaseProvider>
+        <ThemeProvider>
+          <SupabaseProvider>
+            <DemoProvider>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+            </DemoProvider>
+          </SupabaseProvider>
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>

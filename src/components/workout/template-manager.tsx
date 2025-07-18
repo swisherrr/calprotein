@@ -163,31 +163,33 @@ export function TemplateManager() {
                 ))}
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button 
-                  onClick={handleAddExercise}
-                  variant="outline"
-                  className="flex items-center justify-center"
-                >
-                  Add Exercise
-                </Button>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
-                        className="flex items-center justify-center font-medium"
-                      >
-                        {currentTemplate.id ? 'Update Template' : 'Save Template'}
-                      </Button>
-                    </TooltipTrigger>
-                    {isDemoMode && (
-                      <TooltipContent className="bg-black text-white px-4 py-2 text-sm font-medium">
-                        <p>Make an account to save templates</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    onClick={handleAddExercise}
+                    variant="outline"
+                    className="flex items-center justify-center"
+                  >
+                    Add Exercise
+                  </Button>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
+                          className="flex items-center justify-center font-medium"
+                        >
+                          {currentTemplate.id ? 'Update Template' : 'Save Template'}
+                        </Button>
+                      </TooltipTrigger>
+                      {isDemoMode && (
+                        <TooltipContent className="bg-black text-white px-4 py-2 text-sm font-medium">
+                          <p>Make an account to save templates</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <Button 
                   variant="outline" 
                   onClick={() => {
@@ -216,7 +218,7 @@ export function TemplateManager() {
         <div className="flex justify-center">
           <Button 
             onClick={() => setIsEditing(true)}
-            className="font-medium"
+            className="font-medium hover:text-gray-700 dark:hover:text-gray-100"
           >
             Create New Template
           </Button>

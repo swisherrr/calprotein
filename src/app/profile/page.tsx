@@ -75,7 +75,7 @@ export default function ProfilePage() {
       {/* Sign Out Button */}
       <button
         onClick={handleSignOut}
-        className="mt-16 text-red-600 dark:text-red-400 text-base font-medium rounded-full px-8 py-2 border border-red-100 dark:border-red-900 bg-transparent hover:bg-red-50 dark:hover:bg-red-900 transition-none"
+        className="mt-16 text-red-600 dark:text-red-400 text-base font-medium rounded-full px-8 py-2 border border-red-100 dark:border-red-900 bg-transparent hover:bg-red-100 dark:hover:bg-red-900 transition-none"
         style={{ boxShadow: 'none' }}
       >
         Sign Out
