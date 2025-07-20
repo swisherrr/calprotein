@@ -35,7 +35,6 @@ export default function FriendsPage() {
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    console.log('Friends page useEffect triggered');
     getCurrentUser();
     loadFriends();
     loadPendingRequests();
@@ -111,8 +110,6 @@ export default function FriendsPage() {
 
   const sendFriendRequest = async (userId: string) => {
     try {
-      console.log('Sending friend request to user ID:', userId);
-      
       const response = await fetch('/api/friends/send-request', {
         method: 'POST',
         headers: {
@@ -121,13 +118,10 @@ export default function FriendsPage() {
         body: JSON.stringify({ receiverId: userId }),
       });
 
-      console.log('Response status:', response.status);
       const responseData = await response.json();
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         if (responseData.error === 'Friend request already exists') {
-          console.log('Friend request already exists, updating UI');
           // If request already exists, just update the UI to show it
           setSearchResults(prev => prev.map(user => 
             user.id === userId 
@@ -139,7 +133,6 @@ export default function FriendsPage() {
         throw new Error(responseData.error || 'Failed to send friend request');
       }
 
-      console.log('Friend request sent successfully');
       // Update the user in search results to show request sent
       setSearchResults(prev => prev.map(user => 
         user.id === userId 
@@ -194,12 +187,7 @@ export default function FriendsPage() {
   const loadPendingRequests = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('No user found in loadPendingRequests');
-        return;
-      }
-
-      console.log('Loading pending requests for user:', user.id);
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('friendship_requests')
@@ -207,29 +195,18 @@ export default function FriendsPage() {
         .eq('receiver_id', user.id)
         .eq('status', 'pending');
 
-      if (error) {
-        console.error('Error fetching pending requests:', error);
-        throw error;
-      }
-
-      console.log('Raw pending requests data:', data);
+      if (error) throw error;
 
       // Get sender usernames for all pending requests
       if (data && data.length > 0) {
         const senderIds = data.map(request => request.sender_id);
-        console.log('Sender IDs:', senderIds);
         
         const { data: senderProfiles, error: profilesError } = await supabase
           .from('user_profiles')
           .select('user_id, username')
           .in('user_id', senderIds);
 
-        if (profilesError) {
-          console.error('Error fetching sender profiles:', profilesError);
-          throw profilesError;
-        }
-
-        console.log('Sender profiles:', senderProfiles);
+        if (profilesError) throw profilesError;
 
         // Create a map of user_id to username
         const usernameMap = new Map();
@@ -243,10 +220,8 @@ export default function FriendsPage() {
           sender_username: usernameMap.get(request.sender_id) || 'Unknown User'
         }));
 
-        console.log('Final pending requests with usernames:', requestsWithUsernames);
         setPendingRequests(requestsWithUsernames);
       } else {
-        console.log('No pending requests found');
         setPendingRequests([]);
       }
     } catch (error) {
@@ -304,77 +279,7 @@ export default function FriendsPage() {
     searchUsers();
   };
 
-  const debugCheckRequests = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      console.log('=== DEBUG: Checking all friendship requests ===');
-      
-      // Check all requests (not just pending)
-      const { data: allRequests, error } = await supabase
-        .from('friendship_requests')
-        .select('*');
-
-      if (error) {
-        console.error('Error fetching all requests:', error);
-        return;
-      }
-
-      console.log('All friendship requests in database:', allRequests);
-      
-      // Check requests where current user is receiver
-      const { data: receivedRequests, error: receivedError } = await supabase
-        .from('friendship_requests')
-        .select('*')
-        .eq('receiver_id', user.id);
-
-      if (receivedError) {
-        console.error('Error fetching received requests:', receivedError);
-        return;
-      }
-
-      console.log('Requests where current user is receiver:', receivedRequests);
-      console.log('Received request details:', JSON.stringify(receivedRequests, null, 2));
-      
-      // Check requests where current user is sender
-      const { data: sentRequests, error: sentError } = await supabase
-        .from('friendship_requests')
-        .select('*')
-        .eq('sender_id', user.id);
-
-      if (sentError) {
-        console.error('Error fetching sent requests:', sentError);
-        return;
-      }
-
-      console.log('Requests where current user is sender:', sentRequests);
-      console.log('Sent request details:', JSON.stringify(sentRequests, null, 2));
-
-      // Try to manually update a rejected request to pending
-      if (receivedRequests && receivedRequests.length > 0) {
-        const rejectedRequest = receivedRequests.find(r => r.status === 'rejected');
-        if (rejectedRequest) {
-          console.log('=== DEBUG: Trying to manually update rejected request ===');
-          console.log('Request to update:', rejectedRequest);
-          
-          const { data: updateData, error: updateError } = await supabase
-            .from('friendship_requests')
-            .update({ status: 'pending' })
-            .eq('id', rejectedRequest.id)
-            .select();
-
-          if (updateError) {
-            console.error('Manual update error:', updateError);
-          } else {
-            console.log('Manual update successful:', updateData);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error in debug function:', error);
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -404,15 +309,7 @@ export default function FriendsPage() {
           </Button>
         </form>
         
-        {/* Debug button - remove this later */}
-        <Button 
-          onClick={debugCheckRequests} 
-          variant="outline" 
-          size="sm" 
-          className="mb-4"
-        >
-          Debug: Check All Requests
-        </Button>
+
         
 
 
@@ -421,16 +318,21 @@ export default function FriendsPage() {
           <div className="space-y-2">
             {searchResults.length > 0 ? (
               searchResults.map((user) => (
-                <div
+                                <div
                   key={user.id}
                   className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
                 >
-                  <div>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="/profile-placeholder.jpg"
+                      alt={`${user.username}'s profile`}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
                     <p className="font-medium">{user.username}</p>
                   </div>
                   {user.requestSent ? (
                     <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                      Request Sent ✓
+                      Request Sent 
                     </span>
                   ) : (
                     <Button
@@ -464,33 +366,40 @@ export default function FriendsPage() {
           </h2>
           <div className="space-y-2">
             {pendingRequests.map((request) => (
-              <div
-                key={request.id}
-                className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium">Friend Request</p>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                    Request from: {request.sender_username || 'Unknown User'}
-                  </p>
+                              <div
+                  key={request.id}
+                  className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="/profile-placeholder.jpg"
+                      alt={`${request.sender_username || 'Unknown User'}'s profile`}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-medium">Friend Request</p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Request from: {request.sender_username || 'Unknown User'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => acceptFriendRequest(request.id)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => rejectFriendRequest(request.id)}
+                    >
+                      Reject
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => acceptFriendRequest(request.id)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => rejectFriendRequest(request.id)}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              </div>
             ))}
           </div>
         </div>
@@ -510,14 +419,19 @@ export default function FriendsPage() {
         ) : (
           <div className="space-y-2">
             {friends.map((friend) => (
-              <div
-                key={friend.id}
-                className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium">{friend.username}</p>
+                              <div
+                  key={friend.id}
+                  className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="/profile-placeholder.jpg"
+                      alt={`${friend.username}'s profile`}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                    <p className="font-medium">{friend.username}</p>
+                  </div>
                 </div>
-              </div>
             ))}
           </div>
         )}
