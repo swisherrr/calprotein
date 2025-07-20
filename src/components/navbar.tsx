@@ -8,6 +8,7 @@ import {
   User,
   LogOut,
   Dumbbell,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,13 @@ export function Navbar() {
       href: "/workout",
       icon: (
         <Dumbbell className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Friends",
+      href: "/friends",
+      icon: (
+        <Users className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
     },
     {
