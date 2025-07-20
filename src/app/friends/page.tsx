@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react";
-import { Search, UserPlus, Users } from "lucide-react";
+import { Search, UserPlus, Users, MoreVertical } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +33,27 @@ export default function FriendsPage() {
   const [pendingRequests, setPendingRequests] = useState<FriendshipRequest[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     getCurrentUser();
     loadFriends();
     loadPendingRequests();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown && !(event.target as Element).closest('.dropdown-container')) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -274,6 +289,42 @@ export default function FriendsPage() {
     }
   };
 
+  const removeFriend = async (friendId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Find the friendship record
+      const { data: friendship, error: findError } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(`and(user1_id.eq.${user.id},user2_id.eq.${friendId}),and(user1_id.eq.${friendId},user2_id.eq.${user.id})`)
+        .single();
+
+      if (findError) {
+        console.error('Error finding friendship:', findError);
+        return;
+      }
+
+      // Delete the friendship
+      const { error: deleteError } = await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendship.id);
+
+      if (deleteError) {
+        console.error('Error removing friend:', deleteError);
+        return;
+      }
+
+      // Reload friends list
+      await loadFriends();
+      setOpenDropdown(null);
+    } catch (error) {
+      console.error('Error removing friend:', error);
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     searchUsers();
@@ -430,6 +481,26 @@ export default function FriendsPage() {
                       className="h-10 w-10 rounded-full object-cover"
                     />
                     <p className="font-medium">{friend.username}</p>
+                  </div>
+                  <div className="relative dropdown-container">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setOpenDropdown(openDropdown === friend.id ? null : friend.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                    {openDropdown === friend.id && (
+                      <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg z-10">
+                        <button
+                          onClick={() => removeFriend(friend.id)}
+                          className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
+                        >
+                          Remove Friend
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
             ))}
