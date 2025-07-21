@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useDemo } from "@/components/providers/demo-provider"
 import { ThemeSelector } from "@/components/ui/theme-selector"
+import { supabase } from "@/lib/supabase"
 
 function SettingToggle({ 
   label, 
@@ -40,12 +41,40 @@ export default function SettingsPage() {
   const { isDemoMode } = useDemo()
   const [autoLoadReps, setAutoLoadReps] = useState(false)
   const [autoLoadWeight, setAutoLoadWeight] = useState(false)
+  const [templatesPrivate, setTemplatesPrivate] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load settings from localStorage
-    setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
-    setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
+    loadSettings()
   }, [])
+
+  const loadSettings = async () => {
+    try {
+      // Load local settings
+      setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
+      setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
+
+      // Load privacy setting from database
+      if (!isDemoMode) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('templates_private')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (profile) {
+            setTemplatesPrivate(profile.templates_private || false)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleToggleReps = (v: boolean) => {
     setAutoLoadReps(v)
@@ -55,6 +84,24 @@ export default function SettingsPage() {
   const handleToggleWeight = (v: boolean) => {
     setAutoLoadWeight(v)
     localStorage.setItem('autoLoadWeight', v ? 'true' : 'false')
+  }
+
+  const handleTogglePrivacy = async (v: boolean) => {
+    setTemplatesPrivate(v)
+    
+    if (!isDemoMode) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase
+            .from('user_profiles')
+            .update({ templates_private: v })
+            .eq('user_id', user.id)
+        }
+      } catch (error) {
+        console.error('Error updating privacy setting:', error)
+      }
+    }
   }
 
   return (
@@ -86,6 +133,17 @@ export default function SettingsPage() {
           description="When enabled, entering weight in the first set will automatically fill the same weight for all remaining sets in that exercise."
           value={autoLoadWeight} 
           onChange={handleToggleWeight} 
+        />
+      </div>
+
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Privacy Settings</h2>
+        
+        <SettingToggle 
+          label="Private Templates" 
+          description="When enabled, only your friends can see your workout templates. When disabled, anyone can view your templates."
+          value={templatesPrivate} 
+          onChange={handleTogglePrivacy} 
         />
       </div>
 

@@ -5,6 +5,7 @@ import { Search, UserPlus, Users, MoreVertical } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 interface User {
   id: string;
@@ -480,7 +481,12 @@ export default function FriendsPage() {
                       alt={`${friend.username}'s profile`}
                       className="h-10 w-10 rounded-full object-cover"
                     />
-                    <p className="font-medium">{friend.username}</p>
+                    <Link 
+                      href={`/user/${friend.username}`}
+                      className="font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {friend.username}
+                    </Link>
                   </div>
                   <div className="relative dropdown-container">
                     <Button
