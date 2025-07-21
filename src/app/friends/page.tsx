@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import ProfilePicture from "@/components/ui/profile-picture";
 
 interface User {
   id: string;
@@ -375,10 +376,9 @@ export default function FriendsPage() {
                   className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src="/profile-placeholder.jpg"
-                      alt={`${user.username}'s profile`}
-                      className="h-10 w-10 rounded-full object-cover"
+                    <ProfilePicture
+                      userId={user.id}
+                      size="md"
                     />
                     <p className="font-medium">{user.username}</p>
                   </div>
@@ -423,10 +423,9 @@ export default function FriendsPage() {
                   className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src="/profile-placeholder.jpg"
-                      alt={`${request.sender_username || 'Unknown User'}'s profile`}
-                      className="h-10 w-10 rounded-full object-cover"
+                    <ProfilePicture
+                      userId={request.sender_id}
+                      size="md"
                     />
                     <div>
                       <p className="font-medium">Friend Request</p>
@@ -476,10 +475,9 @@ export default function FriendsPage() {
                   className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src="/profile-placeholder.jpg"
-                      alt={`${friend.username}'s profile`}
-                      className="h-10 w-10 rounded-full object-cover"
+                    <ProfilePicture
+                      userId={friend.id}
+                      size="md"
                     />
                     <Link 
                       href={`/user/${friend.username}`}

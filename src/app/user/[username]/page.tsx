@@ -8,6 +8,7 @@ import { ArrowLeft, Dumbbell, Users, Copy } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import ProfilePicture from "@/components/ui/profile-picture";
 
 interface UserProfile {
   user_id: string;
@@ -244,10 +245,9 @@ export default function UserProfilePage() {
         </Link>
         
         <div className="flex items-center gap-4">
-          <img
-            src="/profile-placeholder.jpg"
-            alt={`${userProfile.username}'s profile`}
-            className="h-16 w-16 rounded-full object-cover"
+          <ProfilePicture
+            userId={userProfile.user_id}
+            size="lg"
           />
           <div>
             <h1 className="text-3xl font-bold">{userProfile.username}</h1>
