@@ -2,11 +2,15 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import ProfilePictureUpload from "@/components/profile/profile-picture-upload"
+import ProfilePicture from "@/components/ui/profile-picture"
 
 export default function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -16,17 +20,21 @@ export default function ProfilePage() {
         if (user) {
           setEmail(user.email || null)
           
-          // Fetch user profile to get username
+          // Fetch user profile to get username and profile picture
           const { data: profile, error } = await supabase
             .from('user_profiles')
-            .select('username')
+            .select('username, profile_picture_url')
             .eq('user_id', user.id)
             .single()
 
           if (error && error.code !== 'PGRST116') {
             console.error('Error fetching profile:', error)
           } else if (profile) {
+            console.log('Profile data:', profile)
             setUsername(profile.username)
+            setProfilePictureUrl(profile.profile_picture_url)
+          } else {
+            console.log('No profile found')
           }
         }
       } catch (error) {
@@ -44,15 +52,18 @@ export default function ProfilePage() {
     router.refresh()
   }
 
+  const handlePictureUpdate = (url: string | null) => {
+    setProfilePictureUrl(url)
+  }
+
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
       {/* Profile Picture */}
-      <div className="w-28 h-28 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-900 mb-6">
-        <img
-          src="/profile-placeholder.jpg"
-          alt="Profile"
-          className="w-24 h-24 object-cover rounded-full"
-          style={{ display: 'block' }}
+      <div className="mb-6">
+        <ProfilePicture
+          pictureUrl={profilePictureUrl}
+          size="xl"
+          onClick={() => setUploadDialogOpen(true)}
         />
       </div>
       
@@ -80,6 +91,13 @@ export default function ProfilePage() {
       >
         Sign Out
       </button>
+
+      <ProfilePictureUpload
+        currentPictureUrl={profilePictureUrl}
+        onPictureUpdate={handlePictureUpdate}
+        isOpen={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+      />
     </div>
   )
 }

@@ -15,10 +15,22 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useDemo } from "@/components/providers/demo-provider";
+import ProfilePicture from "@/components/ui/profile-picture";
 
 export function Navbar() {
   const router = useRouter()
   const { isDemoMode, exitDemoMode } = useDemo()
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  React.useEffect(() => {
+    async function getCurrentUser() {
+      if (!isDemoMode) {
+        const { data: { user } } = await supabase.auth.getUser()
+        setCurrentUser(user)
+      }
+    }
+    getCurrentUser()
+  }, [isDemoMode])
 
   const handleSignOut = async () => {
     if (isDemoMode) {
@@ -104,12 +116,10 @@ export function Navbar() {
               label: "Profile",
               href: "/profile",
               icon: (
-                <img
-                  src="/profile-placeholder.jpg"
-                  className="h-7 w-7 shrink-0 rounded-full"
-                  width={50}
-                  height={50}
-                  alt="Avatar"
+                <ProfilePicture
+                  userId={currentUser?.id}
+                  size="sm"
+                  className="shrink-0"
                 />
               ),
             }}
