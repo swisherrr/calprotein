@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { useDemo } from "@/components/providers/demo-provider"
 import { ThemeSelector } from "@/components/ui/theme-selector"
 import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+import ProfilePictureUpload from "@/components/profile/profile-picture-upload"
+import ProfilePicture from "@/components/ui/profile-picture"
 
 function SettingToggle({ 
   label, 
@@ -43,10 +46,41 @@ export default function SettingsPage() {
   const [autoLoadWeight, setAutoLoadWeight] = useState(false)
   const [templatesPrivate, setTemplatesPrivate] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [email, setEmail] = useState<string | null>(null)
+  const [username, setUsername] = useState<string | null>(null)
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     loadSettings()
+    loadUserData()
   }, [])
+
+  const loadUserData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setEmail(user.email || null)
+        
+        // Fetch user profile to get username and profile picture
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('username, profile_picture_url')
+          .eq('user_id', user.id)
+          .single()
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching profile:', error)
+        } else if (profile) {
+          setUsername(profile.username)
+          setProfilePictureUrl(profile.profile_picture_url)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+    }
+  }
 
   const loadSettings = async () => {
     try {
@@ -104,6 +138,16 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  const handlePictureUpdate = (url: string | null) => {
+    setProfilePictureUrl(url)
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -111,6 +155,38 @@ export default function SettingsPage() {
         <p className="text-gray-500 dark:text-gray-400">
           Customize your workout experience and app preferences.
         </p>
+      </div>
+
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Account</h2>
+        
+        {/* Profile Picture */}
+        <div className="flex items-center mb-4">
+          <div className="mr-4">
+            <ProfilePicture
+              pictureUrl={profilePictureUrl}
+              size="lg"
+              onClick={() => setUploadDialogOpen(true)}
+            />
+          </div>
+          <div>
+            <div className="text-base font-medium text-gray-800 dark:text-gray-200">
+              {username ? `@${username}` : 'No username set'}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {email || 'Loading...'}
+            </div>
+          </div>
+        </div>
+
+        {/* Sign Out Button */}
+        <button
+          onClick={handleSignOut}
+          className="w-full text-red-600 dark:text-red-400 text-base font-medium rounded-lg px-4 py-2 border border-red-200 dark:border-red-800 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          style={{ boxShadow: 'none' }}
+        >
+          Sign Out
+        </button>
       </div>
 
       <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
@@ -154,6 +230,13 @@ export default function SettingsPage() {
           </p>
         </div>
       )}
+
+      <ProfilePictureUpload
+        currentPictureUrl={profilePictureUrl}
+        onPictureUpdate={handlePictureUpdate}
+        isOpen={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+      />
     </div>
   )
 } 

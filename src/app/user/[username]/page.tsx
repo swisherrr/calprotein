@@ -14,6 +14,7 @@ interface UserProfile {
   user_id: string;
   username: string;
   templates_private: boolean;
+  profile_picture_url?: string;
 }
 
 interface WorkoutTemplate {
@@ -74,7 +75,7 @@ export default function UserProfilePage() {
       // Get user profile by username
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('user_id, username, templates_private')
+        .select('user_id, username, templates_private, profile_picture_url')
         .eq('username', username)
         .single();
 
@@ -208,22 +209,22 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center">Loading...</div>
+      <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
+        <div className="text-center text-gray-500 dark:text-gray-400">Loading...</div>
       </div>
     );
   }
 
   if (error || !userProfile) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">User Not Found</h1>
-          <p className="text-neutral-600 dark:text-neutral-400 mb-4">
+          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">User Not Found</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             The user "{username}" could not be found.
           </p>
           <Link href="/friends">
-            <Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Friends
             </Button>
@@ -236,52 +237,57 @@ export default function UserProfilePage() {
   const canViewTemplates = !userProfile.templates_private || isFriends || currentUser?.id === userProfile.user_id;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <Link href="/friends" className="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 mb-4">
+    <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
+      {/* Back Button */}
+      <div className="w-full max-w-4xl px-4 mb-8">
+        <Link href="/friends" className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Friends
         </Link>
-        
-        <div className="flex items-center gap-4">
-          <ProfilePicture
-            userId={userProfile.user_id}
-            size="lg"
-          />
-          <div>
-            <h1 className="text-3xl font-bold">{userProfile.username}</h1>
-            <p className="text-neutral-600 dark:text-neutral-400">
-              {userProfile.templates_private ? 'Private Profile' : 'Public Profile'}
-            </p>
-          </div>
-        </div>
+      </div>
+
+      {/* Profile Picture */}
+      <div className="mb-6">
+        <ProfilePicture
+          pictureUrl={userProfile.profile_picture_url}
+          size="xl"
+        />
+      </div>
+      
+      {/* Username */}
+      <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        @{userProfile.username}
+      </div>
+
+      {/* Privacy Status */}
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8">
+        {userProfile.templates_private ? 'Private Profile' : 'Public Profile'}
       </div>
 
       {/* Templates Section */}
-      <div className="bg-white dark:bg-neutral-900 rounded-lg p-6 border border-neutral-200 dark:border-neutral-800">
+      <div className="w-full max-w-4xl px-4">
         <div className="flex items-center gap-2 mb-6">
           <Dumbbell className="h-5 w-5" />
-          <h2 className="text-xl font-semibold">Workout Templates</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Workout Templates</h2>
         </div>
 
         {!canViewTemplates ? (
           <div className="text-center py-8">
-            <Users className="h-12 w-12 mx-auto mb-4 text-neutral-400" />
-            <h3 className="text-lg font-medium mb-2">Private Templates</h3>
-            <p className="text-neutral-600 dark:text-neutral-400 mb-4">
+            <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Private Templates</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               This user's templates are private. Send them a friend request to view their templates.
             </p>
             <Link href="/friends">
-              <Button>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Users className="h-4 w-4 mr-2" />
                 Send Friend Request
               </Button>
             </Link>
           </div>
         ) : templates.length === 0 ? (
-          <div className="text-center py-8 text-neutral-600 dark:text-neutral-400">
-            <Dumbbell className="h-12 w-12 mx-auto mb-4 text-neutral-400" />
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <Dumbbell className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <p>No workout templates found.</p>
           </div>
         ) : (
@@ -289,16 +295,16 @@ export default function UserProfilePage() {
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors"
+                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
               >
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-medium">{template.name}</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h3>
                   {currentUser && currentUser.id !== userProfile.user_id && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleCopyTemplate(template)}
-                      className="h-8 w-8 p-0 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       title="Copy template"
                     >
                       <Copy className="h-4 w-4" />
@@ -310,10 +316,10 @@ export default function UserProfilePage() {
                 <div className="space-y-2 mb-3">
                   {template.exercises?.map((exercise: any, index: number) => (
                     <div key={index} className="text-sm">
-                      <div className="font-medium text-neutral-900 dark:text-neutral-100">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
                         {exercise.name}
                       </div>
-                      <div className="text-neutral-600 dark:text-neutral-400">
+                      <div className="text-gray-600 dark:text-gray-400">
                         {exercise.sets || 0} sets
                         {exercise.reps && ` × ${exercise.reps} reps`}
                         {exercise.weight && ` @ ${exercise.weight}lbs`}
@@ -322,7 +328,7 @@ export default function UserProfilePage() {
                   ))}
                 </div>
                 
-                <p className="text-xs text-neutral-500 dark:text-neutral-500 border-t border-neutral-200 dark:border-neutral-700 pt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-2">
                   Created {new Date(template.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -333,7 +339,7 @@ export default function UserProfilePage() {
 
       {/* Copy Template Dialog */}
       <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
-        <DialogContent className="max-w-md w-[90vw] mx-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-lg">
+        <DialogContent className="max-w-md w-[90vw] mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-700 shadow-lg">
           <DialogHeader>
             <DialogTitle>Copy Template</DialogTitle>
           </DialogHeader>
