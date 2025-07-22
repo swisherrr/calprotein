@@ -10,6 +10,7 @@ import {
   Dumbbell,
   Users,
   Search,
+  Bell,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -22,12 +23,26 @@ export function Navbar() {
   const router = useRouter()
   const { isDemoMode, exitDemoMode } = useDemo()
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [notificationCount, setNotificationCount] = useState(0)
 
   React.useEffect(() => {
     async function getCurrentUser() {
       if (!isDemoMode) {
         const { data: { user } } = await supabase.auth.getUser()
         setCurrentUser(user)
+        
+        // Fetch notification count
+        if (user) {
+          try {
+            const response = await fetch('/api/notifications/count')
+            if (response.ok) {
+              const { count } = await response.json()
+              setNotificationCount(count)
+            }
+          } catch (error) {
+            console.error('Error fetching notification count:', error)
+          }
+        }
       }
     }
     getCurrentUser()
@@ -72,6 +87,20 @@ export function Navbar() {
       href: "/search",
       icon: (
         <Search className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: (
+        <div className="relative">
+          <Bell className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+          {notificationCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {notificationCount > 99 ? '99+' : notificationCount}
+            </span>
+          )}
+        </div>
       ),
     },
     {

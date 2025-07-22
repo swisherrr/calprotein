@@ -7,21 +7,31 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
   const supabase = createClient();
 
-  // Followers: users who follow this user
-  const { data: followers, error: followersError } = await supabase
+  // Get all followers (for status checking) and accepted followers (for count)
+  const { data: allFollowers, error: allFollowersError } = await supabase
     .from('follows')
     .select('id, follower_id, status')
     .eq('followed_id', userId);
 
-  // Following: users this user follows
-  const { data: following, error: followingError } = await supabase
+  // Get all following (for status checking) and accepted following (for count)
+  const { data: allFollowing, error: allFollowingError } = await supabase
     .from('follows')
     .select('id, followed_id, status')
     .eq('follower_id', userId);
 
-  if (followersError || followingError) {
+  if (allFollowersError || allFollowingError) {
     return NextResponse.json({ error: 'Failed to fetch followers/following' }, { status: 500 });
   }
 
-  return NextResponse.json({ followers, following });
+  // Filter to only accepted relationships for counts
+  const followers = allFollowers?.filter(f => f.status === 'accepted') || [];
+  const following = allFollowing?.filter(f => f.status === 'accepted') || [];
+
+  // Return both the counts (accepted only) and all relationships (for status checking)
+  return NextResponse.json({ 
+    followers, 
+    following,
+    allFollowers: allFollowers || [],
+    allFollowing: allFollowing || []
+  });
 } 

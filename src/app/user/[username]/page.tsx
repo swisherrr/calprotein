@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Dumbbell, Users, Copy, Activity } from "lucide-react";
+import { ArrowLeft, Dumbbell, Users, Copy, Activity, Camera } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -61,29 +61,45 @@ export default function UserProfilePage() {
   const [followStatus, setFollowStatus] = useState<'none' | 'accepted' | 'pending'>('none');
   const [followId, setFollowId] = useState<string | null>(null);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [progressPictures, setProgressPictures] = useState<any[]>([]);
+  const [progressPicturesLoading, setProgressPicturesLoading] = useState(true);
 
   // Fetch followers/following and follow status
   const fetchFollowData = useCallback(async (profileUserId: string) => {
     if (!currentUser) return;
     // Get followers and following
     const res = await fetch(`/api/follow/list?userId=${profileUserId}`);
-    const { followers, following } = await res.json();
+    const { followers, following, allFollowers, allFollowing } = await res.json();
     setFollowers(followers);
     setFollowing(following);
-    // Check if current user follows this profile
-    const myFollow = (followers as Array<{follower_id: string, status: string, id: string}>).find((f) => f.follower_id === currentUser.id);
+    // Check if current user follows this profile (use allFollowers for status checking)
+    const myFollow = (allFollowers as Array<{follower_id: string, status: string, id: string}>).find((f) => f.follower_id === currentUser.id);
     if (myFollow) {
-      setFollowStatus(myFollow.status as 'none' | 'accepted' | 'pending');
-      setFollowId(myFollow.id);
+      // Reset rejected requests to 'none' so user can request again
+      if (myFollow.status === 'rejected') {
+        setFollowStatus('none');
+        setFollowId(null);
+      } else {
+        setFollowStatus(myFollow.status as 'none' | 'accepted' | 'pending');
+        setFollowId(myFollow.id);
+      }
     } else {
       setFollowStatus('none');
       setFollowId(null);
     }
     // If viewing own profile and private, show pending requests
     if (profileUserId === currentUser.id && userProfile?.private_account) {
-      setPendingRequests((followers as Array<{status: string}>).filter((f) => f.status === 'pending'));
+      setPendingRequests((allFollowers as Array<{status: string}>).filter((f) => f.status === 'pending'));
     } else {
       setPendingRequests([]);
+    }
+
+    // Reload content with correct privacy settings after follow status is determined
+    if (userProfile) {
+      const isFriendsWithUser = myFollow?.status === 'accepted';
+      loadTemplates(userProfile, isFriendsWithUser);
+      loadSharedWorkouts(userProfile.user_id, userProfile.private_account, isFriendsWithUser);
+      loadProgressPictures(userProfile, isFriendsWithUser);
     }
   }, [currentUser, userProfile]);
 
@@ -131,12 +147,15 @@ export default function UserProfilePage() {
       // Wait for current user to be loaded, then check friendship status
       if (currentUser) {
         await fetchFollowData(profile.user_id);
-        await loadTemplates(profile, false); // No longer friends, so always load templates
-        await loadSharedWorkouts(profile.user_id, profile.private_account, false);
-      } else {
-        // If no current user (not logged in), just load templates
+        // Load content based on privacy settings (will be updated after follow status is determined)
         await loadTemplates(profile, false);
         await loadSharedWorkouts(profile.user_id, profile.private_account, false);
+        await loadProgressPictures(profile, false);
+      } else {
+        // If no current user (not logged in), just load public content
+        await loadTemplates(profile, false);
+        await loadSharedWorkouts(profile.user_id, profile.private_account, false);
+        await loadProgressPictures(profile, false);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -250,6 +269,51 @@ export default function UserProfilePage() {
     }
   };
 
+  const loadProgressPictures = async (profile: UserProfile, isFriendsWithUser: boolean) => {
+    try {
+      setProgressPicturesLoading(true);
+      
+      // Load progress pictures based on privacy settings
+      let query = supabase
+        .from('progress_pictures')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .order('created_at', { ascending: false });
+
+      // If private account and not friends, only show non-hidden pictures
+      if (profile.private_account && !isFriendsWithUser) {
+        query = query.eq('hidden', false);
+      }
+
+      const { data: progressPicturesData, error } = await query;
+
+      if (error) {
+        console.error('Error loading progress pictures:', error);
+        return;
+      }
+
+      // Get user's deleted progress pictures
+      const { data: userProfileData } = await supabase
+        .from('user_profiles')
+        .select('deleted_progress_pictures')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      const deletedPictures = userProfileData?.deleted_progress_pictures || [];
+
+      // Filter out deleted pictures
+      const filteredPictures = (progressPicturesData || []).filter(picture => {
+        return !deletedPictures.includes(picture.id);
+      });
+
+      setProgressPictures(filteredPictures);
+    } catch (error) {
+      console.error('Error loading progress pictures:', error);
+    } finally {
+      setProgressPicturesLoading(false);
+    }
+  };
+
   const handleCopyTemplate = (template: WorkoutTemplate) => {
     setTemplateToCopy(template);
     setNewTemplateName(`${template.name} (Copy)`);
@@ -308,22 +372,7 @@ export default function UserProfilePage() {
     });
     fetchFollowData(userProfile.user_id);
   };
-  const handleAccept = async (id: string) => {
-    await fetch('/api/follow/accept', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followId: id })
-    });
-    fetchFollowData(userProfile!.user_id);
-  };
-  const handleReject = async (id: string) => {
-    await fetch('/api/follow/reject', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followId: id })
-    });
-    fetchFollowData(userProfile!.user_id);
-  };
+
 
   if (loading) {
     return (
@@ -341,10 +390,10 @@ export default function UserProfilePage() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             The user "{username}" could not be found.
           </p>
-          <Link href="/friends">
+          <Link href="/search">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Friends
+              Back to Search
             </Button>
           </Link>
         </div>
@@ -352,7 +401,7 @@ export default function UserProfilePage() {
     );
   }
 
-  const canViewTemplates = !userProfile.private_account || currentUser?.id === userProfile.user_id;
+  const canViewTemplates = !userProfile.private_account || currentUser?.id === userProfile.user_id || followStatus === 'accepted';
 
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
@@ -382,7 +431,7 @@ export default function UserProfilePage() {
                   onClick={handleFollow}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-full"
                 >
-                  Follow
+                  {userProfile.private_account ? 'Request' : 'Follow'}
                 </Button>
               )}
               {followStatus === 'pending' && (
@@ -399,18 +448,20 @@ export default function UserProfilePage() {
                   onClick={handleUnfollow}
                   className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 px-8 rounded-full"
                 >
-                  Following
+                  Unfollow
                 </Button>
               )}
+
             </div>
           )}
+
         </div>
       </div>
 
 
 
       {/* Templates Section */}
-      {templates.length > 0 && (
+      {templates.length > 0 && canViewTemplates && (
         <div className="w-full max-w-4xl px-4">
           <div className="flex items-center gap-2 mb-6">
             <Dumbbell className="h-5 w-5" />
@@ -464,7 +515,7 @@ export default function UserProfilePage() {
       )}
 
       {/* Logged Workouts Section */}
-      {sharedWorkouts.length > 0 && (
+      {sharedWorkouts.length > 0 && canViewTemplates && (
         <div className="w-full max-w-4xl px-4 mt-8">
           <div className="flex items-center gap-2 mb-6">
             <Activity className="h-5 w-5" />
@@ -523,42 +574,74 @@ export default function UserProfilePage() {
         </div>
       )}
 
+      {/* Progress Pictures Section */}
+      {progressPictures.length > 0 && canViewTemplates && (
+        <div className="w-full max-w-4xl px-4 mt-8">
+          <div className="flex items-center gap-2 mb-6">
+            <Camera className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Progress Pictures</h2>
+          </div>
+
+          {progressPicturesLoading ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              Loading progress pictures...
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1">
+              {progressPictures.map((picture) => (
+                <div
+                  key={picture.id}
+                  className="relative aspect-square cursor-pointer group"
+                  onClick={() => {
+                    // Could add a modal to view the picture in detail
+                  }}
+                >
+                  <img 
+                    src={picture.image_url} 
+                    alt="Progress Picture" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Show message when templates are private and user can't view them */}
-      {!canViewTemplates && (
+      {!canViewTemplates && currentUser && currentUser.id !== userProfile.user_id && (followStatus === 'none' || followStatus === 'pending') && (
         <div className="w-full max-w-4xl px-4">
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Private Account</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              This account is private. Send a friend request to view the profile.
+              This account is private. Follow this user to view their profile.
             </p>
-            <Link href="/friends">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            {followStatus === 'none' && (
+              <Button 
+                onClick={handleFollow}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
                 <Users className="h-4 w-4 mr-2" />
-                Send Friend Request
+                Request
               </Button>
-            </Link>
+            )}
+            {followStatus === 'pending' && (
+              <Button 
+                disabled
+                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Request Sent
+              </Button>
+            )}
+
+
           </div>
         </div>
       )}
 
-      {/* Pending follow requests for private accounts (if viewing own profile) */}
-      {currentUser && userProfile.user_id === currentUser.id && userProfile.private_account && pendingRequests.length > 0 && (
-        <div className="w-full max-w-4xl px-4 mb-6">
-          <h3 className="text-lg font-medium mb-2">Pending Follow Requests</h3>
-          <div className="space-y-2">
-            {pendingRequests.map(req => (
-              <div key={req.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded p-2">
-                <span>{req.follower_id}</span>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleAccept(req.id)}>Accept</Button>
-                  <Button size="sm" variant="outline" onClick={() => handleReject(req.id)}>Reject</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Copy Template Dialog */}
       <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
