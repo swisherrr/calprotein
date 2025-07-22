@@ -34,12 +34,10 @@ export function CustomExerciseManager() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this custom exercise?')) {
-      try {
-        await deleteCustomExercise(id)
-      } catch (error) {
-        console.error('Error deleting custom exercise:', error)
-      }
+    try {
+      await deleteCustomExercise(id)
+    } catch (error) {
+      console.error('Error deleting custom exercise:', error)
     }
   }
 
