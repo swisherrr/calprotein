@@ -740,71 +740,69 @@ export default function ProfilePage() {
       )}
 
       {/* Progress Pictures Section */}
-      {progressPictures.filter(picture => !deletedProgressPictures.has(picture.id)).length > 0 && (
-        <div className="w-full max-w-4xl px-4 mt-8">
-          <div className="flex items-center gap-2 mb-6">
-            <Camera className="h-5 w-5" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Progress Pictures</h2>
-          </div>
-
-          {progressPicturesLoading ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Loading progress pictures...
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-1">
-              {/* Post Button Square */}
-              <div
-                className="relative aspect-square cursor-pointer group bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                onClick={() => setShowUploadDialog(true)}
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Plus className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                </div>
-              </div>
-              
-              {progressPictures
-                .filter(picture => !deletedProgressPictures.has(picture.id))
-                .map((picture) => {
-                  const isHidden = hiddenProgressPictures.has(picture.id)
-                  return (
-                    <div
-                      key={picture.id}
-                      className={`relative aspect-square cursor-pointer group ${
-                        isHidden ? 'opacity-50' : ''
-                      }`}
-                      onClick={() => {
-                        setSelectedProgressPicture(picture)
-                        setShowProgressPictureModal(true)
-                      }}
-                    >
-                      <img 
-                        src={picture.image_url} 
-                        alt="Progress Picture" 
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedProgressPicture(picture)
-                            setShowProgressPictureMenu(true)
-                          }}
-                          className="h-8 w-8 p-0 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-transparent dark:hover:bg-transparent"
-                          title="More options"
-                        >
-                          ⋯
-                        </Button>
-                      </div>
-                    </div>
-                  )
-                })}
-            </div>
-          )}
+      <div className="w-full max-w-4xl px-4 mt-8">
+        <div className="flex items-center gap-2 mb-6">
+          <Camera className="h-5 w-5" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Progress Pictures</h2>
         </div>
-      )}
+
+        {progressPicturesLoading ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            Loading progress pictures...
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-1">
+            {/* Post Button Square */}
+            <div
+              className="relative aspect-square cursor-pointer group bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              onClick={() => setShowUploadDialog(true)}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Plus className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+              </div>
+            </div>
+            
+            {progressPictures
+              .filter(picture => !deletedProgressPictures.has(picture.id))
+              .map((picture) => {
+                const isHidden = hiddenProgressPictures.has(picture.id)
+                return (
+                  <div
+                    key={picture.id}
+                    className={`relative aspect-square cursor-pointer group ${
+                      isHidden ? 'opacity-50' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedProgressPicture(picture)
+                      setShowProgressPictureModal(true)
+                    }}
+                  >
+                    <img 
+                      src={picture.image_url} 
+                      alt="Progress Picture" 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedProgressPicture(picture)
+                          setShowProgressPictureMenu(true)
+                        }}
+                        className="h-8 w-8 p-0 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-transparent dark:hover:bg-transparent"
+                        title="More options"
+                      >
+                        ⋯
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        )}
+      </div>
 
       {/* Upload Progress Picture Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
