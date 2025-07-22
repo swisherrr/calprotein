@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Dumbbell, Users, Copy } from "lucide-react";
+import { ArrowLeft, Dumbbell, Users, Copy, Activity } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,16 @@ interface WorkoutTemplate {
   created_at: string;
 }
 
+interface SharedWorkout {
+  id: string;
+  template_name: string;
+  total_volume: number;
+  duration: string;
+  exercises: any[];
+  exercise_stats: any[];
+  created_at: string;
+}
+
 interface Friendship {
   user1_id: string;
   user2_id: string;
@@ -35,6 +45,7 @@ export default function UserProfilePage() {
   
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [sharedWorkouts, setSharedWorkouts] = useState<SharedWorkout[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isFriends, setIsFriends] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -91,15 +102,62 @@ export default function UserProfilePage() {
         const isFriendsWithUser = await checkFriendshipStatus(profile.user_id);
         // Load templates after friendship check with the correct friendship status
         await loadTemplates(profile, isFriendsWithUser);
+        await loadSharedWorkouts(profile.user_id);
       } else {
         // If no current user (not logged in), just load templates
         await loadTemplates(profile, false);
+        await loadSharedWorkouts(profile.user_id);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
       setError('Failed to load user profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSharedWorkouts = async (userId: string) => {
+    try {
+      // Load shared workouts
+      const { data: workoutsData, error } = await supabase
+        .from('shared_workouts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading shared workouts:', error);
+        return;
+      }
+
+      console.log('Shared workouts found:', workoutsData);
+      
+      // Filter out hidden workouts if viewing another user's profile
+      let filteredWorkouts = workoutsData || [];
+      if (currentUser?.id !== userId) {
+        // Get hidden and deleted workouts for this user
+        const { data: userProfileData } = await supabase
+          .from('user_profiles')
+          .select('hidden_workouts, deleted_workouts')
+          .eq('user_id', userId)
+          .single();
+
+        if (userProfileData?.hidden_workouts && Array.isArray(userProfileData.hidden_workouts)) {
+          const hiddenWorkoutIds = new Set(userProfileData.hidden_workouts);
+          filteredWorkouts = filteredWorkouts.filter(workout => !hiddenWorkoutIds.has(workout.id));
+          console.log('Filtered out hidden workouts:', hiddenWorkoutIds);
+        }
+
+        if (userProfileData?.deleted_workouts && Array.isArray(userProfileData.deleted_workouts)) {
+          const deletedWorkoutIds = new Set(userProfileData.deleted_workouts);
+          filteredWorkouts = filteredWorkouts.filter(workout => !deletedWorkoutIds.has(workout.id));
+          console.log('Filtered out deleted workouts:', deletedWorkoutIds);
+        }
+      }
+      
+      setSharedWorkouts(filteredWorkouts);
+    } catch (error) {
+      console.error('Error loading shared workouts:', error);
     }
   };
 
@@ -330,6 +388,66 @@ export default function UserProfilePage() {
                 <p className="text-xs text-gray-500 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-2">
                   Created {new Date(template.created_at).toLocaleDateString()}
                 </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Logged Workouts Section */}
+      {sharedWorkouts.length > 0 && (
+        <div className="w-full max-w-4xl px-4 mt-8">
+          <div className="flex items-center gap-2 mb-6">
+            <Activity className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Logged Workouts</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {sharedWorkouts.map((workout) => (
+              <div
+                key={workout.id}
+                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+              >
+                <div className="mb-3">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">{workout.template_name}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    {new Date(workout.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                
+                {/* Workout Stats */}
+                <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                  <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {workout.total_volume.toLocaleString()}
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400">lbs</div>
+                  </div>
+                  <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {workout.duration}
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400">duration</div>
+                  </div>
+                </div>
+                
+                {/* Exercise Breakdown */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Exercises</h4>
+                  {workout.exercise_stats?.map((exercise: any, index: number) => (
+                    <div key={index} className="text-xs">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        {exercise.name}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
+                      </div>
+                      <div className="text-blue-600 dark:text-blue-400 font-medium">
+                        Volume: {exercise.volume.toLocaleString()} lbs
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

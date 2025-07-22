@@ -129,6 +129,8 @@ export function WorkoutLogger() {
   } | null>(null)
   const [autoLoadReps, setAutoLoadReps] = useState(false)
   const [autoLoadWeight, setAutoLoadWeight] = useState(false)
+  const [postingToProfile, setPostingToProfile] = useState(false)
+  const [completedTemplateName, setCompletedTemplateName] = useState<string | null>(null)
 
   useEffect(() => {
     // Load settings from localStorage
@@ -449,9 +451,11 @@ export function WorkoutLogger() {
         total_volume: totalVolume
       }
 
-      const { error } = await supabase
+      const { data: savedWorkout, error } = await supabase
         .from('workout_logs')
         .insert([workoutToSave])
+        .select()
+        .single()
 
       if (error) throw error
 
@@ -497,12 +501,52 @@ export function WorkoutLogger() {
         exerciseStats
       })
 
+      setCompletedTemplateName(selectedTemplate?.name || null)
       setShowSummary(true)
       setCurrentWorkout(null)
       setSelectedTemplate(null)
       setIsWorkoutActive(false)
     } catch (error) {
       console.error('Error saving workout:', error)
+    }
+  }
+
+  const postWorkoutToProfile = async () => {
+    if (!workoutSummary) return
+
+    try {
+      setPostingToProfile(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('shared_workouts')
+        .insert([{
+          user_id: user.id,
+          template_name: completedTemplateName || 'Custom Workout',
+          total_volume: workoutSummary.totalVolume,
+          duration: workoutSummary.duration,
+          exercises: workoutSummary.exerciseStats.map(stat => ({
+            name: stat.name,
+            totalSets: stat.totalSets,
+            totalReps: stat.totalReps,
+            totalWeight: stat.totalWeight,
+            maxWeight: stat.maxWeight,
+            maxReps: stat.maxReps,
+            volume: stat.volume
+          })),
+          exercise_stats: workoutSummary.exerciseStats
+        }])
+
+      if (error) throw error
+
+      // Close the modal after successful post
+      setShowSummary(false)
+      setPostingToProfile(false)
+      setCompletedTemplateName(null)
+    } catch (error) {
+      console.error('Error posting workout to profile:', error)
+      setPostingToProfile(false)
     }
   }
 
@@ -793,9 +837,20 @@ export function WorkoutLogger() {
                 </div>
               )}
 
-              <div className="text-center pt-4">
+              <div className="text-center pt-4 space-y-3">
                 <Button 
-                  onClick={() => setShowSummary(false)}
+                  onClick={postWorkoutToProfile}
+                  disabled={postingToProfile}
+                  className="font-medium bg-blue-600 hover:bg-blue-700 text-white mr-3"
+                >
+                  {postingToProfile ? 'Posting...' : 'Post to Profile'}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowSummary(false)
+                    setCompletedTemplateName(null)
+                  }}
+                  variant="outline"
                   className="font-medium"
                 >
                   Close
