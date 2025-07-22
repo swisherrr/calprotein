@@ -154,6 +154,23 @@ export default function UserProfilePage() {
 
       console.log('Templates found:', templatesData);
       
+      // Filter out hidden templates if viewing another user's profile
+      let filteredTemplates = templatesData || [];
+      if (currentUser?.id !== profile.user_id) {
+        // Get hidden templates for this user
+        const { data: userProfileData } = await supabase
+          .from('user_profiles')
+          .select('hidden_templates')
+          .eq('user_id', profile.user_id)
+          .single();
+
+        if (userProfileData?.hidden_templates && Array.isArray(userProfileData.hidden_templates)) {
+          const hiddenTemplateIds = new Set(userProfileData.hidden_templates);
+          filteredTemplates = filteredTemplates.filter(template => !hiddenTemplateIds.has(template.id));
+          console.log('Filtered out hidden templates:', hiddenTemplateIds);
+        }
+      }
+      
       // Also check if there are any templates at all for this user
       const { count } = await supabase
         .from('workout_templates')
@@ -161,8 +178,9 @@ export default function UserProfilePage() {
         .eq('user_id', profile.user_id);
       
       console.log('Total templates count for user:', count);
+      console.log('Visible templates after filtering:', filteredTemplates.length);
       
-      setTemplates(templatesData || []);
+      setTemplates(filteredTemplates);
     } catch (error) {
       console.error('Error loading templates:', error);
     }
@@ -265,32 +283,13 @@ export default function UserProfilePage() {
       </div>
 
       {/* Templates Section */}
-      <div className="w-full max-w-4xl px-4">
-        <div className="flex items-center gap-2 mb-6">
-          <Dumbbell className="h-5 w-5" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Workout Templates</h2>
-        </div>
+      {templates.length > 0 && (
+        <div className="w-full max-w-4xl px-4">
+          <div className="flex items-center gap-2 mb-6">
+            <Dumbbell className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Workout Templates</h2>
+          </div>
 
-        {!canViewTemplates ? (
-          <div className="text-center py-8">
-            <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Private Templates</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              This user's templates are private. Send them a friend request to view their templates.
-            </p>
-            <Link href="/friends">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Users className="h-4 w-4 mr-2" />
-                Send Friend Request
-              </Button>
-            </Link>
-          </div>
-        ) : templates.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <Dumbbell className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p>No workout templates found.</p>
-          </div>
-        ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {templates.map((template) => (
               <div
@@ -334,8 +333,27 @@ export default function UserProfilePage() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Show message when templates are private and user can't view them */}
+      {!canViewTemplates && (
+        <div className="w-full max-w-4xl px-4">
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Private Templates</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              This user's templates are private. Send them a friend request to view their templates.
+            </p>
+            <Link href="/friends">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Users className="h-4 w-4 mr-2" />
+                Send Friend Request
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Copy Template Dialog */}
       <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
