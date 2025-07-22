@@ -163,20 +163,36 @@ export function TemplateManager() {
                 ))}
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4">
-                <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col gap-4 pt-4">
+                {/* Add Exercise Button - positioned above cancel button */}
+                <Button 
+                  onClick={handleAddExercise}
+                  variant="outline"
+                  className="flex items-center justify-center w-full"
+                >
+                  Add Exercise
+                </Button>
+                
+                {/* Bottom row with Cancel and Save buttons */}
+                <div className="flex justify-between items-center gap-4">
+                  {/* Cancel button - leftmost, no outline */}
                   <Button 
-                    onClick={handleAddExercise}
-                    variant="outline"
+                    onClick={() => {
+                      setIsEditing(false)
+                      setCurrentTemplate({ name: "", exercises: [], user_id: "" })
+                    }}
                     className="flex items-center justify-center"
                   >
-                    Add Exercise
+                    Cancel
                   </Button>
+                  
+                  {/* Save button - rightmost, with outline */}
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button 
                           onClick={currentTemplate.id ? handleUpdateTemplate : handleSaveTemplate}
+                          variant="outline"
                           className="flex items-center justify-center font-medium"
                         >
                           {currentTemplate.id ? 'Update Template' : 'Save Template'}
@@ -190,16 +206,6 @@ export function TemplateManager() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsEditing(false)
-                    setCurrentTemplate({ name: "", exercises: [], user_id: "" })
-                  }}
-                  className="flex items-center justify-center"
-                >
-                  Cancel
-                </Button>
               </div>
             </div>
           </div>
