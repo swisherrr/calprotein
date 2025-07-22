@@ -195,7 +195,7 @@ export function TemplateManager() {
               <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
               {currentTemplate.exercises.map((exercise, index) => (
                 <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Exercise Name
@@ -210,13 +210,13 @@ export function TemplateManager() {
                           if (customExerciseIndex === index) setCustomExerciseIndex(null);
                         }
                       }}>
-                        <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+                        <Select.Trigger className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
                           <Select.Value placeholder="Select exercise">{getExerciseLabel(exercise.name, customExercises)}</Select.Value>
                           <Select.Icon>
                             <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
                           </Select.Icon>
                         </Select.Trigger>
-                        <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                        <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
                           <Select.Viewport>
                             <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">Add Custom Exercise</Select.Item>
                             {getCombinedExerciseGroups(customExercises).map((group) => (
@@ -426,7 +426,7 @@ export function TemplateManager() {
                 <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
                 {currentTemplate.exercises.map((exercise, index) => (
                   <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Exercise Name
@@ -441,13 +441,13 @@ export function TemplateManager() {
                             if (customExerciseIndex === index) setCustomExerciseIndex(null);
                           }
                         }}>
-                          <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+                          <Select.Trigger className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
                             <Select.Value placeholder="Select exercise">{getExerciseLabel(exercise.name, customExercises)}</Select.Value>
                             <Select.Icon>
                               <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
                             </Select.Icon>
                           </Select.Trigger>
-                          <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                          <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
                             <Select.Viewport>
                               <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">Add Custom Exercise</Select.Item>
                               {getCombinedExerciseGroups(customExercises).map((group) => (

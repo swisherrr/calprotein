@@ -251,7 +251,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
+    <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black pb-8">
       {/* Profile Picture */}
       <div className="mb-6">
         <ProfilePicture
