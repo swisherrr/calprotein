@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
-import { EXERCISE_GROUPS } from "@/lib/exercises"
+import { EXERCISE_GROUPS, getCombinedExerciseGroups } from "@/lib/exercises"
+import { useCustomExercises } from "@/hooks/use-custom-exercises"
 
 interface Exercise {
   name: string
@@ -29,7 +29,19 @@ interface CheckIn {
   notes?: string
 }
 
+const MUSCLE_GROUPS = [
+  "Chest",
+  "Back", 
+  "Shoulders",
+  "Arms",
+  "Legs",
+  "Core",
+  "Cardio",
+  "Other"
+]
+
 export default function WorkoutPage() {
+  const { customExercises, addCustomExercise } = useCustomExercises()
   const [selectedDay, setSelectedDay] = useState("")
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [savedTemplates, setSavedTemplates] = useState<WorkoutTemplate[]>([])
@@ -37,6 +49,9 @@ export default function WorkoutPage() {
   const [isCheckInOpen, setIsCheckInOpen] = useState(false)
   const [checkInData, setCheckInData] = useState<CheckIn>({})
   const [totalVolume, setTotalVolume] = useState(0)
+  const [customExerciseIndex, setCustomExerciseIndex] = useState<number | null>(null)
+  const [customExerciseName, setCustomExerciseName] = useState("")
+  const [customMuscleGroup, setCustomMuscleGroup] = useState("")
 
   const daysOfWeek = [
     "Monday",
@@ -59,10 +74,49 @@ export default function WorkoutPage() {
   }
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string | number) => {
+    if (field === "name" && value === "custom") {
+      // Show custom exercise form inline
+      setCustomExerciseIndex(index)
+      setCustomExerciseName("")
+      setCustomMuscleGroup("")
+      return
+    }
+
     const newExercises = [...exercises]
     newExercises[index] = { ...newExercises[index], [field]: value }
     setExercises(newExercises)
     setTotalVolume(calculateVolume(newExercises))
+    
+    // Hide custom exercise form if it was open
+    if (customExerciseIndex === index) {
+      setCustomExerciseIndex(null)
+    }
+  }
+
+  const handleCustomExerciseSubmit = async (index: number) => {
+    if (!customExerciseName.trim() || !customMuscleGroup) {
+      return
+    }
+
+    try {
+      await addCustomExercise(customExerciseName.trim(), customMuscleGroup)
+      
+      // Update the exercise name in the current exercises
+      const newExercises = [...exercises]
+      newExercises[index] = { 
+        ...newExercises[index], 
+        name: customExerciseName.trim()
+      }
+      setExercises(newExercises)
+      setTotalVolume(calculateVolume(newExercises))
+      
+      // Reset custom exercise form
+      setCustomExerciseIndex(null)
+      setCustomExerciseName("")
+      setCustomMuscleGroup("")
+    } catch (error) {
+      console.error('Error adding custom exercise:', error)
+    }
   }
 
   const handleCheckInChange = (field: keyof CheckIn, value: string | number) => {
@@ -165,7 +219,8 @@ export default function WorkoutPage() {
                       className="w-full rounded-md border border-gray-200 px-3 py-2"
                     >
                       <option value="">Select exercise</option>
-                      {EXERCISE_GROUPS.map((group) => (
+                      <option value="custom">➕ Add Custom Exercise</option>
+                      {getCombinedExerciseGroups(customExercises).map((group) => (
                         <optgroup key={group.label} label={group.label}>
                           {group.exercises.map((exerciseName) => (
                             <option key={exerciseName} value={exerciseName}>
@@ -203,6 +258,70 @@ export default function WorkoutPage() {
                       className="w-full rounded-md border border-gray-200 px-3 py-2"
                     />
                   </div>
+
+                  {/* Custom Exercise Form - Inline */}
+                  {customExerciseIndex === index && (
+                    <div className="col-span-4 mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
+                        Add Custom Exercise
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                            Exercise Name
+                          </label>
+                          <input
+                            type="text"
+                            value={customExerciseName}
+                            onChange={(e) => setCustomExerciseName(e.target.value)}
+                            className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
+                            placeholder="e.g., Custom Deadlift"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                            Muscle Group
+                          </label>
+                          <select
+                            value={customMuscleGroup}
+                            onChange={(e) => setCustomMuscleGroup(e.target.value)}
+                            className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
+                          >
+                            <option value="">Select group</option>
+                            {MUSCLE_GROUPS.map((group) => (
+                              <option key={group} value={group}>
+                                {group}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 mt-3">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            setCustomExerciseIndex(null)
+                            setCustomExerciseName("")
+                            setCustomMuscleGroup("")
+                          }}
+                          className="text-xs"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCustomExerciseSubmit(index)}
+                          disabled={!customExerciseName.trim() || !customMuscleGroup}
+                          className="text-xs"
+                        >
+                          Add Exercise
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               <div className="text-right text-lg font-medium">

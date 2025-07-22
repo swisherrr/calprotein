@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { ScatterChart } from "@mui/x-charts/ScatterChart"
 import { supabase } from "@/lib/supabase"
-import { EXERCISE_GROUPS } from "@/lib/exercises"
+import { EXERCISE_GROUPS, getCombinedExerciseGroups } from "@/lib/exercises"
+import { useCustomExercises } from "@/hooks/use-custom-exercises"
 import { startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subYears, isSameMonth, isSameYear, isWithinInterval, parseISO } from 'date-fns'
 
 interface WorkoutData {
@@ -57,12 +58,13 @@ export function WorkoutAnalytics() {
   const [workoutData, setWorkoutData] = useState<WorkoutData[]>([])
   const [loading, setLoading] = useState(true)
   const { chartHeight, margins, isMobile } = useResponsiveDimensions()
+  const { customExercises } = useCustomExercises()
 
   // Single dropdown options
   const chartOptions = [
     { value: 'total-volume', label: 'Total Volume Over Time' },
     { value: 'all-exercises', label: 'All Exercises' },
-    ...EXERCISE_GROUPS.map(group => ({ value: `muscle-group:${group.label}`, label: `Muscle Group: ${group.label}` }))
+    ...getCombinedExerciseGroups(customExercises).map(group => ({ value: `muscle-group:${group.label}`, label: `Muscle Group: ${group.label}` }))
   ]
 
   // State for chart type and muscle group

@@ -12,6 +12,7 @@ interface DemoData {
   usuals: any[]
   workoutTemplates: any[]
   workoutLogs: any[]
+  customExercises: any[]
   settings: any
 }
 
@@ -129,6 +130,20 @@ const initialDemoData: DemoData = {
           volume: 570
         }
       ]
+    }
+  ],
+  customExercises: [
+    {
+      id: 'demo-custom-1',
+      exercise_name: 'Custom Deadlift',
+      muscle_group: 'Legs',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'demo-custom-2',
+      exercise_name: 'Custom Push-ups',
+      muscle_group: 'Chest',
+      created_at: new Date().toISOString()
     }
   ],
   settings: {
