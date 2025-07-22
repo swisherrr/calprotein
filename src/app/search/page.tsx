@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Search, Users } from "lucide-react";
 import ProfilePicture from "@/components/ui/profile-picture";
 import { useSearchParams } from "next/navigation";
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [results, setResults] = useState<any[]>([]);
@@ -79,5 +79,29 @@ export default function SearchPage() {
         <div className="text-center text-gray-500 dark:text-gray-400">No users found.</div>
       ) : null}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-full mx-auto px-4 py-2">
+        <div className="bg-white dark:bg-black rounded-full p-6 mb-6">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Search by username"
+                className="pl-12 h-12 rounded-full border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 text-base"
+                disabled
+              />
+            </div>
+          </div>
+        </div>
+        <div className="text-center text-gray-500 dark:text-gray-400">Loading...</div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 } 
