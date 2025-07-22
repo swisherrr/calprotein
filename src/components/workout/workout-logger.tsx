@@ -519,7 +519,8 @@ export function WorkoutLogger() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { error } = await supabase
+      // Insert shared workout
+      const { data: sharedWorkout, error } = await supabase
         .from('shared_workouts')
         .insert([{
           user_id: user.id,
@@ -537,8 +538,24 @@ export function WorkoutLogger() {
           })),
           exercise_stats: workoutSummary.exerciseStats
         }])
+        .select()
+        .single()
 
       if (error) throw error
+
+      // Create post entry for the feed
+      const { error: postError } = await supabase
+        .from('posts')
+        .insert([{
+          user_id: user.id,
+          post_type: 'workout',
+          workout_id: sharedWorkout.id,
+        }])
+
+      if (postError) {
+        console.error('Error creating post entry:', postError)
+        // Don't fail the request if post creation fails, just log it
+      }
 
       // Close the modal after successful post
       setShowSummary(false)

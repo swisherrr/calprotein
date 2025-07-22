@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import ProfilePicture from "@/components/ui/profile-picture"
-import { Dumbbell, Users, Eye, EyeOff, Activity } from "lucide-react"
+import { Dumbbell, Users, Eye, EyeOff, Activity, Camera, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface WorkoutTemplate {
   id: string
@@ -35,6 +37,29 @@ export default function ProfilePage() {
   const [hiddenWorkouts, setHiddenWorkouts] = useState<Set<string>>(new Set())
   const [deletedWorkouts, setDeletedWorkouts] = useState<Set<string>>(new Set())
   const [privateAccount, setPrivateAccount] = useState(false)
+  const [followers, setFollowers] = useState<any[]>([])
+  const [following, setFollowing] = useState<any[]>([])
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [newCaption, setNewCaption] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [selectedFileName, setSelectedFileName] = useState<string>('No file chosen')
+  const [progressPictures, setProgressPictures] = useState<any[]>([])
+  const [progressPicturesLoading, setProgressPicturesLoading] = useState(true)
+  const [storageBucketExists, setStorageBucketExists] = useState<boolean | null>(null)
+  const [hiddenProgressPictures, setHiddenProgressPictures] = useState<Set<string>>(new Set())
+  const [deletedProgressPictures, setDeletedProgressPictures] = useState<Set<string>>(new Set())
+  const [selectedProgressPicture, setSelectedProgressPicture] = useState<any>(null)
+  const [showProgressPictureModal, setShowProgressPictureModal] = useState(false)
+  const [showProgressPictureMenu, setShowProgressPictureMenu] = useState(false)
+  const [selectedWorkout, setSelectedWorkout] = useState<any>(null)
+  const [showWorkoutMenu, setShowWorkoutMenu] = useState(false)
+
+  const [cropArea, setCropArea] = useState({ x: 50, y: 50, width: 80, height: 80 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     async function fetchUser() {
@@ -59,6 +84,9 @@ export default function ProfilePage() {
             await loadTemplates(user.id)
             await loadHiddenTemplates(user.id)
             await loadSharedWorkouts(user.id)
+            await loadFollowData(user.id)
+            await loadProgressPictures(user.id)
+            await checkStorageBucket()
           } else {
             console.log('No profile found')
           }
@@ -102,7 +130,7 @@ export default function ProfilePage() {
       // Load hidden templates from user_profiles
       const { data: profile, error } = await supabase
         .from('user_profiles')
-        .select('hidden_templates, hidden_workouts, deleted_workouts')
+        .select('hidden_templates, hidden_workouts, deleted_workouts, hidden_progress_pictures, deleted_progress_pictures')
         .eq('user_id', userId)
         .single()
 
@@ -121,6 +149,14 @@ export default function ProfilePage() {
 
       if (profile?.deleted_workouts) {
         setDeletedWorkouts(new Set(profile.deleted_workouts))
+      }
+
+      if (profile?.hidden_progress_pictures) {
+        setHiddenProgressPictures(new Set(profile.hidden_progress_pictures))
+      }
+
+      if (profile?.deleted_progress_pictures) {
+        setDeletedProgressPictures(new Set(profile.deleted_progress_pictures))
       }
     } catch (error) {
       console.error('Error loading hidden templates:', error)
@@ -149,6 +185,266 @@ export default function ProfilePage() {
       console.error('Error loading shared workouts:', error)
     } finally {
       setWorkoutsLoading(false)
+    }
+  }
+
+  const loadFollowData = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/follow/list?userId=${userId}`)
+      const { followers, following } = await res.json()
+      setFollowers(followers)
+      setFollowing(following)
+    } catch (error) {
+      console.error('Error loading follow data:', error)
+    }
+  }
+
+  const loadProgressPictures = async (userId: string) => {
+    try {
+      setProgressPicturesLoading(true)
+      const { data: progressPicturesData, error } = await supabase
+        .from('progress_pictures')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error loading progress pictures:', error)
+        return
+      }
+
+      console.log('Progress pictures found:', progressPicturesData)
+      setProgressPictures(progressPicturesData || [])
+    } catch (error) {
+      console.error('Error loading progress pictures:', error)
+    } finally {
+      setProgressPicturesLoading(false)
+    }
+  }
+
+  const checkStorageBucket = async () => {
+    try {
+      const { data, error } = await supabase.storage.from('progress-pictures').list()
+      if (error) {
+        console.error('Error checking storage bucket:', error)
+        setStorageBucketExists(false)
+      } else {
+        setStorageBucketExists(true)
+      }
+    } catch (error) {
+      console.error('Error checking storage bucket:', error)
+      setStorageBucketExists(false)
+    }
+  }
+
+  const hideProgressPicture = async (pictureId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const newHiddenPictures = new Set(hiddenProgressPictures)
+      if (newHiddenPictures.has(pictureId)) {
+        newHiddenPictures.delete(pictureId)
+      } else {
+        newHiddenPictures.add(pictureId)
+      }
+
+      setHiddenProgressPictures(newHiddenPictures)
+
+      // Update the hidden_progress_pictures field in user_profiles
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ 
+          hidden_progress_pictures: Array.from(newHiddenPictures)
+        })
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error updating hidden progress pictures:', error)
+        // Revert the state if update failed
+        setHiddenProgressPictures(hiddenProgressPictures)
+      }
+    } catch (error) {
+      console.error('Error hiding progress picture:', error)
+      // Revert the state if update failed
+      setHiddenProgressPictures(hiddenProgressPictures)
+    }
+  }
+
+  const deleteProgressPicture = async (pictureId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const newDeletedPictures = new Set(deletedProgressPictures)
+      newDeletedPictures.add(pictureId)
+      setDeletedProgressPictures(newDeletedPictures)
+
+      // Update the deleted_progress_pictures field in user_profiles
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ 
+          deleted_progress_pictures: Array.from(newDeletedPictures)
+        })
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error deleting progress picture:', error)
+        // Revert the state if update failed
+        setDeletedProgressPictures(deletedProgressPictures)
+      }
+    } catch (error) {
+      console.error('Error deleting progress picture:', error)
+      // Revert the state if update failed
+      setDeletedProgressPictures(deletedProgressPictures)
+    }
+  }
+
+  const handleUploadProgressPicture = async () => {
+    if (!selectedFile || !newCaption.trim()) return
+    
+    try {
+      setUploading(true)
+      setUploadError(null) // Clear previous errors
+      
+      // Upload file to Supabase storage
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setUploadError('User not logged in.')
+        setUploading(false)
+        return
+      }
+      
+      let imageUrl = ''
+      
+      try {
+        const fileExt = selectedFile.name.split('.').pop()
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('progress-pictures')
+          .upload(fileName, selectedFile)
+        
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError)
+          // Convert file to data URL as fallback with crop
+          const reader = new FileReader()
+          imageUrl = await new Promise((resolve) => {
+            reader.onload = () => {
+              const img = new Image()
+              img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+                canvas.width = 400
+                canvas.height = 400
+                
+                // Calculate crop dimensions based on cropArea percentages
+                const cropSize = Math.min(img.width, img.height) * (cropArea.width / 100)
+                const centerX = (cropArea.x / 100) * img.width
+                const centerY = (cropArea.y / 100) * img.height
+                const cropX = Math.max(0, centerX - cropSize / 2)
+                const cropY = Math.max(0, centerY - cropSize / 2)
+                
+                ctx?.drawImage(
+                  img,
+                  cropX, cropY, cropSize, cropSize,
+                  0, 0, 400, 400
+                )
+                
+                resolve(canvas.toDataURL('image/jpeg', 0.8))
+              }
+              img.src = reader.result as string
+            }
+            reader.readAsDataURL(selectedFile)
+          })
+        } else {
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('progress-pictures')
+            .getPublicUrl(fileName)
+          
+          if (!publicUrl) {
+            setUploadError('Could not get public URL for the uploaded file.')
+            setUploading(false)
+            return
+          }
+          
+          imageUrl = publicUrl
+        }
+      } catch (storageError) {
+        console.error('Storage error, using fallback:', storageError)
+        // Convert file to data URL as fallback with crop
+        const reader = new FileReader()
+        imageUrl = await new Promise((resolve) => {
+          reader.onload = () => {
+            const img = new Image()
+            img.onload = () => {
+              const canvas = document.createElement('canvas')
+              const ctx = canvas.getContext('2d')
+              canvas.width = 400
+              canvas.height = 400
+              
+              // Calculate crop dimensions based on cropArea percentages
+              const cropSize = Math.min(img.width, img.height) * (cropArea.width / 100)
+              const centerX = (cropArea.x / 100) * img.width
+              const centerY = (cropArea.y / 100) * img.height
+              const cropX = Math.max(0, centerX - cropSize / 2)
+              const cropY = Math.max(0, centerY - cropSize / 2)
+              
+              ctx?.drawImage(
+                img,
+                cropX, cropY, cropSize, cropSize,
+                0, 0, 400, 400
+              )
+              
+              resolve(canvas.toDataURL('image/jpeg', 0.8))
+            }
+            img.src = reader.result as string
+          }
+          reader.readAsDataURL(selectedFile)
+        })
+      }
+      
+      // Save to database
+      const response = await fetch('/api/profile/upload-progress-picture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, caption: newCaption })
+      })
+      
+      if (response.ok) {
+        setShowUploadDialog(false)
+        setNewCaption('')
+        setSelectedFile(null)
+        setPreviewUrl(null)
+        setSelectedFileName('No file chosen')
+        setUploadError(null)
+        // Refresh the progress pictures
+        await loadProgressPictures(user.id)
+      } else {
+        console.error('Failed to upload progress picture')
+        setUploadError('Failed to save progress picture to database.')
+      }
+    } catch (error) {
+      console.error('Error uploading progress picture:', error)
+      setUploadError('An unexpected error occurred during upload.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      setSelectedFileName(file.name)
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+      // Reset crop area to center
+      setCropArea({ x: 50, y: 50, width: 80, height: 80 })
+
+    } else {
+      setSelectedFileName('No file chosen')
     }
   }
 
@@ -251,29 +547,32 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black pb-8">
-      {/* Profile Picture */}
-      <div className="mb-6">
+      {/* Profile Picture and Info */}
+      <div className="flex items-center gap-6 mb-8">
         <ProfilePicture
           pictureUrl={profilePictureUrl}
           size="xl"
         />
-      </div>
-      
-      {/* Username */}
-      <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-        {loading ? (
-          <span className="text-gray-400">Loading...</span>
-        ) : username ? (
-          `@${username}`
-        ) : (
-          <span className="text-gray-400">No username set</span>
-        )}
+        
+        <div className="flex flex-col">
+          <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            {loading ? (
+              <span className="text-gray-400">Loading...</span>
+            ) : username ? (
+              `@${username}`
+            ) : (
+              <span className="text-gray-400">No username set</span>
+            )}
+          </div>
+          
+          <div className="flex gap-4 text-sm text-gray-700 dark:text-gray-300">
+            <span>{followers.length} Followers</span>
+            <span>{following.length} Following</span>
+          </div>
+        </div>
       </div>
 
-      {/* Privacy Status */}
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        {privateAccount ? 'Private Account' : 'Public Account'}
-      </div>
+
 
       {/* Templates Section */}
       {templates.length > 0 && (
@@ -379,20 +678,15 @@ export default function ProfilePage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => hideWorkout(workout.id)}
-                        className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        title={isHidden ? "Show workout" : "Hide workout"}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedWorkout(workout)
+                          setShowWorkoutMenu(true)
+                        }}
+                        className="h-6 w-6 p-0 text-gray-500 dark:text-gray-400 hover:bg-transparent dark:hover:bg-transparent"
+                        title="More options"
                       >
-                        {isHidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteWorkout(workout.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200"
-                        title="Delete workout"
-                      >
-                        ×
+                        ⋯
                       </Button>
                     </div>
                   </div>
@@ -444,6 +738,332 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Progress Pictures Section */}
+      {progressPictures.filter(picture => !deletedProgressPictures.has(picture.id)).length > 0 && (
+        <div className="w-full max-w-4xl px-4 mt-8">
+          <div className="flex items-center gap-2 mb-6">
+            <Camera className="h-5 w-5" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Progress Pictures</h2>
+          </div>
+
+          {progressPicturesLoading ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              Loading progress pictures...
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-1">
+              {/* Post Button Square */}
+              <div
+                className="relative aspect-square cursor-pointer group bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setShowUploadDialog(true)}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Plus className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                </div>
+              </div>
+              
+              {progressPictures
+                .filter(picture => !deletedProgressPictures.has(picture.id))
+                .map((picture) => {
+                  const isHidden = hiddenProgressPictures.has(picture.id)
+                  return (
+                    <div
+                      key={picture.id}
+                      className={`relative aspect-square cursor-pointer group ${
+                        isHidden ? 'opacity-50' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedProgressPicture(picture)
+                        setShowProgressPictureModal(true)
+                      }}
+                    >
+                      <img 
+                        src={picture.image_url} 
+                        alt="Progress Picture" 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedProgressPicture(picture)
+                            setShowProgressPictureMenu(true)
+                          }}
+                          className="h-8 w-8 p-0 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-transparent dark:hover:bg-transparent"
+                          title="More options"
+                        >
+                          ⋯
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Upload Progress Picture Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-md w-[90vw] mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-700 shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Post Progress Picture</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Upload a progress picture to share with your followers.
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="progress-picture" className="block text-sm font-medium mb-2">
+                Progress Picture
+              </label>
+              <div className="flex justify-center">
+                <label htmlFor="progress-picture" className="w-full max-w-xs bg-gray-800 border border-gray-600 rounded-lg cursor-pointer flex items-center">
+                  <span className="bg-gray-600 text-white px-4 py-2 rounded-l-lg text-sm font-medium flex items-center justify-center min-w-[120px]">
+                    Choose File
+                  </span>
+                  <span className="flex-1 px-4 py-2 text-gray-300 text-sm">
+                    {selectedFileName}
+                  </span>
+                </label>
+                <input
+                  type="file"
+                  id="progress-picture"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+              {previewUrl && (
+                <div className="mt-4">
+                  <div className="relative w-64 h-64 mx-auto border-2 border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                    <img 
+                      src={previewUrl} 
+                      alt="Progress Picture Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Dark overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+                    {/* Clear crop box */}
+                    <div 
+                      className="absolute border-2 border-white shadow-lg cursor-move"
+                      style={{
+                        left: `${cropArea.x}%`,
+                        top: `${cropArea.y}%`,
+                        width: `${cropArea.width}%`,
+                        height: `${cropArea.height}%`,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation()
+                        setIsDragging(true)
+                        setDragStart({ x: e.clientX, y: e.clientY })
+                      }}
+                    ></div>
+                    {/* Crop area indicator */}
+                    <div 
+                      className="absolute inset-0 cursor-move"
+                      onMouseDown={(e) => {
+                        setIsDragging(true)
+                        setDragStart({ x: e.clientX, y: e.clientY })
+                      }}
+                      onMouseMove={(e) => {
+                        if (isDragging) {
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          const deltaX = e.clientX - dragStart.x
+                          const deltaY = e.clientY - dragStart.y
+                          
+                          setCropArea(prev => ({
+                            ...prev,
+                            x: Math.max(10, Math.min(90, prev.x + (deltaX / rect.width) * 100)),
+                            y: Math.max(10, Math.min(90, prev.y + (deltaY / rect.height) * 100))
+                          }))
+                          setDragStart({ x: e.clientX, y: e.clientY })
+                        }
+                      }}
+                      onMouseUp={() => setIsDragging(false)}
+                      onMouseLeave={() => setIsDragging(false)}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                    Drag the white box to adjust crop area
+                  </p>
+                </div>
+              )}
+              {uploadError && (
+                <div className="mt-4 text-red-500 text-sm">
+                  {uploadError}
+                </div>
+              )}
+            </div>
+            <div>
+              <label htmlFor="caption" className="block text-sm font-medium mb-2">
+                Caption
+              </label>
+              <Input
+                id="caption"
+                value={newCaption}
+                onChange={(e) => setNewCaption(e.target.value)}
+                placeholder="Add a caption..."
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-between gap-2">
+              <Button
+                onClick={() => {
+                  setShowUploadDialog(false)
+                  setSelectedFile(null)
+                  setPreviewUrl(null)
+                  setNewCaption('')
+                  setSelectedFileName('No file chosen')
+                  setUploadError(null) // Clear error on cancel
+                }}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUploadProgressPicture}
+                variant="outline"
+                disabled={!newCaption.trim() || uploading || !selectedFile}
+              >
+                {uploading ? 'Posting...' : 'Post Picture'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Progress Picture Detail Modal */}
+      <Dialog open={showProgressPictureModal} onOpenChange={setShowProgressPictureModal}>
+        <DialogContent className="max-w-2xl w-[90vw] mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-700 shadow-lg p-0">
+          {selectedProgressPicture && (
+            <div className="flex flex-col md:flex-row">
+              {/* Image */}
+              <div className="flex-1">
+                <img 
+                  src={selectedProgressPicture.image_url} 
+                  alt="Progress Picture" 
+                  className="w-full h-auto max-h-96 md:max-h-none md:h-full object-cover"
+                />
+              </div>
+              
+              {/* Details */}
+              <div className="flex-1 p-6 flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <ProfilePicture userId={selectedProgressPicture.user_id} size="sm" />
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      @{username}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(selectedProgressPicture.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedProgressPicture.caption && (
+                  <div className="mb-4">
+                    <p className="text-gray-900 dark:text-gray-100">
+                      {selectedProgressPicture.caption}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="mt-auto flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => hideProgressPicture(selectedProgressPicture.id)}
+                    className="flex-1"
+                  >
+                    {hiddenProgressPictures.has(selectedProgressPicture.id) ? 'Show' : 'Hide'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => deleteProgressPicture(selectedProgressPicture.id)}
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Progress Picture Menu */}
+      <Dialog open={showProgressPictureMenu} onOpenChange={setShowProgressPictureMenu}>
+        <DialogContent className="max-w-sm w-[90vw] mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-700 shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Progress Picture Options</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (selectedProgressPicture) {
+                  hideProgressPicture(selectedProgressPicture.id)
+                }
+                setShowProgressPictureMenu(false)
+              }}
+              className="w-full justify-start"
+            >
+              {selectedProgressPicture && hiddenProgressPictures.has(selectedProgressPicture.id) ? 'Show Picture' : 'Hide Picture'}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (selectedProgressPicture) {
+                  deleteProgressPicture(selectedProgressPicture.id)
+                }
+                setShowProgressPictureMenu(false)
+              }}
+              className="w-full justify-start text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            >
+              Delete Picture
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Workout Menu */}
+      <Dialog open={showWorkoutMenu} onOpenChange={setShowWorkoutMenu}>
+        <DialogContent className="max-w-sm w-[90vw] mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-700 shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Workout Options</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (selectedWorkout) {
+                  hideWorkout(selectedWorkout.id)
+                }
+                setShowWorkoutMenu(false)
+              }}
+              className="w-full justify-start"
+            >
+              {selectedWorkout && hiddenWorkouts.has(selectedWorkout.id) ? 'Show Workout' : 'Hide Workout'}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (selectedWorkout) {
+                  deleteWorkout(selectedWorkout.id)
+                }
+                setShowWorkoutMenu(false)
+              }}
+              className="w-full justify-start text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            >
+              Delete Workout
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

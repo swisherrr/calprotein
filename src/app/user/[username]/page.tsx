@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,38 @@ export default function UserProfilePage() {
   const [templateToCopy, setTemplateToCopy] = useState<WorkoutTemplate | null>(null);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [copying, setCopying] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [followers, setFollowers] = useState<any[]>([]);
+  const [following, setFollowing] = useState<any[]>([]);
+  const [followStatus, setFollowStatus] = useState<'none' | 'accepted' | 'pending'>('none');
+  const [followId, setFollowId] = useState<string | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+
+  // Fetch followers/following and follow status
+  const fetchFollowData = useCallback(async (profileUserId: string) => {
+    if (!currentUser) return;
+    // Get followers and following
+    const res = await fetch(`/api/follow/list?userId=${profileUserId}`);
+    const { followers, following } = await res.json();
+    setFollowers(followers);
+    setFollowing(following);
+    // Check if current user follows this profile
+    const myFollow = (followers as Array<{follower_id: string, status: string, id: string}>).find((f) => f.follower_id === currentUser.id);
+    if (myFollow) {
+      setFollowStatus(myFollow.status as 'none' | 'accepted' | 'pending');
+      setFollowId(myFollow.id);
+    } else {
+      setFollowStatus('none');
+      setFollowId(null);
+    }
+    // If viewing own profile and private, show pending requests
+    if (profileUserId === currentUser.id && userProfile?.private_account) {
+      setPendingRequests((followers as Array<{status: string}>).filter((f) => f.status === 'pending'));
+    } else {
+      setPendingRequests([]);
+    }
+  }, [currentUser, userProfile]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -67,12 +99,11 @@ export default function UserProfilePage() {
   useEffect(() => {
     if (currentUser && userProfile) {
       const reloadData = async () => {
-        const isFriendsWithUser = await checkFriendshipStatus(userProfile.user_id);
-        await loadTemplates(userProfile, isFriendsWithUser);
+        await fetchFollowData(userProfile.user_id);
       };
       reloadData();
     }
-  }, [currentUser, userProfile]);
+  }, [currentUser, userProfile, fetchFollowData]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -99,10 +130,9 @@ export default function UserProfilePage() {
 
       // Wait for current user to be loaded, then check friendship status
       if (currentUser) {
-        const isFriendsWithUser = await checkFriendshipStatus(profile.user_id);
-        // Load templates after friendship check with the correct friendship status
-        await loadTemplates(profile, isFriendsWithUser);
-        await loadSharedWorkouts(profile.user_id, profile.private_account, isFriendsWithUser);
+        await fetchFollowData(profile.user_id);
+        await loadTemplates(profile, false); // No longer friends, so always load templates
+        await loadSharedWorkouts(profile.user_id, profile.private_account, false);
       } else {
         // If no current user (not logged in), just load templates
         await loadTemplates(profile, false);
@@ -163,27 +193,6 @@ export default function UserProfilePage() {
       setSharedWorkouts(filteredWorkouts);
     } catch (error) {
       console.error('Error loading shared workouts:', error);
-    }
-  };
-
-  const checkFriendshipStatus = async (userId: string) => {
-    try {
-      console.log('Checking friendship between:', currentUser.id, 'and', userId);
-      
-      const { data: friendship, error } = await supabase
-        .from('friendships')
-        .select('user1_id, user2_id')
-        .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${userId}),and(user1_id.eq.${userId},user2_id.eq.${currentUser.id})`)
-        .single();
-
-      console.log('Friendship found:', friendship);
-      const isFriendsWithUser = !!friendship;
-      setIsFriends(isFriendsWithUser);
-      return isFriendsWithUser;
-    } catch (error) {
-      console.log('No friendship found or error:', error);
-      setIsFriends(false);
-      return false;
     }
   };
 
@@ -280,6 +289,42 @@ export default function UserProfilePage() {
     }
   };
 
+  // Follow/unfollow/request handlers
+  const handleFollow = async () => {
+    if (!userProfile) return;
+    await fetch('/api/follow/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followedId: userProfile.user_id })
+    });
+    fetchFollowData(userProfile.user_id);
+  };
+  const handleUnfollow = async () => {
+    if (!userProfile) return;
+    await fetch('/api/follow/unfollow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followedId: userProfile.user_id })
+    });
+    fetchFollowData(userProfile.user_id);
+  };
+  const handleAccept = async (id: string) => {
+    await fetch('/api/follow/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followId: id })
+    });
+    fetchFollowData(userProfile!.user_id);
+  };
+  const handleReject = async (id: string) => {
+    await fetch('/api/follow/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followId: id })
+    });
+    fetchFollowData(userProfile!.user_id);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
@@ -307,35 +352,62 @@ export default function UserProfilePage() {
     );
   }
 
-  const canViewTemplates = !userProfile.private_account || isFriends || currentUser?.id === userProfile.user_id;
+  const canViewTemplates = !userProfile.private_account || currentUser?.id === userProfile.user_id;
 
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
-      {/* Back Button */}
-      <div className="w-full max-w-4xl px-4 mb-8">
-        <Link href="/friends" className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Friends
-        </Link>
-      </div>
 
-      {/* Profile Picture */}
-      <div className="mb-6">
+
+      {/* Profile Picture and Info */}
+      <div className="flex items-center gap-8 mb-8">
         <ProfilePicture
           pictureUrl={userProfile.profile_picture_url}
           size="xl"
         />
-      </div>
-      
-      {/* Username */}
-      <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-        @{userProfile.username}
+        
+        <div className="flex flex-col">
+          <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            @{userProfile.username}
+          </div>
+          
+          <div className="flex gap-6 text-sm text-gray-700 dark:text-gray-300 mb-4">
+            <span>{followers.length} Followers</span>
+            <span>{following.length} Following</span>
+          </div>
+          
+          {currentUser && currentUser.id !== userProfile.user_id && (
+            <div className="mt-2">
+              {followStatus === 'none' && (
+                <Button 
+                  onClick={handleFollow}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-full"
+                >
+                  Follow
+                </Button>
+              )}
+              {followStatus === 'pending' && (
+                <Button 
+                  disabled
+                  className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-8 rounded-full"
+                >
+                  Requested
+                </Button>
+              )}
+              {followStatus === 'accepted' && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleUnfollow}
+                  className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 px-8 rounded-full"
+                >
+                  Following
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Privacy Status */}
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        {userProfile.private_account ? 'Private Account' : 'Public Account'}
-      </div>
+
 
       {/* Templates Section */}
       {templates.length > 0 && (
@@ -466,6 +538,24 @@ export default function UserProfilePage() {
                 Send Friend Request
               </Button>
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Pending follow requests for private accounts (if viewing own profile) */}
+      {currentUser && userProfile.user_id === currentUser.id && userProfile.private_account && pendingRequests.length > 0 && (
+        <div className="w-full max-w-4xl px-4 mb-6">
+          <h3 className="text-lg font-medium mb-2">Pending Follow Requests</h3>
+          <div className="space-y-2">
+            {pendingRequests.map(req => (
+              <div key={req.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded p-2">
+                <span>{req.follower_id}</span>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => handleAccept(req.id)}>Accept</Button>
+                  <Button size="sm" variant="outline" onClick={() => handleReject(req.id)}>Reject</Button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
