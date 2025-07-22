@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase"
 import { EXERCISE_GROUPS, getCombinedExerciseGroups } from "@/lib/exercises"
 import { useCustomExercises } from "@/hooks/use-custom-exercises"
 import { startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subYears, isSameMonth, isSameYear, isWithinInterval, parseISO } from 'date-fns'
+import * as Select from '@radix-ui/react-select';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 
 interface WorkoutData {
   id: string
@@ -60,12 +62,57 @@ export function WorkoutAnalytics() {
   const { chartHeight, margins, isMobile } = useResponsiveDimensions()
   const { customExercises } = useCustomExercises()
 
+  // Define mapping from specific muscle group to broad group
+  const MUSCLE_GROUP_TO_BROAD: Record<string, string> = {
+    // Arms
+    Bicep: 'Arms',
+    Tricep: 'Arms',
+    Forearm: 'Arms',
+    // Legs
+    Quadriceps: 'Legs',
+    Hamstrings: 'Legs',
+    Glutes: 'Legs',
+    Adductors: 'Legs',
+    Abductors: 'Legs',
+    Calves: 'Legs',
+    // Chest
+    'Upper Chest': 'Chest',
+    'Middle Chest': 'Chest',
+    'Lower Chest': 'Chest',
+    // Back
+    Lats: 'Back',
+    'Upper Back': 'Back',
+    'Lower Back': 'Back',
+    Traps: 'Back',
+    // Shoulders
+    Shoulders: 'Shoulders',
+    // Core
+    Core: 'Core',
+    // Cardio
+    Cardio: 'Cardio',
+    // Other
+    Other: 'Other',
+  };
+
   // Single dropdown options
   const chartOptions = [
     { value: 'total-volume', label: 'Total Volume Over Time' },
     { value: 'all-exercises', label: 'All Exercises' },
-    ...getCombinedExerciseGroups(customExercises).map(group => ({ value: `muscle-group:${group.label}`, label: `Muscle Group: ${group.label}` }))
   ]
+
+  // Build grouped chart options for muscle groups
+  const combinedGroups = getCombinedExerciseGroups(customExercises);
+  const broadGroups: Record<string, { label: string; options: { value: string; label: string }[] }> = {};
+  for (const group of combinedGroups) {
+    const broad = MUSCLE_GROUP_TO_BROAD[group.label] || group.label;
+    if (!broadGroups[broad]) {
+      broadGroups[broad] = { label: broad, options: [] };
+    }
+    broadGroups[broad].options.push({
+      value: `muscle-group:${group.label}`,
+      label: group.label,
+    });
+  }
 
   // State for chart type and muscle group
   const [chartType, setChartType] = useState<'total-volume' | 'muscle-groups' | 'all-exercises'>('total-volume')
@@ -84,7 +131,7 @@ export function WorkoutAnalytics() {
 
   useEffect(() => {
     loadWorkoutData()
-  }, [])
+  }, [customExercises])
 
   const loadWorkoutData = async () => {
     try {
@@ -164,7 +211,8 @@ export function WorkoutAnalytics() {
   }
   const getMuscleGroupData = (): ChartData[] => {
     if (!selectedMuscleGroup) return []
-    const exercisesInGroup = EXERCISE_GROUPS.find(group => group.label === selectedMuscleGroup)?.exercises || []
+    const combinedGroups = getCombinedExerciseGroups(customExercises)
+    const exercisesInGroup = combinedGroups.find(group => group.label === selectedMuscleGroup)?.exercises || []
     const chartData: ChartData[] = []
     filteredWorkoutData.forEach(workout => {
       workout.exercises.forEach(exercise => {
@@ -273,6 +321,27 @@ export function WorkoutAnalytics() {
     return ((last - first) / Math.abs(first)) * 100;
   }
 
+  // Helper to get label for current value
+  const getChartLabel = (value: string) => {
+    if (value === 'total-volume') return 'Total Volume Over Time';
+    if (value === 'all-exercises') return 'All Exercises';
+    for (const broad of Object.values(broadGroups)) {
+      const found = broad.options.find(opt => opt.value === value);
+      if (found) return found.label;
+    }
+    return 'Select chart...';
+  };
+  const getPeriodLabel = (value: string) => {
+    if (value === 'all') return 'All Time';
+    if (value === 'week') return 'Past Week';
+    if (value === 'month') return 'Past Month';
+    if (value === 'ytd') return 'Year to Date';
+    if (value === 'prev-year') return `${currentYear - 1}`;
+    const found = monthOptions.find(opt => opt.value === value);
+    if (found) return found.label;
+    return 'Select period...';
+  };
+
   if (loading) {
     return (
       <div className="container-apple section-apple">
@@ -322,37 +391,50 @@ export function WorkoutAnalytics() {
 
         {/* Chart and Timeframe Dropdowns */}
         <div className="mb-4 flex flex-col sm:flex-row justify-center gap-2 sm:gap-6 dark:bg-black">
-          <div className="inline-flex items-center gap-2 flex-col sm:flex-row">
-            <label className="text-sm font-medium">Chart:</label>
-            <select
-              value={dropdownValue}
-              onChange={(e) => setDropdownValue(e.target.value)}
-              className="input-apple text-sm rounded-none min-w-[200px] sm:min-w-[250px]"
-              style={{ borderRadius: 0 }}
-            >
-              {chartOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="inline-flex items-center gap-2 flex-col sm:flex-row">
-            <label className="text-sm font-medium">Period:</label>
-            <select
-              value={timeframeValue}
-              onChange={(e) => setTimeframeValue(e.target.value)}
-              className="input-apple text-sm rounded-none min-w-[200px] sm:min-w-[250px]"
-              style={{ borderRadius: 0 }}
-            >
-              <option value="all">All Time</option>
-              <option value="week">Past Week</option>
-              <option value="month">Past Month</option>
-              <option value="ytd">Year to Date</option>
-              {monthOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-              <option value="prev-year">{currentYear - 1}</option>
-            </select>
-          </div>
+          <Select.Root value={dropdownValue} onValueChange={setDropdownValue} defaultValue={dropdownValue || 'total-volume'}>
+            <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+              <Select.Value>{getChartLabel(dropdownValue)}</Select.Value>
+              <Select.Icon>
+                <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+              <Select.Viewport>
+                <Select.Item value="total-volume" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Total Volume Over Time</Select.Item>
+                <Select.Item value="all-exercises" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">All Exercises</Select.Item>
+                {Object.values(broadGroups).map(broad => (
+                  <Select.Group key={broad.label}>
+                    <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{broad.label}</Select.Label>
+                    {broad.options.map(opt => (
+                      <Select.Item key={opt.value} value={opt.value} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        {opt.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Group>
+                ))}
+              </Select.Viewport>
+            </Select.Content>
+          </Select.Root>
+          <Select.Root value={timeframeValue} onValueChange={setTimeframeValue} defaultValue={timeframeValue || 'all'}>
+            <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+              <Select.Value>{getPeriodLabel(timeframeValue)}</Select.Value>
+              <Select.Icon>
+                <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+              <Select.Viewport>
+                <Select.Item value="all" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">All Time</Select.Item>
+                <Select.Item value="week" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Past Week</Select.Item>
+                <Select.Item value="month" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Past Month</Select.Item>
+                <Select.Item value="ytd" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Year to Date</Select.Item>
+                {monthOptions.map(opt => (
+                  <Select.Item key={opt.value} value={opt.value} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">{opt.label}</Select.Item>
+                ))}
+                <Select.Item value="prev-year" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">{currentYear - 1}</Select.Item>
+              </Select.Viewport>
+            </Select.Content>
+          </Select.Root>
         </div>
 
         {/* Chart */}

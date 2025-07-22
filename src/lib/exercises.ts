@@ -1,51 +1,122 @@
 // Predefined list of exercises organized by muscle groups
 export const EXERCISE_LIST = [
-  // Chest
+  // Upper Chest
   "Smith Incline Press",
+  "Low to High Cable Fly",
+  // Middle Chest
   "High to Low Cable Fly",
-  
-  // Back
+  // Lats
   "Lat Pulldown",
-  "Machine Row (Lats)",
+  "Machine Row (Tucked)",
+  // Upper Back
+  "Machine Row (Flared)",
+  // Lower Back
   "Back Extension",
-  
   // Shoulders
   "Lateral Raise",
   "Cable Lateral Raise",
-  
-  // Arms
+  "Rear Delt Fly (Pec Deck)",
+  "Cable Rear Delt Fly",
+  "Cable Front Raise",
+  // Bicep
   "Preacher Curl",
   "Preacher Hammer Curl",
+  // Tricep
   "Tricep Pushdown",
-  
-  // Legs
+  "Overhead Extension",
+  // Traps
+  "Dumbbell Shrugs",
+  // Quadriceps
+  "Squat",
+  // Hamstrings
   "RDL",
+  // Glutes
   "Hip Thrust",
-  "Sumo Squat",
-  "Squat"
+  // Adductors
+  "Seated Adductor Machine",
+  "Standing Adduction (Cable)",
+  // Abductors
+  "Seated Abductor Machine",
+  "Standing Abduction (Cable)",
+  // Calves
+  "Standing Calf Raise",
+  "Seated Calf Raise",
+  "Leg Press Calf Raise",
+  // Forearm
+  "Preacher Hammer Curl",
+  "Reverse Curl",
+  "Cable Wrist Curl"
 ]
 
 // Exercise groups for dropdown organization
 export const EXERCISE_GROUPS = [
   {
-    label: "Chest",
-    exercises: ["Smith Incline Press", "High to Low Cable Fly"]
+    label: "Upper Chest",
+    exercises: ["Smith Incline Press", "Low to High Cable Fly"]
   },
   {
-    label: "Back", 
-    exercises: ["Lat Pulldown", "Machine Row (Lats)", "Back Extension"]
+    label: "Middle Chest",
+    exercises: ["High to Low Cable Fly"]
+  },
+  {
+    label: "Lower Chest",
+    exercises: ["Smith Incline Press"] // Add lower chest exercises here
+  },
+  {
+    label: "Lats",
+    exercises: ["Lat Pulldown", "Machine Row (Tucked)"]
+  },
+  {
+    label: "Upper Back",
+    exercises: ["Machine Row (Flared)"]
+  },
+  {
+    label: "Lower Back",
+    exercises: ["Back Extension"]
+  },
+  {
+    label: "Traps",
+    exercises: ["Dumbbell Shrugs"]
   },
   {
     label: "Shoulders",
-    exercises: ["Lateral Raise", "Cable Lateral Raise"]
+    exercises: ["Lateral Raise", "Cable Lateral Raise", "Rear Delt Fly (Pec Deck)", "Cable Rear Delt Fly", "Cable Front Raise"]
   },
   {
-    label: "Arms",
-    exercises: ["Preacher Curl", "Preacher Hammer Curl", "Tricep Pushdown"]
+    label: "Bicep",
+    exercises: ["Preacher Curl", "Preacher Hammer Curl"]
   },
   {
-    label: "Legs",
-    exercises: ["RDL", "Hip Thrust", "Sumo Squat", "Squat"]
+    label: "Tricep",
+    exercises: ["Tricep Pushdown", "Overhead Extension"]
+  },
+  {
+    label: "Forearm",
+    exercises: ["Preacher Hammer Curl", "Reverse Curl", "Cable Wrist Curl"] // Add forearm exercises here if needed
+  },
+  {
+    label: "Quadriceps",
+    exercises: ["Squat", "Leg Press"]
+  },
+  {
+    label: "Hamstrings",
+    exercises: ["RDL", "Leg Press"]
+  },
+  {
+    label: "Glutes",
+    exercises: ["Hip Thrust", "Leg Press"]
+  },
+  {
+    label: "Adductors",
+    exercises: ["Seated Adductor Machine", "Standing Adduction (Cable)"]
+  },
+  {
+    label: "Abductors",
+    exercises: ["Seated Abductor Machine", "Standing Abduction (Cable)"]
+  },
+  {
+    label: "Calves",
+    exercises: ["Standing Calf Raise", "Seated Calf Raise", "Leg Press Calf Raise"]
   }
 ]
 

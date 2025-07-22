@@ -5,13 +5,24 @@ import { Button } from '@/components/ui/button'
 import { useCustomExercises } from '@/hooks/use-custom-exercises'
 
 const MUSCLE_GROUPS = [
-  "Chest",
-  "Back", 
+  "Upper Chest",
+  "Middle Chest",
+  "Lower Chest",
+  "Lats",
+  "Upper Back",
+  "Lower Back",
+  "Traps",
   "Shoulders",
-  "Arms",
-  "Legs",
+  "Bicep",
+  "Tricep",
+  "Forearm",
+  "Quadriceps",
+  "Hamstrings",
+  "Glutes",
+  "Adductors",
+  "Abductors",
+  "Calves",
   "Core",
-  "Cardio",
   "Other"
 ]
 
@@ -107,7 +118,7 @@ export function CustomExerciseManager() {
                 <select
                   value={muscleGroup}
                   onChange={(e) => setMuscleGroup(e.target.value)}
-                  className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
+                  className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm max-h-60 overflow-y-auto"
                   required
                 >
                   <option value="">Select group</option>

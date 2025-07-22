@@ -9,6 +9,8 @@ import { useWorkoutTemplates, WorkoutTemplate } from "@/hooks/use-workout-templa
 import { useCustomExercises } from "@/hooks/use-custom-exercises"
 import { useDemo } from "@/components/providers/demo-provider"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import * as Select from '@radix-ui/react-select';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 
 interface Exercise {
   name: string
@@ -17,15 +19,40 @@ interface Exercise {
 }
 
 const MUSCLE_GROUPS = [
-  "Chest",
-  "Back", 
+  "Upper Chest",
+  "Middle Chest",
+  "Lower Chest",
+  "Lats",
+  "Upper Back",
+  "Lower Back",
+  "Traps",
   "Shoulders",
-  "Arms",
-  "Legs",
+  "Bicep",
+  "Tricep",
+  "Forearm",
+  "Quadriceps",
+  "Hamstrings",
+  "Glutes",
+  "Adductors",
+  "Abductors",
+  "Calves",
   "Core",
   "Cardio",
   "Other"
 ]
+
+// Helper to get label for current value
+const getExerciseLabel = (value: string, customExercises: any[]) => {
+  if (!value) return 'Select exercise';
+  if (value === 'custom') return '➕ Add Custom Exercise';
+  // Search in all groups
+  const allGroups = getCombinedExerciseGroups(customExercises);
+  for (const group of allGroups) {
+    if (group.exercises.includes(value)) return value;
+  }
+  return value;
+};
+const getMuscleGroupLabel = (value: string) => value || 'Select group';
 
 export function TemplateManager() {
   const { isDemoMode } = useDemo()
@@ -169,37 +196,38 @@ export function TemplateManager() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Exercise Name
                       </label>
-                      <select
-                        value={exercise.name}
-                        onChange={(e) => {
-                          const value = e.target.value
-                          if (value === "custom") {
-                            // Show custom exercise form inline
-                            setCustomExerciseIndex(index)
-                            setCustomExerciseName("")
-                            setCustomMuscleGroup("")
-                          } else {
-                            handleExerciseChange(index, "name", value)
-                            // Hide custom exercise form if it was open
-                            if (customExerciseIndex === index) {
-                              setCustomExerciseIndex(null)
-                            }
-                          }
-                        }}
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="">Select exercise</option>
-                        <option value="custom">➕ Add Custom Exercise</option>
-                        {getCombinedExerciseGroups(customExercises).map((group) => (
-                          <optgroup key={group.label} label={group.label}>
-                            {group.exercises.map((exerciseName) => (
-                              <option key={exerciseName} value={exerciseName}>
-                                {exerciseName}
-                              </option>
+                      <Select.Root value={exercise.name} onValueChange={(value) => {
+                        if (value === 'custom') {
+                          setCustomExerciseIndex(index);
+                          setCustomExerciseName("");
+                          setCustomMuscleGroup("");
+                        } else {
+                          handleExerciseChange(index, "name", value);
+                          if (customExerciseIndex === index) setCustomExerciseIndex(null);
+                        }
+                      }}>
+                        <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+                          <Select.Value placeholder="Select exercise">{getExerciseLabel(exercise.name, customExercises)}</Select.Value>
+                          <Select.Icon>
+                            <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
+                          </Select.Icon>
+                        </Select.Trigger>
+                        <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                          <Select.Viewport>
+                            <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">➕ Add Custom Exercise</Select.Item>
+                            {getCombinedExerciseGroups(customExercises).map((group) => (
+                              <Select.Group key={group.label}>
+                                <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.label}</Select.Label>
+                                {group.exercises.map((exerciseName) => (
+                                  <Select.Item key={exerciseName} value={exerciseName} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">
+                                    {exerciseName}
+                                  </Select.Item>
+                                ))}
+                              </Select.Group>
                             ))}
-                          </optgroup>
-                        ))}
-                      </select>
+                          </Select.Viewport>
+                        </Select.Content>
+                      </Select.Root>
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -238,18 +266,23 @@ export function TemplateManager() {
                           <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
                             Muscle Group
                           </label>
-                          <select
-                            value={customMuscleGroup}
-                            onChange={(e) => setCustomMuscleGroup(e.target.value)}
-                            className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
-                          >
-                            <option value="">Select group</option>
-                            {MUSCLE_GROUPS.map((group) => (
-                              <option key={group} value={group}>
-                                {group}
-                              </option>
-                            ))}
-                          </select>
+                          <Select.Root value={customMuscleGroup} onValueChange={setCustomMuscleGroup}>
+                            <Select.Trigger className="min-w-[300px] w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm flex items-center justify-between">
+                              <Select.Value placeholder="Select group">{getMuscleGroupLabel(customMuscleGroup)}</Select.Value>
+                              <Select.Icon>
+                                <ChevronDownIcon className="ml-2 h-4 w-4 text-blue-400" />
+                              </Select.Icon>
+                            </Select.Trigger>
+                            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-blue-300 dark:border-blue-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                              <Select.Viewport>
+                                {MUSCLE_GROUPS.map((group) => (
+                                  <Select.Item key={group} value={group} className="px-3 py-2 cursor-pointer text-blue-900 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/20">
+                                    {group}
+                                  </Select.Item>
+                                ))}
+                              </Select.Viewport>
+                            </Select.Content>
+                          </Select.Root>
                         </div>
                       </div>
                       <div className="flex justify-end gap-2 mt-3">
