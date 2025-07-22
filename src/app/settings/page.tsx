@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import ProfilePictureUpload from "@/components/profile/profile-picture-upload"
 import ProfilePicture from "@/components/ui/profile-picture"
-import { CustomExerciseManager } from "@/components/workout/custom-exercise-manager"
 
 function SettingToggle({ 
   label, 
@@ -220,10 +219,6 @@ export default function SettingsPage() {
           value={privateAccount} 
           onChange={handleTogglePrivateAccount} 
         />
-      </div>
-
-      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
-        <CustomExerciseManager />
       </div>
 
       {isDemoMode && (
