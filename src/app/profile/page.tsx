@@ -28,23 +28,22 @@ export default function ProfilePage() {
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([])
-  const [templatesPrivate, setTemplatesPrivate] = useState(false)
   const [templatesLoading, setTemplatesLoading] = useState(true)
   const [hiddenTemplates, setHiddenTemplates] = useState<Set<string>>(new Set())
   const [sharedWorkouts, setSharedWorkouts] = useState<SharedWorkout[]>([])
   const [workoutsLoading, setWorkoutsLoading] = useState(true)
   const [hiddenWorkouts, setHiddenWorkouts] = useState<Set<string>>(new Set())
   const [deletedWorkouts, setDeletedWorkouts] = useState<Set<string>>(new Set())
+  const [privateAccount, setPrivateAccount] = useState(false)
 
   useEffect(() => {
     async function fetchUser() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Fetch user profile to get username, profile picture, and privacy settings
           const { data: profile, error } = await supabase
             .from('user_profiles')
-            .select('username, profile_picture_url, templates_private')
+            .select('username, profile_picture_url, private_account, hidden_templates, hidden_workouts, deleted_workouts')
             .eq('user_id', user.id)
             .single()
 
@@ -54,10 +53,10 @@ export default function ProfilePage() {
             console.log('Profile data:', profile)
             setUsername(profile.username)
             setProfilePictureUrl(profile.profile_picture_url)
-            setTemplatesPrivate(profile.templates_private || false)
+            setPrivateAccount(profile.private_account || false)
             
             // Load templates and hidden templates after getting profile data
-            await loadTemplates(user.id, profile.templates_private || false)
+            await loadTemplates(user.id)
             await loadHiddenTemplates(user.id)
             await loadSharedWorkouts(user.id)
           } else {
@@ -73,7 +72,7 @@ export default function ProfilePage() {
     fetchUser()
   }, [])
 
-  const loadTemplates = async (userId: string, isPrivate: boolean) => {
+  const loadTemplates = async (userId: string) => {
     try {
       setTemplatesLoading(true)
       
@@ -273,7 +272,7 @@ export default function ProfilePage() {
 
       {/* Privacy Status */}
       <div className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        {templatesPrivate ? 'Private Profile' : 'Public Profile'}
+        {privateAccount ? 'Private Account' : 'Public Account'}
       </div>
 
       {/* Templates Section */}

@@ -13,7 +13,7 @@ import ProfilePicture from "@/components/ui/profile-picture";
 interface UserProfile {
   user_id: string;
   username: string;
-  templates_private: boolean;
+  private_account: boolean;
   profile_picture_url?: string;
 }
 
@@ -86,7 +86,7 @@ export default function UserProfilePage() {
       // Get user profile by username
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('user_id, username, templates_private, profile_picture_url')
+        .select('user_id, username, private_account, profile_picture_url')
         .eq('username', username)
         .single();
 
@@ -102,11 +102,11 @@ export default function UserProfilePage() {
         const isFriendsWithUser = await checkFriendshipStatus(profile.user_id);
         // Load templates after friendship check with the correct friendship status
         await loadTemplates(profile, isFriendsWithUser);
-        await loadSharedWorkouts(profile.user_id);
+        await loadSharedWorkouts(profile.user_id, profile.private_account, isFriendsWithUser);
       } else {
         // If no current user (not logged in), just load templates
         await loadTemplates(profile, false);
-        await loadSharedWorkouts(profile.user_id);
+        await loadSharedWorkouts(profile.user_id, profile.private_account, false);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -116,8 +116,13 @@ export default function UserProfilePage() {
     }
   };
 
-  const loadSharedWorkouts = async (userId: string) => {
+  const loadSharedWorkouts = async (userId: string, privateAccount: boolean, isFriendsWithUser: boolean) => {
     try {
+      // If private_account is true and not friends or self, do not load workouts
+      if (privateAccount && !isFriendsWithUser && currentUser?.id !== userId) {
+        setSharedWorkouts([]);
+        return;
+      }
       // Load shared workouts
       const { data: workoutsData, error } = await supabase
         .from('shared_workouts')
@@ -185,18 +190,10 @@ export default function UserProfilePage() {
   const loadTemplates = async (profile: UserProfile, isFriendsWithUser: boolean) => {
     try {
       console.log('Loading templates for user:', profile.user_id);
-      console.log('Templates private:', profile.templates_private);
       console.log('Is friends:', isFriendsWithUser);
       console.log('Current user ID:', currentUser?.id);
       console.log('Profile user ID:', profile.user_id);
-      console.log('Can view templates:', !profile.templates_private || isFriendsWithUser || currentUser?.id === profile.user_id);
-
-      // If templates are private and user is not friends, don't load templates
-      if (profile.templates_private && !isFriendsWithUser && currentUser?.id !== profile.user_id) {
-        console.log('Templates are private and user is not friends, not loading templates');
-        setTemplates([]);
-        return;
-      }
+      console.log('Can view templates:', isFriendsWithUser || currentUser?.id === profile.user_id);
 
       // Load templates
       const { data: templatesData, error } = await supabase
@@ -310,7 +307,7 @@ export default function UserProfilePage() {
     );
   }
 
-  const canViewTemplates = !userProfile.templates_private || isFriends || currentUser?.id === userProfile.user_id;
+  const canViewTemplates = !userProfile.private_account || isFriends || currentUser?.id === userProfile.user_id;
 
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
@@ -337,7 +334,7 @@ export default function UserProfilePage() {
 
       {/* Privacy Status */}
       <div className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        {userProfile.templates_private ? 'Private Profile' : 'Public Profile'}
+        {userProfile.private_account ? 'Private Account' : 'Public Account'}
       </div>
 
       {/* Templates Section */}
@@ -459,9 +456,9 @@ export default function UserProfilePage() {
         <div className="w-full max-w-4xl px-4">
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Private Templates</h3>
+            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Private Account</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              This user's templates are private. Send them a friend request to view their templates.
+              This account is private. Send a friend request to view the profile.
             </p>
             <Link href="/friends">
               <Button className="bg-blue-600 hover:bg-blue-700 text-white">

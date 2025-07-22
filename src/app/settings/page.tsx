@@ -45,12 +45,12 @@ export default function SettingsPage() {
   const { isDemoMode } = useDemo()
   const [autoLoadReps, setAutoLoadReps] = useState(false)
   const [autoLoadWeight, setAutoLoadWeight] = useState(false)
-  const [templatesPrivate, setTemplatesPrivate] = useState(false)
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [privateAccount, setPrivateAccount] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -95,12 +95,12 @@ export default function SettingsPage() {
         if (user) {
           const { data: profile } = await supabase
             .from('user_profiles')
-            .select('templates_private')
+            .select('private_account')
             .eq('user_id', user.id)
             .single()
           
           if (profile) {
-            setTemplatesPrivate(profile.templates_private || false)
+            setPrivateAccount(profile.private_account || false)
           }
         }
       }
@@ -121,20 +121,19 @@ export default function SettingsPage() {
     localStorage.setItem('autoLoadWeight', v ? 'true' : 'false')
   }
 
-  const handleTogglePrivacy = async (v: boolean) => {
-    setTemplatesPrivate(v)
-    
+  const handleTogglePrivateAccount = async (v: boolean) => {
+    setPrivateAccount(v)
     if (!isDemoMode) {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           await supabase
             .from('user_profiles')
-            .update({ templates_private: v })
+            .update({ private_account: v })
             .eq('user_id', user.id)
         }
       } catch (error) {
-        console.error('Error updating privacy setting:', error)
+        console.error('Error updating private account setting:', error)
       }
     }
   }
@@ -215,12 +214,11 @@ export default function SettingsPage() {
 
       <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
         <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Privacy Settings</h2>
-        
         <SettingToggle 
-          label="Private Templates" 
-          description="When enabled, only your friends can see your workout templates. When disabled, anyone can view your templates."
-          value={templatesPrivate} 
-          onChange={handleTogglePrivacy} 
+          label="Private Account" 
+          description="When enabled, only your friends can see your templates and logged workouts. When disabled, anyone can view your templates and workouts unless you hide them individually." 
+          value={privateAccount} 
+          onChange={handleTogglePrivateAccount} 
         />
       </div>
 
