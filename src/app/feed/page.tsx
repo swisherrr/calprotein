@@ -438,7 +438,7 @@ export default function FeedPage() {
                       <img
                         src={post.image_url}
                         alt="Progress"
-                        className="w-auto max-w-sm h-auto rounded-lg mb-3"
+                        className="w-full max-w-sm h-auto rounded-lg mb-3"
                       />
                     )}
                     {post.caption && (
