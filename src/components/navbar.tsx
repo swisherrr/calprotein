@@ -24,6 +24,7 @@ export function Navbar() {
   const { isDemoMode, exitDemoMode } = useDemo()
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [notificationCount, setNotificationCount] = useState(0)
+  const [username, setUsername] = useState<string | null>(null)
 
   React.useEffect(() => {
     async function getCurrentUser() {
@@ -31,7 +32,7 @@ export function Navbar() {
         const { data: { user } } = await supabase.auth.getUser()
         setCurrentUser(user)
         
-        // Fetch notification count
+        // Fetch notification count and username
         if (user) {
           try {
             const response = await fetch('/api/notifications/count')
@@ -41,6 +42,21 @@ export function Navbar() {
             }
           } catch (error) {
             console.error('Error fetching notification count:', error)
+          }
+
+          // Fetch username
+          try {
+            const { data: profile, error } = await supabase
+              .from('user_profiles')
+              .select('username')
+              .eq('user_id', user.id)
+              .single()
+
+            if (!error && profile) {
+              setUsername(profile.username)
+            }
+          } catch (error) {
+            console.error('Error fetching username:', error)
           }
         }
       }
@@ -60,7 +76,7 @@ export function Navbar() {
     }
   }
 
-  const links = [
+  const desktopLinks = [
     {
       label: "Dashboard",
       href: "/dashboard",
@@ -119,6 +135,30 @@ export function Navbar() {
     },
   ];
 
+  const mobileLinks = [
+    {
+      label: "Notifications",
+      href: "/notifications",
+      icon: (
+        <div className="relative">
+          <Bell className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+          {notificationCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {notificationCount > 99 ? '99+' : notificationCount}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      label: "Settings",
+      href: "/settings",
+      icon: (
+        <Settings className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+  ];
+
   const [open, setOpen] = useState(false);
   
   return (
@@ -127,9 +167,18 @@ export function Navbar() {
         <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
           {open ? <Logo /> : <LogoIcon open={open} />}
           <div className="mt-8 flex flex-col gap-2">
-            {links.map((link, idx) => (
-              <SidebarLink key={idx} link={link} />
-            ))}
+            {/* Desktop sidebar shows all links */}
+            <div className="hidden md:block">
+              {desktopLinks.map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+            </div>
+            {/* Mobile sidebar shows only Profile and Settings */}
+            <div className="md:hidden">
+              {mobileLinks.map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+            </div>
             <button
               onClick={handleSignOut}
               className="flex items-center justify-start gap-2 group/sidebar py-2 text-neutral-700 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-neutral-100"
@@ -147,10 +196,10 @@ export function Navbar() {
             </button>
           </div>
         </div>
-        <div>
+        <div className="hidden md:block">
           <SidebarLink
             link={{
-              label: "Profile",
+              label: username ? `@${username}` : "Profile",
               href: "/profile",
               icon: (
                 <ProfilePicture
