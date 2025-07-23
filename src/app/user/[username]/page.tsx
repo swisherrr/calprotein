@@ -145,19 +145,22 @@ export default function UserProfilePage() {
 
       setUserProfile(profile);
 
-      // Wait for current user to be loaded, then check friendship status
+      // Load all data in parallel for better performance
+      const loadDataPromises = [];
+      
+      // Always load templates and workouts (they'll be filtered based on privacy later)
+      loadDataPromises.push(
+        loadTemplates(profile, false),
+        loadSharedWorkouts(profile.user_id, profile.private_account, false),
+        loadProgressPictures(profile, false)
+      );
+
+      // If current user exists, also load follow data
       if (currentUser) {
-        await fetchFollowData(profile.user_id);
-        // Load content based on privacy settings (will be updated after follow status is determined)
-        await loadTemplates(profile, false);
-        await loadSharedWorkouts(profile.user_id, profile.private_account, false);
-        await loadProgressPictures(profile, false);
-      } else {
-        // If no current user (not logged in), just load public content
-        await loadTemplates(profile, false);
-        await loadSharedWorkouts(profile.user_id, profile.private_account, false);
-        await loadProgressPictures(profile, false);
+        loadDataPromises.push(fetchFollowData(profile.user_id));
       }
+
+      await Promise.all(loadDataPromises);
     } catch (error) {
       console.error('Error loading user profile:', error);
       setError('Failed to load user profile');
@@ -173,12 +176,13 @@ export default function UserProfilePage() {
         setSharedWorkouts([]);
         return;
       }
-      // Load shared workouts
+      // Load shared workouts with limit for better performance
       const { data: workoutsData, error } = await supabase
         .from('shared_workouts')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20); // Limit to recent 20 workouts for performance
 
       if (error) {
         console.error('Error loading shared workouts:', error);
@@ -224,12 +228,13 @@ export default function UserProfilePage() {
       console.log('Profile user ID:', profile.user_id);
       console.log('Can view templates:', isFriendsWithUser || currentUser?.id === profile.user_id);
 
-      // Load templates
+      // Load templates with limit for better performance
       const { data: templatesData, error } = await supabase
         .from('workout_templates')
         .select('id, name, exercises, created_at')
         .eq('user_id', profile.user_id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20); // Limit to recent 20 templates for performance
 
       if (error) {
         console.error('Error loading templates:', error);
@@ -255,15 +260,6 @@ export default function UserProfilePage() {
         }
       }
       
-      // Also check if there are any templates at all for this user
-      const { count } = await supabase
-        .from('workout_templates')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', profile.user_id);
-      
-      console.log('Total templates count for user:', count);
-      console.log('Visible templates after filtering:', filteredTemplates.length);
-      
       setTemplates(filteredTemplates);
     } catch (error) {
       console.error('Error loading templates:', error);
@@ -274,12 +270,13 @@ export default function UserProfilePage() {
     try {
       setProgressPicturesLoading(true);
       
-      // Load progress pictures based on privacy settings
+      // Load progress pictures based on privacy settings with limit for better performance
       let query = supabase
         .from('progress_pictures')
         .select('*')
         .eq('user_id', profile.user_id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20); // Limit to recent 20 progress pictures for performance
 
       // If private account and not friends, only show non-hidden pictures
       if (profile.private_account && !isFriendsWithUser) {

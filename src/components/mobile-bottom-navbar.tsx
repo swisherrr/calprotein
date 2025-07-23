@@ -22,15 +22,18 @@ export function MobileBottomNavbar() {
     async function getCurrentUser() {
       if (!isDemoMode) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          setCurrentUser(user);
+          // Only fetch user if not already cached
+          if (!currentUser) {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+          }
         } catch (error) {
           console.error('Error fetching current user:', error);
         }
       }
     }
     getCurrentUser();
-  }, [isDemoMode]);
+  }, [isDemoMode, currentUser]);
 
   const navItems = [
     {

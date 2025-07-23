@@ -17,6 +17,9 @@ export default function FeedPage() {
   const [showCommentsFor, setShowCommentsFor] = useState<string | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const POSTS_PER_PAGE = 10;
 
   const formatRelativeTime = (dateString: string) => {
     const now = new Date();
@@ -42,315 +45,496 @@ export default function FeedPage() {
 
   useEffect(() => {
     const fetchFeed = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      // Get users the current user follows (accepted only)
-      const { data: following } = await supabase
-        .from('follows')
-        .select('followed_id')
-        .eq('follower_id', user.id)
-        .eq('status', 'accepted');
-      const followedIds = following?.map(f => f.followed_id) || [];
-      
-      // Include current user in the list of users to fetch posts from
-      const allUserIds = [...followedIds, user.id];
-      
-      // Get posts from followed users AND current user
-      const { data: posts, error: postsError } = await supabase
-        .from('posts')
-        .select(`
-          *,
-          shared_workouts!workout_id(*),
-          progress_pictures!progress_picture_id(*)
-        `)
-        .in('user_id', allUserIds)
-        .order('created_at', { ascending: false });
-      
-      // Filter out hidden and deleted content
-      let filteredPosts = posts || [];
-      if (filteredPosts.length > 0) {
-        // Get hidden and deleted content for all users (including current user)
-        const { data: userProfiles } = await supabase
-          .from('user_profiles')
-          .select('user_id, hidden_workouts, deleted_workouts, hidden_progress_pictures, deleted_progress_pictures')
-          .in('user_id', allUserIds);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(user);
+        if (!user) {
+          setLoading(false);
+          return;
+        }
 
-        if (userProfiles) {
-          const hiddenWorkouts = new Set<string>();
-          const deletedWorkouts = new Set<string>();
-          const hiddenPictures = new Set<string>();
-          const deletedPictures = new Set<string>();
-          
-          userProfiles.forEach(profile => {
-            if (profile.hidden_workouts) {
-              profile.hidden_workouts.forEach((id: string) => hiddenWorkouts.add(id));
-            }
-            if (profile.deleted_workouts) {
-              profile.deleted_workouts.forEach((id: string) => deletedWorkouts.add(id));
-            }
-            if (profile.hidden_progress_pictures) {
-              profile.hidden_progress_pictures.forEach((id: string) => hiddenPictures.add(id));
-            }
-            if (profile.deleted_progress_pictures) {
-              profile.deleted_progress_pictures.forEach((id: string) => deletedPictures.add(id));
-            }
-          });
-          
-          filteredPosts = filteredPosts.filter(post => {
-            if (post.post_type === 'workout' && post.shared_workouts) {
-              return !hiddenWorkouts.has(post.shared_workouts.id) && !deletedWorkouts.has(post.shared_workouts.id);
-            } else if (post.post_type === 'progress' && post.progress_pictures) {
-              return !hiddenPictures.has(post.progress_pictures.id) && !deletedPictures.has(post.progress_pictures.id);
-            }
-            return true;
-          });
-        }
-      }
-      
-      // Get usernames for all users
-      const { data: userProfilesForUsernames } = await supabase
-        .from('user_profiles')
-        .select('user_id, username')
-        .in('user_id', allUserIds);
-      
-      const usernameMap = new Map<string, string>();
-      userProfilesForUsernames?.forEach(profile => {
-        usernameMap.set(profile.user_id, profile.username);
-      });
-      
-      // Process posts and add usernames
-      const allPosts = filteredPosts.map(post => {
-        const username = usernameMap.get(post.user_id) || post.user_id;
+        // Get users the current user follows (accepted only) - limit to recent follows for performance
+        const { data: following } = await supabase
+          .from('follows')
+          .select('followed_id')
+          .eq('follower_id', user.id)
+          .eq('status', 'accepted')
+          .order('created_at', { ascending: false })
+          .limit(50); // Limit to recent 50 follows for performance
+
+        const followedIds = following?.map(f => f.followed_id) || [];
+        const allUserIds = [...followedIds, user.id];
         
-        if (post.post_type === 'workout' && post.shared_workouts) {
-          return {
-            ...post.shared_workouts,
-            post_id: post.id,
-            type: 'workout',
-            username,
-            user_id: post.user_id,
-            created_at: post.created_at
-          };
-        } else if (post.post_type === 'progress' && post.progress_pictures) {
-          return {
-            ...post.progress_pictures,
-            post_id: post.id,
-            type: 'progress',
-            username,
-            user_id: post.user_id,
-            created_at: post.created_at
-          };
+        if (allUserIds.length === 0) {
+          setLoading(false);
+          return;
         }
-        return null;
-      }).filter(Boolean);
-      
-      setFeed(allPosts || []);
-      setLoading(false);
+
+        // Get posts with pagination
+        const { data: posts, error: postsError } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            shared_workouts!workout_id(*),
+            progress_pictures!progress_picture_id(*)
+          `)
+          .in('user_id', allUserIds)
+          .order('created_at', { ascending: false })
+          .range(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE - 1);
+
+        if (postsError) {
+          console.error('Error fetching posts:', postsError);
+          setLoading(false);
+          return;
+        }
+
+        // Filter out hidden and deleted content efficiently
+        let filteredPosts = posts || [];
+        if (filteredPosts.length > 0) {
+          // Get hidden and deleted content for all users in one query
+          const { data: userProfiles } = await supabase
+            .from('user_profiles')
+            .select('user_id, hidden_workouts, deleted_workouts, hidden_progress_pictures, deleted_progress_pictures')
+            .in('user_id', allUserIds);
+
+          if (userProfiles) {
+            const hiddenWorkouts = new Set<string>();
+            const deletedWorkouts = new Set<string>();
+            const hiddenPictures = new Set<string>();
+            const deletedPictures = new Set<string>();
+            
+            userProfiles.forEach(profile => {
+              if (profile.hidden_workouts) {
+                profile.hidden_workouts.forEach((id: string) => hiddenWorkouts.add(id));
+              }
+              if (profile.deleted_workouts) {
+                profile.deleted_workouts.forEach((id: string) => deletedWorkouts.add(id));
+              }
+              if (profile.hidden_progress_pictures) {
+                profile.hidden_progress_pictures.forEach((id: string) => hiddenPictures.add(id));
+              }
+              if (profile.deleted_progress_pictures) {
+                profile.deleted_progress_pictures.forEach((id: string) => deletedPictures.add(id));
+              }
+            });
+            
+            filteredPosts = filteredPosts.filter(post => {
+              if (post.post_type === 'workout' && post.shared_workouts) {
+                return !hiddenWorkouts.has(post.shared_workouts.id) && !deletedWorkouts.has(post.shared_workouts.id);
+              } else if (post.post_type === 'progress' && post.progress_pictures) {
+                return !hiddenPictures.has(post.progress_pictures.id) && !deletedPictures.has(post.progress_pictures.id);
+              }
+              return true;
+            });
+          }
+        }
+        
+        // Get usernames for all users in one query
+        const { data: userProfilesForUsernames } = await supabase
+          .from('user_profiles')
+          .select('user_id, username')
+          .in('user_id', allUserIds);
+        
+        const usernameMap = new Map<string, string>();
+        userProfilesForUsernames?.forEach(profile => {
+          usernameMap.set(profile.user_id, profile.username);
+        });
+        
+        // Process posts and add usernames
+        const allPosts = filteredPosts.map(post => {
+          const username = usernameMap.get(post.user_id) || post.user_id;
+          
+          if (post.post_type === 'workout' && post.shared_workouts) {
+            return {
+              ...post.shared_workouts,
+              post_id: post.id,
+              type: 'workout',
+              username,
+              user_id: post.user_id,
+              created_at: post.created_at
+            };
+          } else if (post.post_type === 'progress' && post.progress_pictures) {
+            return {
+              ...post.progress_pictures,
+              post_id: post.id,
+              type: 'progress',
+              username,
+              user_id: post.user_id,
+              created_at: post.created_at
+            };
+          }
+          return null;
+        }).filter(Boolean);
+        
+        if (page === 0) {
+          setFeed(allPosts || []);
+        } else {
+          setFeed(prev => [...prev, ...(allPosts || [])]);
+        }
+        
+        setHasMore((allPosts || []).length === POSTS_PER_PAGE);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching feed:', error);
+        setLoading(false);
+      }
     };
     fetchFeed();
-  }, []);
+  }, [page]);
 
+  // Load likes and comments for the current feed
   useEffect(() => {
-    if (!feed.length) return;
-    // Fetch like counts and whether current user liked each post
+    if (feed.length === 0) return;
+    
     const fetchLikesAndComments = async () => {
-      const postIds = feed.map(p => p.post_id);
-      // Likes
-      const { data: likes } = await supabase
-        .from('post_likes')
-        .select('post_id, user_id')
-        .in('post_id', postIds);
-      const counts: {[postId: string]: number} = {};
-      const liked = new Set<string>();
-      likes?.forEach(like => {
-        counts[like.post_id] = (counts[like.post_id] || 0) + 1;
-        if (like.user_id === currentUser?.id) liked.add(like.post_id);
-      });
-      setLikeCounts(counts);
-      setLikedPosts(liked);
-      // Comments
-      const { data: comments } = await supabase
-        .from('post_comments')
-        .select('post_id');
-      const commentCounts: {[postId: string]: number} = {};
-      comments?.forEach(c => {
-        commentCounts[c.post_id] = (commentCounts[c.post_id] || 0) + 1;
-      });
-      setCommentCounts(commentCounts);
+      try {
+        const postIds = feed.map(post => post.post_id);
+        
+        // Fetch likes and comments in parallel
+        const [likesResponse, commentsResponse] = await Promise.all([
+          supabase
+            .from('post_likes')
+            .select('post_id')
+            .in('post_id', postIds),
+          supabase
+            .from('post_comments')
+            .select('post_id')
+            .in('post_id', postIds)
+        ]);
+
+        // Process likes
+        const likeCountMap: {[postId: string]: number} = {};
+        likesResponse.data?.forEach(like => {
+          likeCountMap[like.post_id] = (likeCountMap[like.post_id] || 0) + 1;
+        });
+        setLikeCounts(likeCountMap);
+
+        // Process comments
+        const commentCountMap: {[postId: string]: number} = {};
+        commentsResponse.data?.forEach(comment => {
+          commentCountMap[comment.post_id] = (commentCountMap[comment.post_id] || 0) + 1;
+        });
+        setCommentCounts(commentCountMap);
+
+        // Check which posts the current user has liked
+        if (currentUser) {
+          const { data: userLikes } = await supabase
+            .from('post_likes')
+            .select('post_id')
+            .in('post_id', postIds)
+            .eq('user_id', currentUser.id);
+          
+          const likedPostIds = new Set(userLikes?.map(like => like.post_id) || []);
+          setLikedPosts(likedPostIds);
+        }
+      } catch (error) {
+        console.error('Error fetching likes and comments:', error);
+      }
     };
+
     fetchLikesAndComments();
   }, [feed, currentUser]);
 
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
+
   const handleLike = async (postId: string) => {
     if (!currentUser) return;
-    
+
     try {
-      if (likedPosts.has(postId)) {
+      const isLiked = likedPosts.has(postId);
+      
+      if (isLiked) {
         // Unlike
-        const { error: deleteError } = await supabase
+        await supabase
           .from('post_likes')
           .delete()
-          .eq('user_id', currentUser.id)
-          .eq('post_id', postId);
+          .eq('post_id', postId)
+          .eq('user_id', currentUser.id);
         
-        if (deleteError) {
-          console.error('Error unliking post:', deleteError);
-          return;
-        }
-        
-        // Update UI immediately
-        setLikeCounts(lc => ({ ...lc, [postId]: Math.max(0, (lc[postId] || 0) - 1) }));
-        setLikedPosts(lp => {
-          const newSet = new Set(lp);
+        setLikedPosts(prev => {
+          const newSet = new Set(prev);
           newSet.delete(postId);
           return newSet;
         });
+        
+        setLikeCounts(prev => ({
+          ...prev,
+          [postId]: Math.max(0, (prev[postId] || 0) - 1)
+        }));
       } else {
         // Like
-        const { error: insertError } = await supabase
+        await supabase
           .from('post_likes')
-          .insert({ user_id: currentUser.id, post_id: postId });
+          .insert([{
+            post_id: postId,
+            user_id: currentUser.id
+          }]);
         
-        if (insertError) {
-          console.error('Error liking post:', insertError);
-          return;
-        }
+        setLikedPosts(prev => new Set([...prev, postId]));
         
-        // Update UI immediately
-        setLikeCounts(lc => ({ ...lc, [postId]: (lc[postId] || 0) + 1 }));
-        setLikedPosts(lp => {
-          const newSet = new Set(lp);
-          newSet.add(postId);
-          return newSet;
-        });
+        setLikeCounts(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || 0) + 1
+        }));
       }
     } catch (error) {
-      console.error('Error handling like:', error);
+      console.error('Error toggling like:', error);
     }
   };
 
   const openComments = async (postId: string) => {
-    setShowCommentsFor(postId);
-    const { data: comments } = await supabase
-      .from('post_comments')
-      .select('*, user_id')
-      .eq('post_id', postId)
-      .order('created_at', { ascending: true });
-    
-    if (comments && comments.length > 0) {
-      // Get usernames for comment authors
-      const commentUserIds = comments.map(c => c.user_id);
-      const { data: userProfiles } = await supabase
-        .from('user_profiles')
-        .select('user_id, username')
-        .in('user_id', commentUserIds);
-      
-      const usernameMap = new Map<string, string>();
-      userProfiles?.forEach(profile => {
-        usernameMap.set(profile.user_id, profile.username);
-      });
-      
-      // Add usernames to comments
-      const commentsWithUsernames = comments.map(comment => ({
-        ...comment,
-        username: usernameMap.get(comment.user_id) || comment.user_id
-      }));
-      
-      setComments(commentsWithUsernames);
-    } else {
+    if (showCommentsFor === postId) {
+      setShowCommentsFor(null);
       setComments([]);
+      return;
+    }
+
+    try {
+      setShowCommentsFor(postId);
+      
+      const { data: commentsData, error } = await supabase
+        .from('post_comments')
+        .select(`
+          *,
+          user_profiles!user_id(username, profile_picture_url)
+        `)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching comments:', error);
+        return;
+      }
+
+      setComments(commentsData || []);
+    } catch (error) {
+      console.error('Error opening comments:', error);
     }
   };
+
   const handleAddComment = async () => {
     if (!currentUser || !showCommentsFor || !newComment.trim()) return;
-    await supabase.from('post_comments').insert({ post_id: showCommentsFor, user_id: currentUser.id, content: newComment.trim() });
-    setNewComment("");
-    openComments(showCommentsFor);
+
+    try {
+      const { data: comment, error } = await supabase
+        .from('post_comments')
+        .insert([{
+          post_id: showCommentsFor,
+          user_id: currentUser.id,
+          content: newComment.trim()
+        }])
+        .select(`
+          *,
+          user_profiles!user_id(username, profile_picture_url)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Error adding comment:', error);
+        return;
+      }
+
+      setComments(prev => [...prev, comment]);
+      setCommentCounts(prev => ({
+        ...prev,
+        [showCommentsFor]: (prev[showCommentsFor] || 0) + 1
+      }));
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
+  if (loading && page === 0) {
+    return (
+      <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
+        <div className="text-center text-gray-500 dark:text-gray-400">Loading feed...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      {loading ? (
-        <div className="text-center text-gray-500 dark:text-gray-400">Loading...</div>
-      ) : feed.length === 0 ? (
-        <div className="text-center text-gray-500 dark:text-gray-400">No posts yet. Start by sharing a workout or posting a progress picture!</div>
-      ) : (
-        <div className="space-y-6">
-          {feed.map((post) => (
-            <div key={post.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-black">
-              {/* User info */}
-              <div className="flex items-center gap-2 mb-2">
-                <ProfilePicture userId={post.user_id} size="sm" />
-                <Link href={`/user/${post.username}`} className="font-medium text-gray-900 dark:text-gray-100 hover:underline">@{post.username}</Link>
-                <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{formatRelativeTime(post.created_at)}</span>
-              </div>
-              
-              {/* Post content based on type */}
-              {post.type === 'workout' ? (
-                <>
-                  <div className="font-medium text-gray-900 dark:text-gray-100 mb-1">{post.template_name}</div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">Volume: {post.total_volume?.toLocaleString()} lbs</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{post.duration}</div>
-                </>
-              ) : (
-                <>
-                  <div className="mb-3">
-                    <img 
-                      src={post.image_url} 
-                      alt="Progress Picture" 
-                      className="w-full max-w-md h-auto rounded-lg"
+    <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black pb-8">
+      {/* Header */}
+      <div className="w-full max-w-2xl px-4 mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Users className="h-6 w-6 text-gray-900 dark:text-gray-100" />
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Feed</h1>
+        </div>
+      </div>
+
+      {/* Feed Content */}
+      <div className="w-full max-w-md px-4">
+        {feed.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No posts yet</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+              Follow some users to see their posts here
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {feed.map((post) => (
+              <div
+                key={post.post_id}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-black p-4"
+              >
+                {/* Post Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Link href={`/user/${post.username}`} className="hover:opacity-80 transition-opacity">
+                    <ProfilePicture
+                      pictureUrl={post.profile_picture_url}
+                      size="sm"
                     />
-                  </div>
-                  {post.caption && (
-                    <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">{post.caption}</div>
-                  )}
-                </>
-              )}
-              
-              {/* Like and comment buttons */}
-              <div className="flex items-center gap-4 mt-2">
-                <button onClick={() => handleLike(post.post_id)} className="flex items-center gap-1 text-red-500">
-                  <Heart className={`h-5 w-5 ${likedPosts.has(post.post_id) ? 'fill-red-500' : 'stroke-red-500'}`} />
-                  <span className="text-sm">{likeCounts[post.post_id] || 0}</span>
-                </button>
-                <button onClick={() => openComments(post.post_id)} className="flex items-center gap-1 text-blue-500">
-                  <MessageCircle className="h-5 w-5" />
-                  <span className="text-sm">{commentCounts[post.post_id] || 0}</span>
-                </button>
-              </div>
-              {/* Comments modal */}
-              {showCommentsFor === post.post_id && (
-                <div className="mt-4 border-t pt-4">
-                  <div className="mb-2 font-medium">Comments</div>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {comments.length === 0 ? (
-                      <div className="text-xs text-gray-500">No comments yet.</div>
-                    ) : comments.map(c => (
-                      <div key={c.id} className="text-sm text-gray-900 dark:text-gray-100 border-b pb-1">
-                        <span className="font-medium">@{c.username}</span>: {c.content}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      value={newComment}
-                      onChange={e => setNewComment(e.target.value)}
-                      placeholder="Add a comment..."
-                      className="flex-1 border rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    />
-                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()}>Post</Button>
+                  </Link>
+                  <div className="flex-1">
+                    <Link 
+                      href={`/user/${post.username}`}
+                      className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      @{post.username}
+                    </Link>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {formatRelativeTime(post.created_at)}
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+
+                {/* Post Content */}
+                {post.type === 'workout' ? (
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      {post.template_name}
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Volume</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                          {post.total_volume?.toLocaleString() || '0'} lbs
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Duration</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                          {post.duration || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Exercises</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                          {post.exercises?.length || 0}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    {post.image_url && (
+                      <img
+                        src={post.image_url}
+                        alt="Progress"
+                        className="w-auto max-w-sm h-auto rounded-lg mb-3"
+                      />
+                    )}
+                    {post.caption && (
+                      <p className="text-gray-900 dark:text-gray-100">{post.caption}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Post Actions */}
+                <div className="flex items-center gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() => handleLike(post.post_id)}
+                    className={`flex items-center gap-2 text-sm transition-colors ${
+                      likedPosts.has(post.post_id)
+                        ? 'text-red-500'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-red-500'
+                    }`}
+                  >
+                    <Heart className={`h-4 w-4 ${likedPosts.has(post.post_id) ? 'fill-current' : ''}`} />
+                    {likeCounts[post.post_id] || 0}
+                  </button>
+                  
+                  <button
+                    onClick={() => openComments(post.post_id)}
+                    className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    {commentCounts[post.post_id] || 0}
+                  </button>
+                </div>
+
+                {/* Comments Section */}
+                {showCommentsFor === post.post_id && (
+                  <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
+                      {comments.map((comment) => (
+                        <div key={comment.id} className="flex items-start gap-2">
+                                                     <ProfilePicture
+                             pictureUrl={comment.user_profiles?.profile_picture_url}
+                             size="sm"
+                           />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                                @{comment.user_profiles?.username}
+                              </span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                {formatRelativeTime(comment.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {comment.content}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Add a comment..."
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-black text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleAddComment}
+                        disabled={!newComment.trim()}
+                      >
+                        Post
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="text-center pt-4">
+                <Button
+                  onClick={loadMore}
+                  disabled={loading}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {loading ? 'Loading...' : 'Load More'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

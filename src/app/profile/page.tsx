@@ -67,35 +67,104 @@ export default function ProfilePage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('username, profile_picture_url, private_account, hidden_templates, hidden_workouts, deleted_workouts')
-            .eq('user_id', user.id)
-            .single()
+          // Fetch profile data and all other data in parallel for better performance
+          const [profileResponse, templatesResponse, workoutsResponse, followResponse, progressResponse] = await Promise.all([
+            supabase
+              .from('user_profiles')
+              .select('username, profile_picture_url, private_account, hidden_templates, hidden_workouts, deleted_workouts, hidden_progress_pictures, deleted_progress_pictures')
+              .eq('user_id', user.id)
+              .single(),
+            supabase
+              .from('workout_templates')
+              .select('id, name, exercises, created_at')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(20), // Limit to recent 20 templates for performance
+            supabase
+              .from('shared_workouts')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(20), // Limit to recent 20 workouts for performance
+            fetch(`/api/follow/list?userId=${user.id}`),
+            supabase
+              .from('progress_pictures')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(20) // Limit to recent 20 progress pictures for performance
+          ])
 
-          if (error && error.code !== 'PGRST116') {
-            console.error('Error fetching profile:', error)
-          } else if (profile) {
-            console.log('Profile data:', profile)
-            setUsername(profile.username)
-            setProfilePictureUrl(profile.profile_picture_url)
-            setPrivateAccount(profile.private_account || false)
+          // Handle profile data
+          if (profileResponse.error && profileResponse.error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', profileResponse.error)
+          } else if (profileResponse.data) {
+            console.log('Profile data:', profileResponse.data)
+            setUsername(profileResponse.data.username)
+            setProfilePictureUrl(profileResponse.data.profile_picture_url)
+            setPrivateAccount(profileResponse.data.private_account || false)
             
-            // Load templates and hidden templates after getting profile data
-            await loadTemplates(user.id)
-            await loadHiddenTemplates(user.id)
-            await loadSharedWorkouts(user.id)
-            await loadFollowData(user.id)
-            await loadProgressPictures(user.id)
-            await checkStorageBucket()
-          } else {
-            console.log('No profile found')
+            // Set hidden/deleted data
+            if (profileResponse.data.hidden_templates) {
+              setHiddenTemplates(new Set(profileResponse.data.hidden_templates))
+            }
+            if (profileResponse.data.hidden_workouts) {
+              setHiddenWorkouts(new Set(profileResponse.data.hidden_workouts))
+            }
+            if (profileResponse.data.deleted_workouts) {
+              setDeletedWorkouts(new Set(profileResponse.data.deleted_workouts))
+            }
+            if (profileResponse.data.hidden_progress_pictures) {
+              setHiddenProgressPictures(new Set(profileResponse.data.hidden_progress_pictures))
+            }
+            if (profileResponse.data.deleted_progress_pictures) {
+              setDeletedProgressPictures(new Set(profileResponse.data.deleted_progress_pictures))
+            }
           }
+
+          // Handle templates data
+          if (templatesResponse.error) {
+            console.error('Error loading templates:', templatesResponse.error)
+          } else {
+            console.log('Templates found:', templatesResponse.data)
+            setTemplates(templatesResponse.data || [])
+          }
+
+          // Handle workouts data
+          if (workoutsResponse.error) {
+            console.error('Error loading shared workouts:', workoutsResponse.error)
+          } else {
+            console.log('Shared workouts found:', workoutsResponse.data)
+            setSharedWorkouts(workoutsResponse.data || [])
+          }
+
+          // Handle follow data
+          try {
+            const followData = await followResponse.json()
+            setFollowers(followData.followers)
+            setFollowing(followData.following)
+          } catch (error) {
+            console.error('Error loading follow data:', error)
+          }
+
+          // Handle progress pictures data
+          if (progressResponse.error) {
+            console.error('Error loading progress pictures:', progressResponse.error)
+          } else {
+            console.log('Progress pictures found:', progressResponse.data)
+            setProgressPictures(progressResponse.data || [])
+          }
+
+          // Check storage bucket (this can be done separately as it's not critical for initial load)
+          checkStorageBucket()
         }
       } catch (error) {
         console.error('Error fetching user data:', error)
       } finally {
         setLoading(false)
+        setTemplatesLoading(false)
+        setWorkoutsLoading(false)
+        setProgressPicturesLoading(false)
       }
     }
     fetchUser()

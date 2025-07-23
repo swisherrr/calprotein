@@ -159,7 +159,7 @@ export function WorkoutLogger() {
         }
       }
       
-            setLastWorkoutData(lastWorkoutDataMap)
+      setLastWorkoutData(lastWorkoutDataMap)
       return
     }
 
@@ -167,58 +167,60 @@ export function WorkoutLogger() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Fetch all recent workout logs in one query instead of multiple queries
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select('exercises')
+        .eq('user_id', user.id)
+        .not('exercises', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(20) // Increased limit to find more recent data
+
+      if (error) {
+        console.error('Error fetching last workout data:', error)
+        return
+      }
+
       const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number, volume?: number }> = {}
+      const foundExercises = new Set<string>()
 
-      for (const exerciseName of exerciseNames) {
-        const { data, error } = await supabase
-          .from('workout_logs')
-          .select('exercises')
-          .eq('user_id', user.id)
-          .not('exercises', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(10)
-
-        if (error) {
-          console.error('Error fetching last workout data:', error)
-          continue
-        }
-
-        // Find the most recent workout that contains this exercise
-        for (const workout of data || []) {
-          const exercise = workout.exercises?.find((ex: any) => ex.name === exerciseName)
-          if (exercise) {
-            // Handle both old format (single reps/weight) and new format (setData)
-            if (exercise.setData && exercise.setData.length > 0) {
-              // New format: calculate total volume from all sets
-              let totalVolume = 0
-              let hasValidSets = false
-              
-              for (const set of exercise.setData) {
-                if (set.reps && set.weight) {
-                  totalVolume += set.reps * set.weight
-                  hasValidSets = true
-                }
+      // Process all workouts to find the most recent data for each exercise
+      for (const workout of data || []) {
+        if (foundExercises.size === exerciseNames.length) break // Stop if we found all exercises
+        
+        for (const exercise of workout.exercises || []) {
+          if (foundExercises.has(exercise.name)) continue // Skip if we already found this exercise
+          
+          if (exercise.setData && exercise.setData.length > 0) {
+            // New format: calculate total volume from all sets
+            let totalVolume = 0
+            let hasValidSets = false
+            
+            for (const set of exercise.setData) {
+              if (set.reps && set.weight) {
+                totalVolume += set.reps * set.weight
+                hasValidSets = true
               }
-              
-              if (hasValidSets) {
-                const firstSet = exercise.setData[0]
-                lastWorkoutDataMap[exerciseName] = {
-                  reps: firstSet.reps,
-                  weight: firstSet.weight,
-                  volume: totalVolume
-                }
-                break
-              }
-            } else if (exercise.reps || exercise.weight) {
-              // Old format: use the single reps/weight values
-              const volume = (exercise.reps || 0) * (exercise.weight || 0)
-              lastWorkoutDataMap[exerciseName] = {
-                reps: exercise.reps,
-                weight: exercise.weight,
-                volume: volume
-              }
-              break
             }
+            
+            if (hasValidSets) {
+              const firstSet = exercise.setData[0]
+              lastWorkoutDataMap[exercise.name] = {
+                reps: firstSet.reps,
+                weight: firstSet.weight,
+                volume: totalVolume
+              }
+              foundExercises.add(exercise.name)
+            }
+          } else if (exercise.reps || exercise.weight) {
+            // Old format: use the single reps/weight values
+            const volume = (exercise.reps || 0) * (exercise.weight || 0)
+            lastWorkoutDataMap[exercise.name] = {
+              reps: exercise.reps,
+              weight: exercise.weight,
+              volume: volume
+            }
+            foundExercises.add(exercise.name)
           }
         }
       }

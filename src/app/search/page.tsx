@@ -17,13 +17,25 @@ function SearchContent() {
     e.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('user_id, username, profile_picture_url')
-      .ilike('username', `%${query}%`)
-      .limit(20);
-    setResults(data || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('user_id, username, profile_picture_url')
+        .ilike('username', `%${query}%`)
+        .limit(15); // Reduced limit for better mobile performance
+      
+      if (error) {
+        console.error('Search error:', error);
+        setResults([]);
+      } else {
+        setResults(data || []);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Auto-search when query changes (debounced)
@@ -31,7 +43,7 @@ function SearchContent() {
     if (query.trim()) {
       const timeoutId = setTimeout(() => {
         handleSearch({ preventDefault: () => {} } as React.FormEvent);
-      }, 300);
+      }, 500); // Increased debounce time for better mobile performance
       return () => clearTimeout(timeoutId);
     } else {
       setResults([]);

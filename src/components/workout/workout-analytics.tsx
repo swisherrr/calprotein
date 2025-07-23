@@ -143,6 +143,7 @@ export function WorkoutAnalytics() {
         .select('id, date, total_volume, exercises')
         .eq('user_id', user.id)
         .order('date', { ascending: true })
+        .limit(100) // Limit to recent 100 workout logs for performance
 
       if (error) throw error
 

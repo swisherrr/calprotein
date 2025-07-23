@@ -49,6 +49,7 @@ export function useWorkoutLogs() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+        .limit(50) // Limit to recent 50 workout logs for performance
 
       if (error) throw error
       setLogs(data || [])

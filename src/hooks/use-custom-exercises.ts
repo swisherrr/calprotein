@@ -26,6 +26,7 @@ export function useCustomExercises() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+        .limit(50) // Limit to recent 50 custom exercises for performance
 
       if (error) throw error
       

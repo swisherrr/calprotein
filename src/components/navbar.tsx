@@ -29,35 +29,34 @@ export function Navbar() {
   React.useEffect(() => {
     async function getCurrentUser() {
       if (!isDemoMode) {
-        const { data: { user } } = await supabase.auth.getUser()
-        setCurrentUser(user)
-        
-        // Fetch notification count and username
-        if (user) {
-          try {
-            const response = await fetch('/api/notifications/count')
-            if (response.ok) {
-              const { count } = await response.json()
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          setCurrentUser(user)
+          
+          // Fetch notification count and username in parallel for better performance
+          if (user) {
+            const [notificationResponse, profileResponse] = await Promise.all([
+              fetch('/api/notifications/count'),
+              supabase
+                .from('user_profiles')
+                .select('username')
+                .eq('user_id', user.id)
+                .single()
+            ])
+
+            // Handle notification count
+            if (notificationResponse.ok) {
+              const { count } = await notificationResponse.json()
               setNotificationCount(count)
             }
-          } catch (error) {
-            console.error('Error fetching notification count:', error)
-          }
 
-          // Fetch username
-          try {
-            const { data: profile, error } = await supabase
-              .from('user_profiles')
-              .select('username')
-              .eq('user_id', user.id)
-              .single()
-
-            if (!error && profile) {
-              setUsername(profile.username)
+            // Handle username
+            if (profileResponse.data) {
+              setUsername(profileResponse.data.username)
             }
-          } catch (error) {
-            console.error('Error fetching username:', error)
           }
+        } catch (error) {
+          console.error('Error fetching user data:', error)
         }
       }
     }
