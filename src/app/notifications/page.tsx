@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Bell, UserPlus, Check, X } from "lucide-react"
+import { Bell, UserPlus, Check, X, Users } from "lucide-react"
 import ProfilePicture from "@/components/ui/profile-picture"
 
 interface FollowRequest {
@@ -17,8 +17,19 @@ interface FollowRequest {
   follower_profile_picture?: string
 }
 
+interface FollowerNotification {
+  id: string
+  follower_id: string
+  followed_id: string
+  status: string
+  created_at: string
+  follower_username?: string
+  follower_profile_picture?: string
+}
+
 export default function NotificationsPage() {
   const [followRequests, setFollowRequests] = useState<FollowRequest[]>([])
+  const [followerNotifications, setFollowerNotifications] = useState<FollowerNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
 
@@ -28,7 +39,10 @@ export default function NotificationsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           setCurrentUser(user)
-          await fetchFollowRequests(user.id)
+          await Promise.all([
+            fetchFollowRequests(user.id),
+            fetchFollowerNotifications(user.id)
+          ])
         }
       } catch (error) {
         console.error('Error fetching user:', error)
@@ -84,6 +98,60 @@ export default function NotificationsPage() {
       setFollowRequests(transformedRequests)
     } catch (error) {
       console.error('Error fetching follow requests:', error)
+    }
+  }
+
+  const fetchFollowerNotifications = async (userId: string) => {
+    try {
+      // Get recent accepted follows where this user is the followed (for public accounts)
+      // Only show follows from the last 7 days to avoid overwhelming the user
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+      const { data: followers, error } = await supabase
+        .from('follows')
+        .select(`
+          id,
+          follower_id,
+          followed_id,
+          status,
+          created_at
+        `)
+        .eq('followed_id', userId)
+        .eq('status', 'accepted')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(20) // Limit to recent 20 followers
+
+      if (error) {
+        console.error('Error fetching follower notifications:', error)
+        return
+      }
+
+      // Get follower details for each notification
+      const transformedFollowers = await Promise.all(
+        (followers || []).map(async (follower) => {
+          const { data: followerProfile } = await supabase
+            .from('user_profiles')
+            .select('username, profile_picture_url')
+            .eq('user_id', follower.follower_id)
+            .single()
+
+          return {
+            id: follower.id,
+            follower_id: follower.follower_id,
+            followed_id: follower.followed_id,
+            status: follower.status,
+            created_at: follower.created_at,
+            follower_username: followerProfile?.username,
+            follower_profile_picture: followerProfile?.profile_picture_url
+          }
+        })
+      )
+
+      setFollowerNotifications(transformedFollowers)
+    } catch (error) {
+      console.error('Error fetching follower notifications:', error)
     }
   }
 
@@ -144,7 +212,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Follow Requests Section */}
-      <div className="w-full max-w-2xl px-4">
+      <div className="w-full max-w-2xl px-4 mb-8">
         <div className="flex items-center gap-2 mb-6">
           <UserPlus className="h-5 w-5 text-gray-900 dark:text-gray-100" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Follow Requests</h2>
@@ -208,6 +276,58 @@ export default function NotificationsPage() {
                     <X className="h-4 w-4 mr-1" />
                     Reject
                   </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Followers Section */}
+      <div className="w-full max-w-2xl px-4">
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recent Followers</h2>
+          {followerNotifications.length > 0 && (
+            <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+              {followerNotifications.length}
+            </span>
+          )}
+        </div>
+
+        {followerNotifications.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No recent followers</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {followerNotifications.map((follower) => (
+              <div
+                key={follower.id}
+                className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Link href={`/user/${follower.follower_username}`} className="hover:opacity-80 transition-opacity">
+                    <ProfilePicture
+                      pictureUrl={follower.follower_profile_picture}
+                      size="md"
+                    />
+                  </Link>
+                  <div>
+                    <Link 
+                      href={`/user/${follower.follower_username}`}
+                      className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      @{follower.follower_username || 'Unknown User'}
+                    </Link>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      started following you
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {new Date(follower.created_at).toLocaleDateString()} at {new Date(follower.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
