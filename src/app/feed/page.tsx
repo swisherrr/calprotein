@@ -298,10 +298,7 @@ export default function FeedPage() {
       
       const { data: commentsData, error } = await supabase
         .from('post_comments')
-        .select(`
-          *,
-          user_profiles!user_id(username, profile_picture_url)
-        `)
+        .select(`*`)
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
@@ -310,7 +307,22 @@ export default function FeedPage() {
         return;
       }
 
-      setComments(commentsData || []);
+      // Fetch user profile for each comment
+      const commentsWithProfiles = await Promise.all(
+        (commentsData || []).map(async (comment) => {
+          const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('username, profile_picture_url')
+            .eq('user_id', comment.user_id)
+            .single();
+          return {
+            ...comment,
+            user_profiles: userProfile || {},
+          };
+        })
+      );
+
+      setComments(commentsWithProfiles);
     } catch (error) {
       console.error('Error opening comments:', error);
     }
@@ -327,10 +339,7 @@ export default function FeedPage() {
           user_id: currentUser.id,
           content: newComment.trim()
         }])
-        .select(`
-          *,
-          user_profiles!user_id(username, profile_picture_url)
-        `)
+        .select(`*`)
         .single();
 
       if (error) {
@@ -338,7 +347,14 @@ export default function FeedPage() {
         return;
       }
 
-      setComments(prev => [...prev, comment]);
+      // Fetch user profile for the new comment
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('username, profile_picture_url')
+        .eq('user_id', comment.user_id)
+        .single();
+
+      setComments(prev => [...prev, { ...comment, user_profiles: userProfile || {} }]);
       setCommentCounts(prev => ({
         ...prev,
         [showCommentsFor]: (prev[showCommentsFor] || 0) + 1
