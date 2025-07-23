@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Bell, UserPlus, Check, X } from "lucide-react"
@@ -167,14 +168,19 @@ export default function NotificationsPage() {
                 className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <ProfilePicture
-                    pictureUrl={request.follower_profile_picture}
-                    size="md"
-                  />
+                  <Link href={`/user/${request.follower_username}`} className="hover:opacity-80 transition-opacity">
+                    <ProfilePicture
+                      pictureUrl={request.follower_profile_picture}
+                      size="md"
+                    />
+                  </Link>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                    <Link 
+                      href={`/user/${request.follower_username}`}
+                      className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
                       @{request.follower_username || 'Unknown User'}
-                    </p>
+                    </Link>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       wants to follow you
                     </p>
