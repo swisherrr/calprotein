@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Dumbbell, Users, Copy, Activity, Camera } from "lucide-react";
+import { ArrowLeft, Dumbbell, Users, Copy, Activity, Camera, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,7 @@ export default function UserProfilePage() {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [progressPictures, setProgressPictures] = useState<any[]>([]);
   const [progressPicturesLoading, setProgressPicturesLoading] = useState(true);
+  const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set());
 
   // Fetch followers/following and follow status
   const fetchFollowData = useCallback(async (profileUserId: string) => {
@@ -320,6 +321,18 @@ export default function UserProfilePage() {
     setCopyDialogOpen(true);
   };
 
+  const toggleTemplateExpansion = (templateId: string) => {
+    setExpandedTemplates(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(templateId)) {
+        newSet.delete(templateId);
+      } else {
+        newSet.add(templateId);
+      }
+      return newSet;
+    });
+  };
+
   const copyTemplate = async () => {
     if (!templateToCopy || !newTemplateName.trim() || !currentUser) return;
 
@@ -469,47 +482,71 @@ export default function UserProfilePage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {templates.map((template) => (
-              <div
-                key={template.id}
-                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h3>
-                  {currentUser && currentUser.id !== userProfile.user_id && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyTemplate(template)}
-                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      title="Copy template"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                
-                {/* Exercise List */}
-                <div className="space-y-2 mb-3">
-                  {template.exercises?.map((exercise: any, index: number) => (
-                    <div key={index} className="text-sm">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {exercise.name}
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400">
-                        {exercise.sets || 0} sets
-                        {exercise.reps && ` × ${exercise.reps} reps`}
-                        {exercise.weight && ` @ ${exercise.weight}lbs`}
+            {templates.map((template) => {
+              const isExpanded = expandedTemplates.has(template.id);
+              return (
+                <div
+                  key={template.id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                >
+                  {/* Header - Always visible */}
+                  <div 
+                    className="p-4 cursor-pointer flex justify-between items-center"
+                    onClick={() => toggleTemplateExpansion(template.id)}
+                  >
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h3>
+                    <div className="flex items-center gap-2">
+                      {currentUser && currentUser.id !== userProfile.user_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyTemplate(template);
+                          }}
+                          className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          title="Copy template"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <div className="text-gray-400 dark:text-gray-500">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                      {/* Exercise List */}
+                      <div className="space-y-2 mb-3 mt-3">
+                        {template.exercises?.map((exercise: any, index: number) => (
+                          <div key={index} className="text-sm">
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {exercise.name}
+                            </div>
+                            <div className="text-gray-600 dark:text-gray-400">
+                              {exercise.sets || 0} sets
+                              {exercise.reps && ` × ${exercise.reps} reps`}
+                              {exercise.weight && ` @ ${exercise.weight}lbs`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <p className="text-xs text-gray-500 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-2">
+                        Created {new Date(template.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                
-                <p className="text-xs text-gray-500 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-2">
-                  Created {new Date(template.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

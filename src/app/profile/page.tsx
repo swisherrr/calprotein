@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import ProfilePicture from "@/components/ui/profile-picture"
-import { Dumbbell, Users, Eye, EyeOff, Activity, Camera, Plus } from "lucide-react"
+import { Dumbbell, Users, Eye, EyeOff, Activity, Camera, Plus, ChevronDown, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -56,6 +56,7 @@ export default function ProfilePage() {
   const [showProgressPictureMenu, setShowProgressPictureMenu] = useState(false)
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null)
   const [showWorkoutMenu, setShowWorkoutMenu] = useState(false)
+  const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set())
 
   const [cropArea, setCropArea] = useState({ x: 50, y: 50, width: 80, height: 80 })
   const [isDragging, setIsDragging] = useState(false)
@@ -511,6 +512,18 @@ export default function ProfilePage() {
     }
   }
 
+  const toggleTemplateExpansion = (templateId: string) => {
+    setExpandedTemplates(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(templateId)) {
+        newSet.delete(templateId);
+      } else {
+        newSet.add(templateId);
+      }
+      return newSet;
+    });
+  };
+
   const toggleTemplateVisibility = async (templateId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -590,54 +603,76 @@ export default function ProfilePage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {templates.map((template) => {
                 const isHidden = hiddenTemplates.has(template.id)
+                const isExpanded = expandedTemplates.has(template.id)
                 return (
                   <div
                     key={template.id}
-                    className={`p-4 border rounded-lg transition-colors ${
+                    className={`border rounded-lg transition-colors ${
                       isHidden 
                         ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-3">
+                    {/* Header - Always visible */}
+                    <div 
+                      className="p-4 cursor-pointer flex justify-between items-center"
+                      onClick={() => toggleTemplateExpansion(template.id)}
+                    >
                       <h3 className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
                         {template.name}
                       </h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleTemplateVisibility(template.id)}
-                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        title={isHidden ? "Show template" : "Hide template"}
-                      >
-                        {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    
-                    {/* Exercise List */}
-                    <div className="space-y-2 mb-3">
-                      {template.exercises?.map((exercise: any, index: number) => (
-                        <div key={index} className="text-sm">
-                          <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                            {exercise.name}
-                          </div>
-                          <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
-                            {exercise.sets || 0} sets
-                            {exercise.reps && ` × ${exercise.reps} reps`}
-                            {exercise.weight && ` @ ${exercise.weight}lbs`}
-                          </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTemplateVisibility(template.id);
+                          }}
+                          className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          title={isHidden ? "Show template" : "Hide template"}
+                        >
+                          {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <div className="text-gray-400 dark:text-gray-500">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
                         </div>
-                      ))}
+                      </div>
                     </div>
                     
-                    <p className={`text-xs border-t pt-2 ${
-                      isHidden 
-                        ? 'text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600' 
-                        : 'text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700'
-                    }`}>
-                      Created {new Date(template.created_at).toLocaleDateString()}
-                      {isHidden && <span className="ml-2">(Hidden)</span>}
-                    </p>
+                    {/* Expanded Content */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                        {/* Exercise List */}
+                        <div className="space-y-2 mb-3 mt-3">
+                          {template.exercises?.map((exercise: any, index: number) => (
+                            <div key={index} className="text-sm">
+                              <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                                {exercise.name}
+                              </div>
+                              <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {exercise.sets || 0} sets
+                                {exercise.reps && ` × ${exercise.reps} reps`}
+                                {exercise.weight && ` @ ${exercise.weight}lbs`}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <p className={`text-xs border-t pt-2 ${
+                          isHidden 
+                            ? 'text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600' 
+                            : 'text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700'
+                        }`}>
+                          Created {new Date(template.created_at).toLocaleDateString()}
+                          {isHidden && <span className="ml-2">(Hidden)</span>}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )
               })}
