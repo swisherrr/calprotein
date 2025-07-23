@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import ProfilePicture from "@/components/ui/profile-picture";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 interface UserProfile {
   user_id: string;
@@ -703,10 +704,13 @@ export default function UserProfilePage() {
                     // Could add a modal to view the picture in detail
                   }}
                 >
-                  <img 
+                  <OptimizedImage 
                     src={picture.image_url} 
                     alt="Progress Picture" 
+                    width={300}
+                    height={300}
                     className="w-full h-full object-cover"
+                    sizes="(max-width: 768px) 33vw, 300px"
                   />
                 </div>
               ))}

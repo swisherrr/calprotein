@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Upload, X, User } from 'lucide-react'
+import OptimizedImage from '@/components/ui/optimized-image'
 
 interface ProfilePictureUploadProps {
   currentPictureUrl: string | null
@@ -106,9 +107,11 @@ export default function ProfilePictureUpload({
             <div className="flex justify-center">
               <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
                 {currentPictureUrl ? (
-                  <img
+                  <OptimizedImage
                     src={currentPictureUrl}
                     alt="Profile"
+                    width={64}
+                    height={64}
                     className="w-16 h-16 object-cover rounded-full"
                   />
                 ) : (

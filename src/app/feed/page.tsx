@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import ProfilePicture from "@/components/ui/profile-picture";
 import { MessageCircle, Heart } from "lucide-react";
+import OptimizedImage from "@/components/ui/optimized-image";
 
 export default function FeedPage() {
   const [feed, setFeed] = useState<any[]>([]);
@@ -451,10 +452,13 @@ export default function FeedPage() {
                 ) : (
                   <div className="mb-4">
                     {post.image_url && (
-                      <img
+                      <OptimizedImage
                         src={post.image_url}
                         alt="Progress"
+                        width={400}
+                        height={400}
                         className="w-full max-w-sm h-auto rounded-lg mb-3"
+                        sizes="(max-width: 768px) 100vw, 400px"
                       />
                     )}
                     {post.caption && (

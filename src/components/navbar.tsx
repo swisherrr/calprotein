@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useDemo } from "@/components/providers/demo-provider";
 import ProfilePicture from "@/components/ui/profile-picture";
+import OptimizedImage from "./ui/optimized-image";
 
 export function Navbar() {
   const router = useRouter()
@@ -223,17 +224,21 @@ export const Logo = () => {
       href="/dashboard"
       className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
     >
-      <img
+      <OptimizedImage
         src="/gainerithmLogoWHITEBG.svg"
         alt="Gainerithm Logo"
+        width={24}
+        height={20}
         className="h-5 w-6 shrink-0 block dark:hidden"
-        draggable="false"
+        priority
       />
-      <img
+      <OptimizedImage
         src="/gainerithmlogoforBLACKBG.svg"
         alt="Gainerithm Logo Dark"
+        width={24}
+        height={20}
         className="h-5 w-6 shrink-0 hidden dark:block"
-        draggable="false"
+        priority
       />
       <motion.span
         initial={{ opacity: 0 }}
@@ -261,17 +266,21 @@ export const LogoIcon = ({ open }: { open: boolean }) => {
       href="/dashboard"
       className="flex items-center py-2"
     >
-      <img
+      <OptimizedImage
         src="/gainerithmLogoWHITEBG.svg"
         alt="Gainerithm Logo"
+        width={20}
+        height={20}
         className="h-5 w-5 shrink-0 block dark:hidden"
-        draggable="false"
+        priority
       />
-      <img
+      <OptimizedImage
         src="/gainerithmlogoforBLACKBG.svg"
         alt="Gainerithm Logo Dark"
+        width={20}
+        height={20}
         className="h-5 w-5 shrink-0 hidden dark:block"
-        draggable="false"
+        priority
       />
     </a>
   );

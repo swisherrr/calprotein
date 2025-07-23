@@ -1,6 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove experimental config since Server Actions are now default
+  // Image optimization settings
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    domains: [
+      'qajpwywcgmbrjsmhofzk.supabase.co', // Add your Supabase project ref here
+    ],
+  },
+  // Enable experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+  }
 }
 
 module.exports = nextConfig 

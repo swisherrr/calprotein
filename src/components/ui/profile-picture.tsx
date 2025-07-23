@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import OptimizedImage from './optimized-image'
 
 interface ProfilePictureProps {
   userId?: string
@@ -84,16 +85,20 @@ export default function ProfilePicture({
       {loading ? (
         <div className={`${sizeClasses[size]} animate-pulse bg-gray-300 dark:bg-gray-600 rounded-full`} />
       ) : profilePictureUrl ? (
-        <img
+        <OptimizedImage
           src={profilePictureUrl}
           alt="Profile"
+          width={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 48 : 96}
+          height={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 48 : 96}
           className={`${sizeClasses[size]} object-cover rounded-full`}
           style={{ display: 'block' }}
         />
       ) : (
-        <img
+        <OptimizedImage
           src="/profile-placeholder.jpg"
           alt="Profile"
+          width={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 48 : 96}
+          height={size === 'sm' ? 24 : size === 'md' ? 32 : size === 'lg' ? 48 : 96}
           className={`${sizeClasses[size]} object-cover rounded-full`}
           style={{ display: 'block' }}
         />

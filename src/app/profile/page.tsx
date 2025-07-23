@@ -6,6 +6,8 @@ import { Dumbbell, Users, Eye, EyeOff, Activity, Camera, Plus, ChevronDown, Chev
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import OptimizedImage from "@/components/ui/optimized-image"
+import { compressImageForProfile, compressImageForProgress, validateImageFile } from "@/lib/image-compression"
 
 interface WorkoutTemplate {
   id: string
@@ -507,16 +509,30 @@ export default function ProfilePage() {
     }
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setSelectedFile(file)
-      setSelectedFileName(file.name)
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-      // Reset crop area to center
-      setCropArea({ x: 50, y: 50, width: 80, height: 80 })
+      // Validate file
+      const validation = validateImageFile(file)
+      if (!validation.valid) {
+        setUploadError(validation.error || 'Invalid file')
+        return
+      }
 
+      try {
+        // Compress the image
+        const compressedFile = await compressImageForProgress(file)
+        setSelectedFile(compressedFile)
+        setSelectedFileName(compressedFile.name)
+        const url = URL.createObjectURL(compressedFile)
+        setPreviewUrl(url)
+        // Reset crop area to center
+        setCropArea({ x: 50, y: 50, width: 80, height: 80 })
+        setUploadError(null)
+      } catch (error) {
+        console.error('Error compressing image:', error)
+        setUploadError('Failed to process image. Please try again.')
+      }
     } else {
       setSelectedFileName('No file chosen')
     }
@@ -627,26 +643,31 @@ export default function ProfilePage() {
     }
   }
 
-  const handleProfilePictureFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        alert('File size must be less than 5MB')
-        return
-      }
-      
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file')
+      // Validate file
+      const validation = validateImageFile(file)
+      if (!validation.valid) {
+        alert(validation.error || 'Invalid file')
         return
       }
 
-      setProfilePictureFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setProfilePicturePreview(e.target?.result as string)
+      try {
+        // Compress the image
+        const compressedFile = await compressImageForProfile(file)
+        setProfilePictureFile(compressedFile)
+        
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setProfilePicturePreview(e.target?.result as string)
+        }
+        reader.readAsDataURL(compressedFile)
+        setShowProfilePictureUpload(true)
+      } catch (error) {
+        console.error('Error compressing image:', error)
+        alert('Failed to process image. Please try again.')
       }
-      reader.readAsDataURL(file)
-      setShowProfilePictureUpload(true)
     }
   }
 
@@ -979,10 +1000,13 @@ export default function ProfilePage() {
                       setShowProgressPictureModal(true)
                     }}
                   >
-                    <img 
+                    <OptimizedImage 
                       src={picture.image_url} 
                       alt="Progress Picture" 
+                      width={300}
+                      height={300}
                       className="w-full h-full object-cover"
+                      sizes="(max-width: 768px) 33vw, 300px"
                     />
                     <div className="absolute top-2 right-2">
                       <Button
@@ -1144,10 +1168,13 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row">
               {/* Image */}
               <div className="flex-1">
-                <img 
+                <OptimizedImage 
                   src={selectedProgressPicture.image_url} 
                   alt="Progress Picture" 
+                  width={600}
+                  height={600}
                   className="w-full h-auto max-h-96 md:max-h-none md:h-full object-cover"
+                  sizes="(max-width: 768px) 100vw, 600px"
                 />
               </div>
               
@@ -1274,9 +1301,11 @@ export default function ProfilePage() {
           <div className="space-y-4">
             {profilePicturePreview && (
               <div className="flex justify-center">
-                <img
+                <OptimizedImage
                   src={profilePicturePreview}
                   alt="Preview"
+                  width={128}
+                  height={128}
                   className="w-32 h-32 object-cover rounded-full border border-gray-200 dark:border-gray-700"
                 />
               </div>
