@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useDemo } from '@/components/providers/demo-provider'
 
@@ -14,19 +14,12 @@ export function useCustomExercises() {
   const [loading, setLoading] = useState(true)
   const { isDemoMode, demoData, updateDemoData } = useDemo()
 
-  useEffect(() => {
-    if (isDemoMode) {
-      setCustomExercises(demoData.customExercises || [])
-      setLoading(false)
-    } else {
-      loadCustomExercises()
-    }
-  }, [isDemoMode, demoData.customExercises])
-
-  const loadCustomExercises = async () => {
+  const loadCustomExercises = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      console.log('Loading custom exercises for user:', user.id)
 
       const { data, error } = await supabase
         .from('user_custom_exercises')
@@ -35,13 +28,31 @@ export function useCustomExercises() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
+      
+      console.log('Loaded custom exercises:', data)
       setCustomExercises(data || [])
     } catch (error) {
       console.error('Error loading custom exercises:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setCustomExercises(demoData.customExercises || [])
+      setLoading(false)
+    } else {
+      loadCustomExercises()
+    }
+  }, [isDemoMode, demoData.customExercises, loadCustomExercises])
+
+  // Add a separate effect to handle authentication changes
+  useEffect(() => {
+    if (!isDemoMode) {
+      loadCustomExercises()
+    }
+  }, [isDemoMode, loadCustomExercises])
 
   const addCustomExercise = async (exerciseName: string, muscleGroup: string) => {
     if (isDemoMode) {
@@ -72,8 +83,21 @@ export function useCustomExercises() {
         .select()
         .single()
 
-      if (error) throw error
-      setCustomExercises(prev => [data, ...prev])
+      if (error) {
+        if (error.code === '23505') {
+          // Unique constraint violation - exercise already exists
+          console.log('Custom exercise already exists:', exerciseName)
+          // Still refresh to get the existing data
+          await loadCustomExercises()
+          return null
+        }
+        throw error
+      }
+      
+      console.log('Added custom exercise:', data)
+      
+      // Refresh the entire list to ensure consistency
+      await loadCustomExercises()
       return data
     } catch (error) {
       console.error('Error adding custom exercise:', error)
@@ -95,8 +119,15 @@ export function useCustomExercises() {
         .delete()
         .eq('id', id)
 
-      if (error) throw error
-      setCustomExercises(prev => prev.filter(ex => ex.id !== id))
+      if (error) {
+        console.error('Error deleting custom exercise:', error)
+        throw error
+      }
+      
+      console.log('Deleted custom exercise with id:', id)
+      
+      // Refresh the entire list to ensure consistency
+      await loadCustomExercises()
     } catch (error) {
       console.error('Error deleting custom exercise:', error)
       throw error

@@ -42,6 +42,9 @@ const MUSCLE_GROUPS = [
 
 export default function WorkoutPage() {
   const { customExercises, addCustomExercise } = useCustomExercises()
+  
+  // Debug logging
+  console.log('WorkoutPage - customExercises:', customExercises)
   const [selectedDay, setSelectedDay] = useState("")
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [savedTemplates, setSavedTemplates] = useState<WorkoutTemplate[]>([])

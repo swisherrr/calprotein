@@ -130,6 +130,8 @@ export interface CustomExercise {
 
 // Function to combine hardcoded exercises with custom exercises
 export function getCombinedExerciseGroups(customExercises: CustomExercise[] = []) {
+  console.log('getCombinedExerciseGroups called with:', customExercises)
+  
   // Create a copy of the hardcoded groups
   const combinedGroups = EXERCISE_GROUPS.map(group => ({
     ...group,
@@ -156,6 +158,7 @@ export function getCombinedExerciseGroups(customExercises: CustomExercise[] = []
     }
   })
 
+  console.log('Combined groups result:', combinedGroups)
   return combinedGroups
 }
 

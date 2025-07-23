@@ -334,11 +334,84 @@ export default function UserProfilePage() {
   };
 
   const copyTemplate = async () => {
-    if (!templateToCopy || !newTemplateName.trim() || !currentUser) return;
+    if (!templateToCopy || !newTemplateName.trim() || !currentUser || !userProfile) return;
 
     try {
       setCopying(true);
 
+      // Import the predefined exercise list
+      const { EXERCISE_LIST } = await import('@/lib/exercises');
+      
+      // Get user's existing custom exercises
+      const { data: existingCustomExercises, error: customError } = await supabase
+        .from('user_custom_exercises')
+        .select('exercise_name')
+        .eq('user_id', currentUser.id);
+
+      if (customError) {
+        console.error('Error fetching custom exercises:', customError);
+      }
+
+      const existingCustomNames = existingCustomExercises?.map(ex => ex.exercise_name) || [];
+      const allAvailableExercises = [...EXERCISE_LIST, ...existingCustomNames];
+
+      // Find custom exercises in the template that need to be added
+      const customExercisesToAdd = templateToCopy.exercises
+        .filter((exercise: any) => {
+          const exerciseName = exercise.name;
+          return !allAvailableExercises.includes(exerciseName);
+        })
+        .map((exercise: any) => {
+          // Try to find the original muscle group for this custom exercise
+          // We need to query the original user's custom exercises to get the muscle group
+          return {
+            exercise_name: exercise.name,
+            muscle_group: 'Other' // Will be updated below if we can find the original
+          };
+        });
+
+      // Get the original muscle groups for custom exercises
+      if (customExercisesToAdd.length > 0) {
+        try {
+          // Get the original user's custom exercises to find the muscle groups
+          const { data: originalCustomExercises, error: originalError } = await supabase
+            .from('user_custom_exercises')
+            .select('exercise_name, muscle_group')
+            .eq('user_id', userProfile.user_id)
+            .in('exercise_name', customExercisesToAdd.map(ex => ex.exercise_name));
+
+          if (!originalError && originalCustomExercises) {
+            // Update the muscle groups with the original values
+            customExercisesToAdd.forEach(customEx => {
+              const original = originalCustomExercises.find(orig => orig.exercise_name === customEx.exercise_name);
+              if (original) {
+                customEx.muscle_group = original.muscle_group;
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching original muscle groups:', error);
+          // Continue with default "Other" muscle group if this fails
+        }
+      }
+
+      // Add custom exercises to user's custom exercises
+      if (customExercisesToAdd.length > 0) {
+        const { error: addCustomError } = await supabase
+          .from('user_custom_exercises')
+          .insert(customExercisesToAdd.map(exercise => ({
+            user_id: currentUser.id,
+            exercise_name: exercise.exercise_name,
+            muscle_group: exercise.muscle_group
+          })));
+
+        if (addCustomError) {
+          console.error('Error adding custom exercises:', addCustomError);
+          // Continue with template copy even if custom exercises fail
+        }
+      }
+
+      // Copy the template
       const { data, error } = await supabase
         .from('workout_templates')
         .insert([{

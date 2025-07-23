@@ -61,6 +61,9 @@ export function TemplateManager() {
   const { isDemoMode } = useDemo()
   const { templates, loading, addTemplate, updateTemplate, deleteTemplate } = useWorkoutTemplates()
   const { customExercises, addCustomExercise } = useCustomExercises()
+  
+  // Debug logging
+  console.log('TemplateManager - customExercises:', customExercises)
   const [isEditing, setIsEditing] = useState(false)
   const [currentTemplate, setCurrentTemplate] = useState<WorkoutTemplate>({
     name: "",
@@ -599,15 +602,82 @@ export function TemplateManager() {
         </div>
       ) : (
         <div className="max-w-4xl mx-auto">
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📝</span>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100 mx-auto"></div>
+              <p className="mt-2 text-gray-500 dark:text-gray-400">Loading templates...</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No templates yet</h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Create your first workout template to get started
-            </p>
-          </div>
+          ) : templates.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📝</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No templates yet</h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Create your first workout template to get started
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Your Templates</h2>
+              <div className="grid gap-4">
+                {templates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                          {template.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleEditTemplate(template)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteTemplate(template.id!)}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {template.exercises.map((exercise, index) => (
+                        <div key={index} className="text-sm">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {exercise.name}
+                          </div>
+                          <div className="text-gray-600 dark:text-gray-400">
+                            {exercise.sets || 0} sets
+                            {exercise.setData && exercise.setData.length > 0 && (
+                              <span className="ml-2">
+                                ({exercise.setData.map((set: any, setIndex: number) => 
+                                  `${set.weight}lbs × ${set.reps}`
+                                ).join(', ')})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
