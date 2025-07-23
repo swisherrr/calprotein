@@ -61,6 +61,10 @@ export default function ProfilePage() {
   const [cropArea, setCropArea] = useState({ x: 50, y: 50, width: 80, height: 80 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [showProfilePictureUpload, setShowProfilePictureUpload] = useState(false)
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null)
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
+  const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false)
 
   useEffect(() => {
     async function fetchUser() {
@@ -595,24 +599,20 @@ export default function ProfilePage() {
 
   const toggleTemplateVisibility = async (templateId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
       const newHiddenTemplates = new Set(hiddenTemplates)
       if (newHiddenTemplates.has(templateId)) {
         newHiddenTemplates.delete(templateId)
       } else {
         newHiddenTemplates.add(templateId)
       }
-
       setHiddenTemplates(newHiddenTemplates)
 
-      // Update the hidden_templates field in user_profiles
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
       const { error } = await supabase
         .from('user_profiles')
-        .update({ 
-          hidden_templates: Array.from(newHiddenTemplates)
-        })
+        .update({ hidden_templates: Array.from(newHiddenTemplates) })
         .eq('user_id', user.id)
 
       if (error) {
@@ -627,13 +627,111 @@ export default function ProfilePage() {
     }
   }
 
+  const handleProfilePictureFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('File size must be less than 5MB')
+        return
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+
+      setProfilePictureFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+      setShowProfilePictureUpload(true)
+    }
+  }
+
+  const handleProfilePictureUpload = async () => {
+    if (!profilePictureFile) return
+
+    setUploadingProfilePicture(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user found')
+
+      console.log('Starting profile picture upload for user:', user.id)
+
+      // Upload to storage
+      const fileExt = profilePictureFile.name.split('.').pop()
+      const fileName = `${user.id}/profile-picture.${fileExt}`
+      
+      console.log('Uploading file:', fileName)
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(fileName, profilePictureFile, {
+          upsert: true
+        })
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError)
+        throw uploadError
+      }
+
+      console.log('File uploaded successfully:', uploadData)
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(fileName)
+
+      console.log('Public URL:', publicUrl)
+
+      // Update user profile
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ profile_picture_url: publicUrl })
+        .eq('user_id', user.id)
+
+      if (updateError) {
+        console.error('Profile update error:', updateError)
+        throw updateError
+      }
+
+      console.log('Profile updated successfully')
+
+      // Update local state
+      setProfilePictureUrl(publicUrl)
+      setShowProfilePictureUpload(false)
+      setProfilePictureFile(null)
+      setProfilePicturePreview(null)
+    } catch (error) {
+      console.error('Error uploading profile picture:', error)
+      alert(`Failed to upload profile picture: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setUploadingProfilePicture(false)
+    }
+  }
+
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black pb-8">
       {/* Profile Picture and Info */}
       <div className="flex items-center gap-6 mb-8">
-        <ProfilePicture
-          pictureUrl={profilePictureUrl}
-          size="xl"
+        <div className="relative group">
+          <ProfilePicture
+            pictureUrl={profilePictureUrl}
+            size="xl"
+            onClick={() => document.getElementById('profile-picture-input')?.click()}
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full transition-all duration-200 flex items-center justify-center pointer-events-none">
+            <Camera className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          </div>
+        </div>
+        <input
+          id="profile-picture-input"
+          type="file"
+          accept="image/*"
+          onChange={handleProfilePictureFileSelect}
+          className="hidden"
         />
         
         <div className="flex flex-col">
@@ -1163,6 +1261,46 @@ export default function ProfilePage() {
             >
               Delete Workout
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Picture Upload Dialog */}
+      <Dialog open={showProfilePictureUpload} onOpenChange={setShowProfilePictureUpload}>
+        <DialogContent className="max-w-md w-[90vw] mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-700 shadow-lg">
+          <DialogHeader>
+            <DialogTitle>Upload Profile Picture</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {profilePicturePreview && (
+              <div className="flex justify-center">
+                <img
+                  src={profilePicturePreview}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-full border border-gray-200 dark:border-gray-700"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowProfilePictureUpload(false)
+                  setProfilePictureFile(null)
+                  setProfilePicturePreview(null)
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleProfilePictureUpload}
+                disabled={uploadingProfilePicture || !profilePictureFile}
+                className="flex-1"
+              >
+                {uploadingProfilePicture ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
