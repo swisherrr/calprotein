@@ -63,8 +63,7 @@ export default function NotificationsPage() {
           follower_id,
           followed_id,
           status,
-          created_at,
-          user_profiles!follower_id(username, profile_picture_url)
+          created_at
         `)
         .eq('followed_id', userId)
         .eq('status', 'pending')
@@ -76,16 +75,26 @@ export default function NotificationsPage() {
         return
       }
 
-      // Transform the data to match the expected format
-      const transformedRequests = (requests || []).map((request) => ({
-        id: request.id,
-        follower_id: request.follower_id,
-        followed_id: request.followed_id,
-        status: request.status,
-        created_at: request.created_at,
-        follower_username: request.user_profiles?.[0]?.username,
-        follower_profile_picture: request.user_profiles?.[0]?.profile_picture_url
-      }))
+      // Get follower details for each request
+      const transformedRequests = await Promise.all(
+        (requests || []).map(async (request) => {
+          const { data: followerProfile } = await supabase
+            .from('user_profiles')
+            .select('username, profile_picture_url')
+            .eq('user_id', request.follower_id)
+            .single()
+
+          return {
+            id: request.id,
+            follower_id: request.follower_id,
+            followed_id: request.followed_id,
+            status: request.status,
+            created_at: request.created_at,
+            follower_username: followerProfile?.username,
+            follower_profile_picture: followerProfile?.profile_picture_url
+          }
+        })
+      )
 
       setFollowRequests(transformedRequests)
     } catch (error) {
@@ -107,8 +116,7 @@ export default function NotificationsPage() {
           follower_id,
           followed_id,
           status,
-          created_at,
-          user_profiles!follower_id(username, profile_picture_url)
+          created_at
         `)
         .eq('followed_id', userId)
         .eq('status', 'accepted')
@@ -121,16 +129,26 @@ export default function NotificationsPage() {
         return
       }
 
-      // Transform the data to match the expected format
-      const transformedFollowers = (followers || []).map((follower) => ({
-        id: follower.id,
-        follower_id: follower.follower_id,
-        followed_id: follower.followed_id,
-        status: follower.status,
-        created_at: follower.created_at,
-        follower_username: follower.user_profiles?.[0]?.username,
-        follower_profile_picture: follower.user_profiles?.[0]?.profile_picture_url
-      }))
+      // Get follower details for each notification
+      const transformedFollowers = await Promise.all(
+        (followers || []).map(async (follower) => {
+          const { data: followerProfile } = await supabase
+            .from('user_profiles')
+            .select('username, profile_picture_url')
+            .eq('user_id', follower.follower_id)
+            .single()
+
+          return {
+            id: follower.id,
+            follower_id: follower.follower_id,
+            followed_id: follower.followed_id,
+            status: follower.status,
+            created_at: follower.created_at,
+            follower_username: followerProfile?.username,
+            follower_profile_picture: followerProfile?.profile_picture_url
+          }
+        })
+      )
 
       setFollowerNotifications(transformedFollowers)
     } catch (error) {
