@@ -8,6 +8,7 @@ import { useDemo } from "@/components/providers/demo-provider"
 import { useWorkoutTemplates } from "@/hooks/use-workout-templates"
 import { useWorkoutLogs } from "@/hooks/use-workout-logs"
 import { useUserSettings } from "@/hooks/use-user-settings"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Set {
@@ -109,9 +110,12 @@ export function WorkoutLogger() {
   const { isDemoMode, demoData } = useDemo()
   const { templates, loading: templatesLoading } = useWorkoutTemplates()
   const { logs, addLog } = useWorkoutLogs()
-  const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null)
-  const [currentWorkout, setCurrentWorkout] = useState<WorkoutLog | null>(null)
-  const [isWorkoutActive, setIsWorkoutActive] = useState(false)
+  
+  // Use localStorage for persistent workout state
+  const [currentWorkout, setCurrentWorkout] = useLocalStorage<WorkoutLog | null>('currentWorkout', null)
+  const [selectedTemplate, setSelectedTemplate] = useLocalStorage<WorkoutTemplate | null>('selectedTemplate', null)
+  const [isWorkoutActive, setIsWorkoutActive] = useLocalStorage<boolean>('isWorkoutActive', false)
+  
   const [lastWorkoutData, setLastWorkoutData] = useState<Record<string, { 
     reps?: number | string, 
     weight?: number | string, 
@@ -139,6 +143,34 @@ export function WorkoutLogger() {
   const displayWorkoutAverage = settings?.display_workout_average !== false
   const [postingToProfile, setPostingToProfile] = useState(false)
   const [completedTemplateName, setCompletedTemplateName] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  // Set client flag on mount to prevent hydration mismatch
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Check for existing workout on component mount
+  useEffect(() => {
+    if (currentWorkout && selectedTemplate && isWorkoutActive) {
+      // Verify the workout is from today and not too old (within 24 hours)
+      const workoutStartTime = new Date(currentWorkout.start_time)
+      const now = new Date()
+      const hoursSinceStart = (now.getTime() - workoutStartTime.getTime()) / (1000 * 60 * 60)
+      
+      if (hoursSinceStart > 24) {
+        // Workout is too old, clear it
+        setCurrentWorkout(null)
+        setSelectedTemplate(null)
+        setIsWorkoutActive(false)
+      } else {
+        // Fetch last workout data for the resumed workout
+        const exerciseNames = currentWorkout.exercises.map(ex => ex.name)
+        fetchLastWorkoutData(exerciseNames)
+      }
+    }
+  }, [])
 
   const formatLastWorkoutDisplay = (exerciseName: string) => {
     const data = lastWorkoutData[exerciseName]
@@ -563,6 +595,7 @@ export function WorkoutLogger() {
 
       setCompletedTemplateName(selectedTemplate?.name || null)
       setShowSummary(true)
+      // Clear localStorage when workout is finished
       setCurrentWorkout(null)
       setSelectedTemplate(null)
       setIsWorkoutActive(false)
@@ -627,16 +660,17 @@ export function WorkoutLogger() {
     }
   }
 
-  if (isWorkoutActive && currentWorkout) {
+  if (isClient && isWorkoutActive && currentWorkout) {
     return (
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="animate-fade-in-up">
-          <div className="text-center mb-8">
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-light mb-4">
-              {selectedTemplate?.name}
-            </p>
-            <WorkoutTimer startTime={currentWorkout.start_time} />
-          </div>
+      <>
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="animate-fade-in-up">
+            <div className="text-center mb-8">
+              <p className="text-xl text-gray-600 dark:text-gray-400 font-light mb-4">
+                {selectedTemplate?.name}
+              </p>
+              <WorkoutTimer startTime={currentWorkout.start_time} />
+            </div>
 
           <div className="space-y-6">
             {currentWorkout.exercises.map((exercise, exerciseIndex) => (
@@ -777,7 +811,7 @@ export function WorkoutLogger() {
           </div>
 
           <div className="text-center mt-12">
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center space-y-4">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -795,8 +829,74 @@ export function WorkoutLogger() {
                   )}
                 </Tooltip>
               </TooltipProvider>
+              
+              {!showCancelConfirm ? (
+                <Button 
+                  onClick={() => setShowCancelConfirm(true)}
+                  variant="outline"
+                  className="text-lg px-8 py-3 flex items-center justify-center text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  Cancel Workout
+                </Button>
+              ) : (
+                <div className="flex flex-col space-y-2">
+                  <Button 
+                    onClick={() => {
+                      console.log('User confirmed workout cancellation')
+                      setCurrentWorkout(null)
+                      setSelectedTemplate(null)
+                      setIsWorkoutActive(false)
+                      setShowCancelConfirm(false)
+                    }}
+                    className="text-lg px-8 py-3 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Confirm Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => setShowCancelConfirm(false)}
+                    variant="outline"
+                    className="text-sm px-6 py-2 flex items-center justify-center text-gray-600 border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/20"
+                  >
+                    Keep Working Out
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      </div>
+
+
+      </>
+    )
+  }
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Start a Workout</h1>
+          <p className="text-gray-500 dark:text-gray-400 max-w-2xl">
+            Choose a workout template to begin tracking your workout.
+          </p>
+        </div>
+        <div className="grid gap-6">
+          {templates.map((template, index) => (
+            <div key={template.id} className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
+                <div className="flex justify-center">
+                  <Button 
+                    disabled
+                    className="font-medium bg-gray-400 text-white rounded-full mt-2"
+                  >
+                    Loading...
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -811,6 +911,67 @@ export function WorkoutLogger() {
             Choose a workout template to begin tracking your workout.
           </p>
         </div>
+
+        {/* Resume Workout Banner */}
+        {isClient && currentWorkout && selectedTemplate && isWorkoutActive && (
+          <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                  Workout in Progress
+                </h3>
+                <p className="text-blue-700 dark:text-blue-300">
+                  You have an active workout: <span className="font-medium">{selectedTemplate.name}</span>
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                  Started {new Date(currentWorkout.start_time).toLocaleTimeString()}
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={() => {
+                    // Resume the workout by fetching last workout data
+                    const exerciseNames = currentWorkout.exercises.map(ex => ex.name)
+                    fetchLastWorkoutData(exerciseNames)
+                  }}
+                  className="font-medium bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Resume Workout
+                </Button>
+                {!showCancelConfirm ? (
+                  <Button 
+                    onClick={() => setShowCancelConfirm(true)}
+                    variant="ghost"
+                    className="font-medium text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    Cancel Workout
+                  </Button>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Button 
+                      onClick={() => {
+                        setCurrentWorkout(null)
+                        setSelectedTemplate(null)
+                        setIsWorkoutActive(false)
+                        setShowCancelConfirm(false)
+                      }}
+                      className="font-medium bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Confirm Cancel
+                    </Button>
+                    <Button 
+                      onClick={() => setShowCancelConfirm(false)}
+                      variant="outline"
+                      className="font-medium text-gray-600 border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/20"
+                    >
+                      Keep
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6">
           {templates.map((template, index) => (
@@ -937,6 +1098,8 @@ export function WorkoutLogger() {
           )}
         </DialogContent>
       </Dialog>
+
+
     </>
   )
 } 
