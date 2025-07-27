@@ -25,9 +25,9 @@ export default function ProfilePictureUpload({
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    console.log('File selected:', file)
+    
     if (!file) {
-      console.log('No file selected')
+      
       return
     }
 
@@ -37,15 +37,15 @@ export default function ProfilePictureUpload({
       const formData = new FormData()
       formData.append('file', file)
 
-      console.log('Sending upload request...')
+
       const response = await fetch('/api/profile/upload-picture', {
         method: 'POST',
         body: formData,
       })
 
-      console.log('Response status:', response.status)
+      
       const data = await response.json()
-      console.log('Response data:', data)
+      
 
       if (response.ok) {
         onPictureUpdate(data.url)

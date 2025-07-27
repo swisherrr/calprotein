@@ -376,9 +376,7 @@ export function WorkoutAnalytics() {
   const avgPercentIncrease = getAveragePercentIncrease(chartData)
   
   // Debug logging
-  console.log('Workout Data:', workoutData)
-  console.log('Chart Data:', chartData)
-  console.log('Chart Config:', chartConfig)
+  
 
   return (
     <div className="container-apple section-apple">

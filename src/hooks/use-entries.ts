@@ -40,7 +40,7 @@ export function useEntries() {
         throw error
       }
 
-      console.log('Fetched entries:', entries)
+
       setEntries(entries || [])
     } catch (error) {
       console.error('Error fetching entries:', error)

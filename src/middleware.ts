@@ -10,11 +10,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Debug: Log cookies and request info
-  console.log('--- Middleware Debug ---')
-  console.log('Request URL:', req.url)
-  console.log('Request Hostname:', req.nextUrl.hostname)
-  console.log('Request Pathname:', req.nextUrl.pathname)
-  console.log('Request Cookies:', req.cookies.getAll())
+
 
   let res = NextResponse.next({
     request: {
@@ -71,7 +67,7 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   // Debug: Log session state
-  console.log('Supabase session:', session)
+  
 
   // Check for demo mode cookie
   const demoMode = req.cookies.get('demo-mode')?.value === 'true'
@@ -83,7 +79,7 @@ export async function middleware(req: NextRequest) {
 
   // Allow dashboard access if in demo mode or authenticated
   if (!session && !demoMode && req.nextUrl.pathname.startsWith('/dashboard')) {
-    console.log('No session or demo mode, redirecting to /login')
+
     return NextResponse.redirect(new URL('/login', req.url))
   }
 

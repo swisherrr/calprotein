@@ -19,12 +19,7 @@ export async function GET(request: NextRequest) {
     .select('id, followed_id, status')
     .eq('follower_id', userId);
 
-  console.log('API: Raw database results for user', userId, ':', {
-    allFollowers: allFollowers,
-    allFollowing: allFollowing,
-    allFollowersError,
-    allFollowingError
-  });
+
 
   if (allFollowersError || allFollowingError) {
     return NextResponse.json({ error: 'Failed to fetch followers/following' }, { status: 500 });
@@ -34,12 +29,7 @@ export async function GET(request: NextRequest) {
   const followers = allFollowers?.filter(f => f.status === 'accepted') || [];
   const following = allFollowing?.filter(f => f.status === 'accepted') || [];
 
-  console.log('API: Follow data for user', userId, ':', {
-    allFollowers: allFollowers?.length || 0,
-    allFollowing: allFollowing?.length || 0,
-    followers: followers.length,
-    following: following.length
-  });
+
 
   // Return both the counts (accepted only) and all relationships (for status checking)
   return NextResponse.json({ 

@@ -37,11 +37,7 @@ export async function POST(request: Request) {
       redirectTo = `${origin}/update-password`
     }
 
-    console.log('About to call Supabase resetPasswordForEmail with:', {
-      email,
-      redirectTo,
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL
-    })
+
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
@@ -60,7 +56,7 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log('Reset email sent successfully:', data)
+
     return NextResponse.json({ message: 'Password reset email sent' })
   } catch (error) {
     console.error('Password reset error:', error)

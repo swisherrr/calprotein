@@ -73,7 +73,6 @@ export default function UserProfilePage() {
   const fetchFollowCounts = useCallback(async (profileUserId: string) => {
     const res = await fetch(`/api/follow/list?userId=${profileUserId}`);
     const { followers, following } = await res.json();
-    console.log('Follow counts for user', profileUserId, ':', { followers, following });
     setFollowers(followers);
     setFollowing(following);
   }, []);
@@ -205,7 +204,7 @@ export default function UserProfilePage() {
         return;
       }
 
-      console.log('Shared workouts found:', workoutsData);
+
       
       // Filter out hidden workouts if viewing another user's profile
       let filteredWorkouts = workoutsData || [];
@@ -220,13 +219,13 @@ export default function UserProfilePage() {
         if (userProfileData?.hidden_workouts && Array.isArray(userProfileData.hidden_workouts)) {
           const hiddenWorkoutIds = new Set(userProfileData.hidden_workouts);
           filteredWorkouts = filteredWorkouts.filter(workout => !hiddenWorkoutIds.has(workout.id));
-          console.log('Filtered out hidden workouts:', hiddenWorkoutIds);
+
         }
 
         if (userProfileData?.deleted_workouts && Array.isArray(userProfileData.deleted_workouts)) {
           const deletedWorkoutIds = new Set(userProfileData.deleted_workouts);
           filteredWorkouts = filteredWorkouts.filter(workout => !deletedWorkoutIds.has(workout.id));
-          console.log('Filtered out deleted workouts:', deletedWorkoutIds);
+
         }
       }
       
@@ -238,11 +237,7 @@ export default function UserProfilePage() {
 
   const loadTemplates = async (profile: UserProfile, isFriendsWithUser: boolean) => {
     try {
-      console.log('Loading templates for user:', profile.user_id);
-      console.log('Is friends:', isFriendsWithUser);
-      console.log('Current user ID:', currentUser?.id);
-      console.log('Profile user ID:', profile.user_id);
-      console.log('Can view templates:', isFriendsWithUser || currentUser?.id === profile.user_id);
+
 
       // Load templates with limit for better performance
       const { data: templatesData, error } = await supabase
@@ -257,7 +252,7 @@ export default function UserProfilePage() {
         return;
       }
 
-      console.log('Templates found:', templatesData);
+
       
       // Filter out hidden templates if viewing another user's profile
       let filteredTemplates = templatesData || [];
@@ -272,7 +267,7 @@ export default function UserProfilePage() {
         if (userProfileData?.hidden_templates && Array.isArray(userProfileData.hidden_templates)) {
           const hiddenTemplateIds = new Set(userProfileData.hidden_templates);
           filteredTemplates = filteredTemplates.filter(template => !hiddenTemplateIds.has(template.id));
-          console.log('Filtered out hidden templates:', hiddenTemplateIds);
+
         }
       }
       

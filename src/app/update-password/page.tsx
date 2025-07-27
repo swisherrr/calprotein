@@ -19,8 +19,7 @@ function UpdatePasswordForm() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log('Update password page loaded')
-        console.log('Search params:', Object.fromEntries(searchParams.entries()))
+        
         
         // Check if we have access_token in URL (from reset email)
         const accessToken = searchParams.get('access_token')
@@ -28,12 +27,7 @@ function UpdatePasswordForm() {
         const code = searchParams.get('code')
         const type = searchParams.get('type')
         
-        console.log('Tokens found:', { 
-          accessToken: !!accessToken, 
-          refreshToken: !!refreshToken, 
-          code: !!code,
-          type 
-        })
+
         
         if (accessToken && refreshToken) {
           // Set the session from the URL tokens
@@ -57,7 +51,7 @@ function UpdatePasswordForm() {
           }
         } else if (code) {
           // For password reset with code, we need to handle it differently
-          console.log('Processing code parameter for password reset...')
+
           
           // Check if we have a valid session first
           const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -68,12 +62,12 @@ function UpdatePasswordForm() {
           
           if (session) {
             // We have a valid session, allow password reset
-            console.log('Valid session found, allowing password reset')
+
             setIsValidSession(true)
           } else {
             // No session, but this might be a password reset flow
             // For password reset, we'll allow it and handle the session during password update
-            console.log('No session found, but allowing password reset flow')
+
             setIsValidSession(true)
           }
         } else {
@@ -81,7 +75,7 @@ function UpdatePasswordForm() {
           const { data: { session }, error } = await supabase.auth.getSession()
           
           if (error || !session) {
-            console.log('No valid session found')
+
             toast.error('Invalid or expired reset link')
             router.push('/reset-password')
             return

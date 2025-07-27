@@ -108,7 +108,7 @@ export default function ProfilePage() {
           if (profileResponse.error && profileResponse.error.code !== 'PGRST116') {
             console.error('Error fetching profile:', profileResponse.error)
           } else if (profileResponse.data) {
-            console.log('Profile data:', profileResponse.data)
+      
             setUsername(profileResponse.data.username)
             setProfilePictureUrl(profileResponse.data.profile_picture_url)
             setPrivateAccount(profileResponse.data.private_account || false)
@@ -135,7 +135,7 @@ export default function ProfilePage() {
           if (templatesResponse.error) {
             console.error('Error loading templates:', templatesResponse.error)
           } else {
-            console.log('Templates found:', templatesResponse.data)
+      
             setTemplates(templatesResponse.data || [])
           }
 
@@ -143,7 +143,7 @@ export default function ProfilePage() {
           if (workoutsResponse.error) {
             console.error('Error loading shared workouts:', workoutsResponse.error)
           } else {
-            console.log('Shared workouts found:', workoutsResponse.data)
+      
             setSharedWorkouts(workoutsResponse.data || [])
           }
 
@@ -160,7 +160,7 @@ export default function ProfilePage() {
           if (progressResponse.error) {
             console.error('Error loading progress pictures:', progressResponse.error)
           } else {
-            console.log('Progress pictures found:', progressResponse.data)
+      
             setProgressPictures(progressResponse.data || [])
           }
 
@@ -195,7 +195,7 @@ export default function ProfilePage() {
         return
       }
 
-      console.log('Templates found:', templatesData)
+
       setTemplates(templatesData || [])
     } catch (error) {
       console.error('Error loading templates:', error)
@@ -258,7 +258,7 @@ export default function ProfilePage() {
         return
       }
 
-      console.log('Shared workouts found:', workoutsData)
+
       setSharedWorkouts(workoutsData || [])
     } catch (error) {
       console.error('Error loading shared workouts:', error)
@@ -292,7 +292,7 @@ export default function ProfilePage() {
         return
       }
 
-      console.log('Progress pictures found:', progressPicturesData)
+
       setProgressPictures(progressPicturesData || [])
     } catch (error) {
       console.error('Error loading progress pictures:', error)
@@ -688,13 +688,13 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No user found')
 
-      console.log('Starting profile picture upload for user:', user.id)
+  
 
       // Upload to storage
       const fileExt = profilePictureFile.name.split('.').pop()
       const fileName = `${user.id}/profile-picture.${fileExt}`
       
-      console.log('Uploading file:', fileName)
+
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('profile-pictures')
@@ -707,14 +707,14 @@ export default function ProfilePage() {
         throw uploadError
       }
 
-      console.log('File uploaded successfully:', uploadData)
+
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('profile-pictures')
         .getPublicUrl(fileName)
 
-      console.log('Public URL:', publicUrl)
+
 
       // Update user profile
       const { error: updateError } = await supabase
@@ -727,7 +727,7 @@ export default function ProfilePage() {
         throw updateError
       }
 
-      console.log('Profile updated successfully')
+
 
       // Update local state
       setProfilePictureUrl(publicUrl)

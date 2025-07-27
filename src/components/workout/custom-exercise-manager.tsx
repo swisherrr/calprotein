@@ -30,7 +30,7 @@ export function CustomExerciseManager() {
   const { customExercises, addCustomExercise, deleteCustomExercise, loading } = useCustomExercises()
   
   // Debug logging
-  console.log('CustomExerciseManager - customExercises:', customExercises)
+  
   const [showAddForm, setShowAddForm] = useState(false)
   const [exerciseName, setExerciseName] = useState('')
   const [muscleGroup, setMuscleGroup] = useState('')

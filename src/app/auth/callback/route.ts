@@ -15,12 +15,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  console.log('Auth callback received:', { 
-    code: code ? `${code.substring(0, 8)}...` : null, 
-    next, 
-    origin,
-    fullUrl: request.url 
-  })
+
 
   if (code) {
     const cookieStore = cookies()
@@ -51,30 +46,24 @@ export async function GET(request: Request) {
     )
 
     try {
-      console.log('Attempting to exchange code for session...')
+
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
       if (error) {
         console.error('Auth callback error:', error)
         // For password reset, try a different approach
         if (next === '/update-password') {
-          console.log('Password reset detected, trying direct redirect...')
           return NextResponse.redirect(`${origin}/update-password?code=${code}`)
         }
         return NextResponse.redirect(`${origin}/reset-password?error=invalid_code`)
       }
 
       if (data.session) {
-        console.log('Auth callback successful, session created:', {
-          userId: data.session.user.id,
-          email: data.session.user.email,
-          redirectingTo: next
-        })
+
         return NextResponse.redirect(`${origin}${next}`)
       } else {
         console.error('No session after code exchange')
         if (next === '/update-password') {
-          console.log('Password reset detected, trying direct redirect...')
           return NextResponse.redirect(`${origin}/update-password?code=${code}`)
         }
         return NextResponse.redirect(`${origin}/reset-password?error=no_session`)
@@ -82,7 +71,6 @@ export async function GET(request: Request) {
     } catch (error) {
       console.error('Auth callback exception:', error)
       if (next === '/update-password') {
-        console.log('Password reset detected, trying direct redirect...')
         return NextResponse.redirect(`${origin}/update-password?code=${code}`)
       }
       return NextResponse.redirect(`${origin}/reset-password?error=exception`)

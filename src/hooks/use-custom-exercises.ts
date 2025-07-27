@@ -19,7 +19,7 @@ export function useCustomExercises() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      console.log('Loading custom exercises for user:', user.id)
+  
 
       const { data, error } = await supabase
         .from('user_custom_exercises')
@@ -30,7 +30,7 @@ export function useCustomExercises() {
 
       if (error) throw error
       
-      console.log('Loaded custom exercises:', data)
+
       setCustomExercises(data || [])
     } catch (error) {
       console.error('Error loading custom exercises:', error)
@@ -87,7 +87,7 @@ export function useCustomExercises() {
       if (error) {
         if (error.code === '23505') {
           // Unique constraint violation - exercise already exists
-          console.log('Custom exercise already exists:', exerciseName)
+    
           // Still refresh to get the existing data
           await loadCustomExercises()
           return null
@@ -95,7 +95,7 @@ export function useCustomExercises() {
         throw error
       }
       
-      console.log('Added custom exercise:', data)
+
       
       // Refresh the entire list to ensure consistency
       await loadCustomExercises()
@@ -125,7 +125,7 @@ export function useCustomExercises() {
         throw error
       }
       
-      console.log('Deleted custom exercise with id:', id)
+
       
       // Refresh the entire list to ensure consistency
       await loadCustomExercises()

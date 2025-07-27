@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
       if (authError && authError.code !== 'PGRST116') {
         // If we can't access auth.users, we'll rely on the user_profiles check
-        console.log('Could not check auth.users table, relying on user_profiles check')
+
       } else if (authData) {
         // Username exists in auth.users metadata
         return NextResponse.json({ 
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       }
     } catch (error) {
       // If we can't access auth.users table, that's okay - we'll rely on user_profiles
-      console.log('Auth users table not accessible, relying on user_profiles check')
+      
     }
 
     // Username is available

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${user.id}-${Date.now()}.${fileExt}`
 
     // Skip bucket check since user confirmed bucket exists in dashboard
-    console.log('Proceeding with upload to profile-pictures bucket')
+
 
     // Upload file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         upsert: false
       })
 
-    console.log('Upload response:', { uploadData, uploadError })
+    
 
     if (uploadError) {
       console.error('Upload error:', uploadError)

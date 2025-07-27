@@ -91,7 +91,7 @@ export function SignupForm() {
     setError(null)
 
     try {
-      console.log('Starting signup process for username:', username)
+  
 
       // Double-check username availability right before signup
       const availabilityResponse = await fetch('/api/auth/check-username', {
@@ -103,7 +103,7 @@ export function SignupForm() {
       })
 
       const availabilityData = await availabilityResponse.json()
-      console.log('Username availability check result:', availabilityData)
+      
 
       if (!availabilityResponse.ok || !availabilityData.available) {
         setError('Username is no longer available. Please choose a different username.')
@@ -113,7 +113,7 @@ export function SignupForm() {
       }
 
       // Create the user account with username in metadata
-      console.log('Creating auth user...')
+      
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -125,7 +125,7 @@ export function SignupForm() {
         }
       })
 
-      console.log('Auth signup result:', { authData, signUpError })
+      
 
       if (signUpError) {
         console.error('Auth signup error:', signUpError)
@@ -142,10 +142,10 @@ export function SignupForm() {
       }
 
       if (authData.user) {
-        console.log('Auth user created successfully:', authData.user.id)
+        
         
         // Create user profile with username
-        console.log('Creating user profile...')
+        
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .insert([{
@@ -155,7 +155,7 @@ export function SignupForm() {
           }])
           .select()
 
-        console.log('Profile creation result:', { profileData, profileError })
+        
 
         if (profileError) {
           console.error('Error creating profile:', profileError)
@@ -168,7 +168,7 @@ export function SignupForm() {
               // Note: We can't use supabase.auth.admin.deleteUser from client side
               // The auth user will remain, but the profile won't be created
               // This is acceptable since the unique constraint on user_profiles prevents duplicates
-              console.log('Profile creation failed due to duplicate username, auth user remains')
+  
             } catch (deleteError) {
               console.error('Could not clean up auth user:', deleteError)
             }
@@ -182,7 +182,7 @@ export function SignupForm() {
         }
 
         if (profileData) {
-          console.log('Profile created successfully:', profileData)
+
         }
       } else {
         console.error('No auth user data returned')
@@ -190,7 +190,7 @@ export function SignupForm() {
         return
       }
       
-      console.log('Signup completed successfully, redirecting...')
+      
       router.push('/dashboard')
       router.refresh()
     } catch (error) {

@@ -63,7 +63,7 @@ export function TemplateManager() {
   const { customExercises, addCustomExercise } = useCustomExercises()
   
   // Debug logging
-  console.log('TemplateManager - customExercises:', customExercises)
+  
   const [isEditing, setIsEditing] = useState(false)
   const [currentTemplate, setCurrentTemplate] = useState<WorkoutTemplate>({
     name: "",
@@ -85,7 +85,7 @@ export function TemplateManager() {
   }
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string | number) => {
-    console.log('handleExerciseChange called:', { index, field, value, valueType: typeof value })
+
     
     const newExercises = [...currentTemplate.exercises]
     newExercises[index] = { ...newExercises[index], [field]: value }
