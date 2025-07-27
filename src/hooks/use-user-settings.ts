@@ -7,6 +7,7 @@ export type UserSettings = {
   daily_protein: number
   auto_load_reps: boolean
   auto_load_weight: boolean
+  display_workout_average: boolean
 }
 
 export function useUserSettings() {
@@ -14,7 +15,8 @@ export function useUserSettings() {
     daily_calories: 2000,
     daily_protein: 150,
     auto_load_reps: false,
-    auto_load_weight: false
+    auto_load_weight: false,
+    display_workout_average: true
   })
   const [loading, setLoading] = useState(true)
   const { isDemoMode, demoData, updateDemoData } = useDemo()
@@ -25,7 +27,8 @@ export function useUserSettings() {
         daily_calories: demoData.settings.calorie_goal,
         daily_protein: demoData.settings.protein_goal,
         auto_load_reps: demoData.settings.auto_load_reps || false,
-        auto_load_weight: demoData.settings.auto_load_weight || false
+        auto_load_weight: demoData.settings.auto_load_weight || false,
+        display_workout_average: demoData.settings.display_workout_average !== undefined ? demoData.settings.display_workout_average : true
       })
       setLoading(false)
     } else {
@@ -54,7 +57,8 @@ export function useUserSettings() {
               daily_calories: 2000,
               daily_protein: 150,
               auto_load_reps: false,
-              auto_load_weight: false
+              auto_load_weight: false,
+              display_workout_average: true
             }])
             .select()
             .single()
@@ -80,7 +84,8 @@ export function useUserSettings() {
         daily_calories: newSettings.daily_calories ?? settings.daily_calories,
         daily_protein: newSettings.daily_protein ?? settings.daily_protein,
         auto_load_reps: newSettings.auto_load_reps ?? settings.auto_load_reps,
-        auto_load_weight: newSettings.auto_load_weight ?? settings.auto_load_weight
+        auto_load_weight: newSettings.auto_load_weight ?? settings.auto_load_weight,
+        display_workout_average: newSettings.display_workout_average ?? settings.display_workout_average
       }
       
       updateDemoData({

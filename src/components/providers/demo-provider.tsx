@@ -152,7 +152,8 @@ const initialDemoData: DemoData = {
     carbs_goal: 200,
     fat_goal: 70,
     auto_load_reps: false,
-    auto_load_weight: false
+    auto_load_weight: false,
+    display_workout_average: true
   }
 }
 

@@ -122,6 +122,14 @@ export default function SettingsPage() {
     }
   }
 
+  const handleToggleWorkoutDisplay = async (v: boolean) => {
+    try {
+      await updateSettings({ display_workout_average: v })
+    } catch (error) {
+      console.error('Error updating workout display setting:', error)
+    }
+  }
+
   const handleTogglePrivateAccount = async (v: boolean) => {
     setPrivateAccount(v)
     if (!isDemoMode) {
@@ -210,6 +218,13 @@ export default function SettingsPage() {
           description="When enabled, entering weight in the first set will automatically fill the same weight for all remaining sets in that exercise."
           value={settings?.auto_load_weight || false} 
           onChange={handleToggleWeight} 
+        />
+        
+        <SettingToggle 
+          label="Display workout average" 
+          description="When enabled, previous workout data shows average reps/weight. When disabled, shows individual set data."
+          value={settings?.display_workout_average !== false} 
+          onChange={handleToggleWorkoutDisplay} 
         />
       </div>
 

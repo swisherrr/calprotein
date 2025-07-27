@@ -112,7 +112,12 @@ export function WorkoutLogger() {
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null)
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutLog | null>(null)
   const [isWorkoutActive, setIsWorkoutActive] = useState(false)
-  const [lastWorkoutData, setLastWorkoutData] = useState<Record<string, { reps?: number, weight?: number, volume?: number }>>({})
+  const [lastWorkoutData, setLastWorkoutData] = useState<Record<string, { 
+    reps?: number | string, 
+    weight?: number | string, 
+    volume?: number,
+    setData?: Array<{ reps?: number, weight?: number }>
+  }>>({})
   const [showSummary, setShowSummary] = useState(false)
   const [workoutSummary, setWorkoutSummary] = useState<{
     totalVolume: number
@@ -131,24 +136,58 @@ export function WorkoutLogger() {
   const { settings } = useUserSettings()
   const autoLoadReps = settings?.auto_load_reps || false
   const autoLoadWeight = settings?.auto_load_weight || false
+  const displayWorkoutAverage = settings?.display_workout_average !== false
   const [postingToProfile, setPostingToProfile] = useState(false)
   const [completedTemplateName, setCompletedTemplateName] = useState<string | null>(null)
+
+  const formatLastWorkoutDisplay = (exerciseName: string) => {
+    const data = lastWorkoutData[exerciseName]
+    if (!data) return null
+    
+    const repsDisplay = typeof data.reps === 'string' ? data.reps : data.reps
+    const weightDisplay = typeof data.weight === 'string' ? data.weight : data.weight
+    
+    return `${repsDisplay} reps × ${weightDisplay} lbs (${data.volume?.toLocaleString()} lbs total volume)`
+  }
 
   const fetchLastWorkoutData = async (exerciseNames: string[]) => {
     if (isDemoMode) {
       // Use demo workout logs for last workout data
-      const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number, volume?: number }> = {}
+      const lastWorkoutDataMap: Record<string, { 
+        reps?: number | string, 
+        weight?: number | string, 
+        volume?: number,
+        setData?: Array<{ reps?: number, weight?: number }>
+      }> = {}
       
       for (const exerciseName of exerciseNames) {
         // Find the most recent workout that contains this exercise
         for (const workout of demoData.workoutLogs) {
           const exercise = workout.exercises?.find((ex: any) => ex.name === exerciseName)
           if (exercise && exercise.setData && exercise.setData.length > 0) {
-            const firstSet = exercise.setData[0]
-            lastWorkoutDataMap[exerciseName] = {
-              reps: firstSet.reps,
-              weight: firstSet.weight,
-              volume: exercise.volume || 0
+            if (displayWorkoutAverage) {
+              // Calculate average reps and weight
+              const totalReps = exercise.setData.reduce((sum: number, set: any) => sum + (set.reps || 0), 0)
+              const totalWeight = exercise.setData.reduce((sum: number, set: any) => sum + (set.weight || 0), 0)
+              const avgReps = totalReps / exercise.setData.length
+              const avgWeight = totalWeight / exercise.setData.length
+              
+              lastWorkoutDataMap[exerciseName] = {
+                reps: Math.round(avgReps * 100) / 100,
+                weight: Math.round(avgWeight * 100) / 100,
+                volume: exercise.volume || 0
+              }
+            } else {
+              // Display individual sets
+              const repsList = exercise.setData.map((set: any) => set.reps || 0).join(',')
+              const weightList = exercise.setData.map((set: any) => set.weight || 0).join(',')
+              
+              lastWorkoutDataMap[exerciseName] = {
+                reps: repsList,
+                weight: weightList,
+                volume: exercise.volume || 0,
+                setData: exercise.setData
+              }
             }
             break
           }
@@ -177,7 +216,12 @@ export function WorkoutLogger() {
         return
       }
 
-      const lastWorkoutDataMap: Record<string, { reps?: number, weight?: number, volume?: number }> = {}
+      const lastWorkoutDataMap: Record<string, { 
+        reps?: number | string, 
+        weight?: number | string, 
+        volume?: number,
+        setData?: Array<{ reps?: number, weight?: number }>
+      }> = {}
       const foundExercises = new Set<string>()
 
       // Process all workouts to find the most recent data for each exercise
@@ -200,11 +244,29 @@ export function WorkoutLogger() {
             }
             
             if (hasValidSets) {
-              const firstSet = exercise.setData[0]
-              lastWorkoutDataMap[exercise.name] = {
-                reps: firstSet.reps,
-                weight: firstSet.weight,
-                volume: totalVolume
+              if (displayWorkoutAverage) {
+                // Calculate average reps and weight
+                const totalReps = exercise.setData.reduce((sum: number, set: any) => sum + (set.reps || 0), 0)
+                const totalWeight = exercise.setData.reduce((sum: number, set: any) => sum + (set.weight || 0), 0)
+                const avgReps = totalReps / exercise.setData.length
+                const avgWeight = totalWeight / exercise.setData.length
+                
+                lastWorkoutDataMap[exercise.name] = {
+                  reps: Math.round(avgReps * 100) / 100,
+                  weight: Math.round(avgWeight * 100) / 100,
+                  volume: totalVolume
+                }
+              } else {
+                // Display individual sets
+                const repsList = exercise.setData.map((set: any) => set.reps || 0).join(',')
+                const weightList = exercise.setData.map((set: any) => set.weight || 0).join(',')
+                
+                lastWorkoutDataMap[exercise.name] = {
+                  reps: repsList,
+                  weight: weightList,
+                  volume: totalVolume,
+                  setData: exercise.setData
+                }
               }
               foundExercises.add(exercise.name)
             }
@@ -691,9 +753,9 @@ export function WorkoutLogger() {
                   </div>
                   
                   {/* Last workout data hint */}
-                  {lastWorkoutData[exercise.name] && (
+                  {formatLastWorkoutDisplay(exercise.name) && (
                     <div className="mt-3 text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 p-2 rounded text-center">
-                      Last workout: {lastWorkoutData[exercise.name].reps} reps × {lastWorkoutData[exercise.name].weight} lbs ({lastWorkoutData[exercise.name].volume?.toLocaleString()} lbs total volume)
+                      Last workout: {formatLastWorkoutDisplay(exercise.name)}
                     </div>
                   )}
                   
