@@ -69,15 +69,23 @@ export default function UserProfilePage() {
   const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(new Set());
   const [expandedWorkoutsArray, setExpandedWorkoutsArray] = useState<string[]>([]);
 
-  // Fetch followers/following and follow status
-  const fetchFollowData = useCallback(async (profileUserId: string) => {
-    if (!currentUser) return;
-    // Get followers and following
+  // Fetch followers/following counts (always load these)
+  const fetchFollowCounts = useCallback(async (profileUserId: string) => {
     const res = await fetch(`/api/follow/list?userId=${profileUserId}`);
-    const { followers, following, allFollowers, allFollowing } = await res.json();
+    const { followers, following } = await res.json();
+    console.log('Follow counts for user', profileUserId, ':', { followers, following });
     setFollowers(followers);
     setFollowing(following);
-    // Check if current user follows this profile (use allFollowers for status checking)
+  }, []);
+
+  // Fetch current user's follow status (only when logged in)
+  const fetchFollowStatus = useCallback(async (profileUserId: string) => {
+    if (!currentUser) return;
+    
+    const res = await fetch(`/api/follow/list?userId=${profileUserId}`);
+    const { allFollowers, allFollowing } = await res.json();
+    
+    // Check if current user follows this profile
     const myFollow = (allFollowers as Array<{follower_id: string, status: string, id: string}>).find((f) => f.follower_id === currentUser.id);
     if (myFollow) {
       // Reset rejected requests to 'none' so user can request again
@@ -92,6 +100,7 @@ export default function UserProfilePage() {
       setFollowStatus('none');
       setFollowId(null);
     }
+    
     // If viewing own profile and private, show pending requests
     if (profileUserId === currentUser.id && userProfile?.private_account) {
       setPendingRequests((allFollowers as Array<{status: string}>).filter((f) => f.status === 'pending'));
@@ -120,11 +129,11 @@ export default function UserProfilePage() {
   useEffect(() => {
     if (currentUser && userProfile) {
       const reloadData = async () => {
-        await fetchFollowData(userProfile.user_id);
+        await fetchFollowStatus(userProfile.user_id);
       };
       reloadData();
     }
-  }, [currentUser, userProfile, fetchFollowData]);
+  }, [currentUser, userProfile, fetchFollowStatus]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -159,9 +168,12 @@ export default function UserProfilePage() {
         loadProgressPictures(profile, false)
       );
 
-      // If current user exists, also load follow data
+      // Always load follow counts
+      loadDataPromises.push(fetchFollowCounts(profile.user_id));
+      
+      // If current user exists, also load follow status
       if (currentUser) {
-        loadDataPromises.push(fetchFollowData(profile.user_id));
+        loadDataPromises.push(fetchFollowStatus(profile.user_id));
       }
 
       await Promise.all(loadDataPromises);
@@ -454,7 +466,8 @@ export default function UserProfilePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ followedId: userProfile.user_id })
     });
-    fetchFollowData(userProfile.user_id);
+    fetchFollowCounts(userProfile.user_id);
+    fetchFollowStatus(userProfile.user_id);
   };
   const handleUnfollow = async () => {
     if (!userProfile) return;
@@ -463,7 +476,8 @@ export default function UserProfilePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ followedId: userProfile.user_id })
     });
-    fetchFollowData(userProfile.user_id);
+    fetchFollowCounts(userProfile.user_id);
+    fetchFollowStatus(userProfile.user_id);
   };
 
 
