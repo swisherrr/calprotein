@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase"
 import { useDemo } from "@/components/providers/demo-provider"
 import { useWorkoutTemplates } from "@/hooks/use-workout-templates"
 import { useWorkoutLogs } from "@/hooks/use-workout-logs"
+import { useUserSettings } from "@/hooks/use-user-settings"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Set {
@@ -127,16 +128,11 @@ export function WorkoutLogger() {
       volume: number
     }>
   } | null>(null)
-  const [autoLoadReps, setAutoLoadReps] = useState(false)
-  const [autoLoadWeight, setAutoLoadWeight] = useState(false)
+  const { settings } = useUserSettings()
+  const autoLoadReps = settings?.auto_load_reps || false
+  const autoLoadWeight = settings?.auto_load_weight || false
   const [postingToProfile, setPostingToProfile] = useState(false)
   const [completedTemplateName, setCompletedTemplateName] = useState<string | null>(null)
-
-  useEffect(() => {
-    // Load settings from localStorage
-    setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
-    setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
-  }, [])
 
   const fetchLastWorkoutData = async (exerciseNames: string[]) => {
     if (isDemoMode) {

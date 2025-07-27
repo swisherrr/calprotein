@@ -150,7 +150,9 @@ const initialDemoData: DemoData = {
     calorie_goal: 2000,
     protein_goal: 150,
     carbs_goal: 200,
-    fat_goal: 70
+    fat_goal: 70,
+    auto_load_reps: false,
+    auto_load_weight: false
   }
 }
 

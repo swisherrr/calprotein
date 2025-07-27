@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import ProfilePictureUpload from "@/components/profile/profile-picture-upload"
 import ProfilePicture from "@/components/ui/profile-picture"
+import { useUserSettings } from "@/hooks/use-user-settings"
 
 function SettingToggle({ 
   label, 
@@ -42,8 +43,7 @@ function SettingToggle({
 
 export default function SettingsPage() {
   const { isDemoMode } = useDemo()
-  const [autoLoadReps, setAutoLoadReps] = useState(false)
-  const [autoLoadWeight, setAutoLoadWeight] = useState(false)
+  const { settings, loading: settingsLoading, updateSettings } = useUserSettings()
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
@@ -84,10 +84,6 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
-      // Load local settings
-      setAutoLoadReps(localStorage.getItem('autoLoadReps') === 'true')
-      setAutoLoadWeight(localStorage.getItem('autoLoadWeight') === 'true')
-
       // Load privacy setting from database
       if (!isDemoMode) {
         const { data: { user } } = await supabase.auth.getUser()
@@ -110,14 +106,20 @@ export default function SettingsPage() {
     }
   }
 
-  const handleToggleReps = (v: boolean) => {
-    setAutoLoadReps(v)
-    localStorage.setItem('autoLoadReps', v ? 'true' : 'false')
+  const handleToggleReps = async (v: boolean) => {
+    try {
+      await updateSettings({ auto_load_reps: v })
+    } catch (error) {
+      console.error('Error updating auto load reps setting:', error)
+    }
   }
 
-  const handleToggleWeight = (v: boolean) => {
-    setAutoLoadWeight(v)
-    localStorage.setItem('autoLoadWeight', v ? 'true' : 'false')
+  const handleToggleWeight = async (v: boolean) => {
+    try {
+      await updateSettings({ auto_load_weight: v })
+    } catch (error) {
+      console.error('Error updating auto load weight setting:', error)
+    }
   }
 
   const handleTogglePrivateAccount = async (v: boolean) => {
@@ -199,14 +201,14 @@ export default function SettingsPage() {
         <SettingToggle 
           label="Auto load reps" 
           description="When enabled, entering reps in the first set will automatically fill the same number of reps for all remaining sets in that exercise."
-          value={autoLoadReps} 
+          value={settings?.auto_load_reps || false} 
           onChange={handleToggleReps} 
         />
         
         <SettingToggle 
           label="Auto load weight" 
           description="When enabled, entering weight in the first set will automatically fill the same weight for all remaining sets in that exercise."
-          value={autoLoadWeight} 
+          value={settings?.auto_load_weight || false} 
           onChange={handleToggleWeight} 
         />
       </div>
