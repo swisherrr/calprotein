@@ -806,8 +806,8 @@ export default function ProfilePage() {
                     key={template.id}
                     className={`border rounded-lg transition-colors relative ${
                       isHidden 
-                        ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50 pink:bg-pink-50' 
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 pink:bg-pink-50 pink:border-pink-200 pink:hover:border-pink-300'
                     }`}
                     style={{ height: isExpanded ? 'auto' : '110px' }}
                   >
@@ -900,8 +900,8 @@ export default function ProfilePage() {
                   key={workout.id}
                   className={`border rounded-lg transition-colors relative ${
                     isHidden 
-                      ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50 pink:bg-pink-50' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 pink:bg-pink-50 pink:border-pink-200 pink:hover:border-pink-300'
                   }`}
                   style={{ height: isExpanded ? 'auto' : '200px' }}
                 >
@@ -945,13 +945,13 @@ export default function ProfilePage() {
                   {/* Workout Stats - Always visible */}
                   <div className="px-4 pb-4" style={{ position: isExpanded ? 'static' : 'absolute', bottom: isExpanded ? 'auto' : '16px', left: '16px', right: '16px', top: isExpanded ? 'auto' : '120px' }}>
                     <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 pink:bg-pink-100 rounded">
                         <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
                           {workout.total_volume.toLocaleString()}
                         </div>
                         <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>lbs</div>
                       </div>
-                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 pink:bg-pink-100 rounded">
                         <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
                           {workout.duration}
                         </div>

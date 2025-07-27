@@ -218,7 +218,7 @@ export default function NotificationsPage() {
           <UserPlus className="h-5 w-5 text-gray-900 dark:text-gray-100" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Follow Requests</h2>
           {followRequests.length > 0 && (
-            <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                            <span className="bg-blue-100 dark:bg-blue-900 pink:bg-pink-100 text-blue-800 dark:text-blue-200 pink:text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
               {followRequests.length}
             </span>
           )}

@@ -28,7 +28,7 @@ function SettingToggle({
       </div>
       <button
         onClick={() => onChange(!value)}
-        className={`w-11 h-6 flex items-center rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${value ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`}
+        className={`w-11 h-6 flex items-center rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${value ? 'bg-blue-600 pink:bg-pink-600' : 'bg-gray-300 dark:bg-gray-700 pink:bg-gray-300'}`}
         style={{ boxShadow: 'none', border: 'none', padding: 0 }}
         aria-pressed={value}
         type="button"
@@ -239,7 +239,7 @@ export default function SettingsPage() {
       </div>
 
       {isDemoMode && (
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 pink:bg-pink-50 border border-blue-200 dark:border-blue-800 pink:border-pink-200 rounded-lg">
           <p className="text-sm text-blue-700 dark:text-blue-300">
             You're currently in demo mode. Settings will be saved locally and reset when you exit demo mode.
           </p>

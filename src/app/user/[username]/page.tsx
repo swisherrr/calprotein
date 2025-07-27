@@ -493,7 +493,7 @@ export default function UserProfilePage() {
             The user "{username}" could not be found.
           </p>
           <Link href="/search">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                            <Button className="bg-blue-600 hover:bg-blue-700 pink:bg-pink-600 pink:hover:bg-pink-700 text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Search
             </Button>
@@ -531,7 +531,7 @@ export default function UserProfilePage() {
               {followStatus === 'none' && (
                 <Button 
                   onClick={handleFollow}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-full"
+                  className="bg-blue-600 hover:bg-blue-700 pink:bg-pink-600 pink:hover:bg-pink-700 text-white px-8 rounded-full"
                 >
                   {userProfile.private_account ? 'Request' : 'Follow'}
                 </Button>
@@ -576,7 +576,7 @@ export default function UserProfilePage() {
               return (
                 <div
                   key={template.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors relative"
+                  className="border border-gray-200 dark:border-gray-700 pink:border-pink-200 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 pink:hover:border-pink-300 transition-colors relative pink:bg-pink-50"
                   style={{ height: isExpanded ? 'auto' : '110px' }}
                 >
                   {/* Header - Always visible */}
@@ -657,7 +657,7 @@ export default function UserProfilePage() {
               return (
                 <div
                   key={workout.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors relative"
+                  className="border border-gray-200 dark:border-gray-700 pink:border-pink-200 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 pink:hover:border-pink-300 transition-colors relative pink:bg-pink-50"
                   style={{ height: isExpanded ? 'auto' : '200px' }}
                 >
                   {/* Header - Always visible */}
@@ -683,13 +683,13 @@ export default function UserProfilePage() {
                   {/* Workout Stats - Always visible */}
                   <div className="px-4 pb-4" style={{ position: isExpanded ? 'static' : 'absolute', bottom: isExpanded ? 'auto' : '16px', left: '16px', right: '16px', top: isExpanded ? 'auto' : '120px' }}>
                     <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 pink:bg-pink-100 rounded">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
                           {workout.total_volume.toLocaleString()}
                         </div>
                         <div className="text-gray-500 dark:text-gray-400">lbs</div>
                       </div>
-                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 pink:bg-pink-100 rounded">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
                           {workout.duration}
                         </div>
@@ -776,7 +776,7 @@ export default function UserProfilePage() {
             {followStatus === 'none' && (
               <Button 
                 onClick={handleFollow}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 pink:bg-pink-600 pink:hover:bg-pink-700 text-white"
               >
                 <Users className="h-4 w-4 mr-2" />
                 Request

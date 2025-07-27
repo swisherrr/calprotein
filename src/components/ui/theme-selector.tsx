@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/providers/theme-provider"
-import { Moon, Sun, Monitor } from "lucide-react"
+import { Moon, Sun, Monitor, Heart } from "lucide-react"
 
 interface ThemeOption {
-  value: 'light' | 'dark' | 'system'
+  value: 'light' | 'dark' | 'system' | 'pink'
   label: string
   icon: React.ReactNode
   description: string
@@ -29,6 +29,12 @@ const themeOptions: ThemeOption[] = [
     label: 'System',
     icon: <Monitor className="h-4 w-4" />,
     description: 'Follow system preference'
+  },
+  {
+    value: 'pink',
+    label: 'Pink',
+    icon: <Heart className="h-4 w-4" />,
+    description: 'Light mode with pink accents'
   }
 ]
 
@@ -77,14 +83,18 @@ export function ThemeSelector() {
           onClick={() => setTheme(option.value)}
           className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors duration-200 ${
             theme === option.value
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+              ? option.value === 'pink'
+                ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20'
+                : 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
               : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
           }`}
         >
           <div className="flex items-center space-x-3">
             <div className={`p-2 rounded-md ${
               theme === option.value
-                ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-400'
+                ? option.value === 'pink'
+                  ? 'bg-pink-100 dark:bg-pink-800 text-pink-600 dark:text-pink-400'
+                  : 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-400'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
             }`}>
               {option.icon}
@@ -99,7 +109,9 @@ export function ThemeSelector() {
             </div>
           </div>
           {theme === option.value && (
-            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+            <div className={`w-2 h-2 rounded-full ${
+              option.value === 'pink' ? 'bg-pink-500' : 'bg-blue-500'
+            }`} />
           )}
         </button>
       ))}

@@ -883,7 +883,7 @@ export function WorkoutLogger() {
         </div>
         <div className="grid gap-6">
           {templates.map((template, index) => (
-            <div key={template.id} className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+            <div key={template.id} className="p-6 bg-white dark:bg-black pink:bg-pink-50 border border-gray-200 dark:border-gray-800 pink:border-pink-200 rounded-lg">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
                 <div className="flex justify-center">
@@ -914,7 +914,7 @@ export function WorkoutLogger() {
 
         {/* Resume Workout Banner */}
         {isClient && currentWorkout && selectedTemplate && isWorkoutActive && (
-          <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 pink:bg-pink-50 border border-blue-200 dark:border-blue-800 pink:border-pink-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
@@ -934,7 +934,7 @@ export function WorkoutLogger() {
                     const exerciseNames = currentWorkout.exercises.map(ex => ex.name)
                     fetchLastWorkoutData(exerciseNames)
                   }}
-                  className="font-medium bg-blue-600 hover:bg-blue-700 text-white"
+                  className="font-medium bg-blue-600 hover:bg-blue-700 pink:bg-pink-600 pink:hover:bg-pink-700 text-white"
                 >
                   Resume Workout
                 </Button>
@@ -975,13 +975,13 @@ export function WorkoutLogger() {
 
         <div className="grid gap-6">
           {templates.map((template, index) => (
-            <div key={template.id} className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+            <div key={template.id} className="p-6 bg-white dark:bg-black pink:bg-pink-50 border border-gray-200 dark:border-gray-800 pink:border-pink-200 rounded-lg">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
                 <div className="flex justify-center">
                   <Button 
                     onClick={() => startWorkout(template)} 
-                    className="font-medium bg-blue-600 text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-full mt-2"
+                    className="font-medium bg-blue-600 text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 pink:bg-pink-800 pink:hover:bg-pink-900 rounded-full mt-2"
                   >
                     Start Workout
                   </Button>
@@ -1079,7 +1079,7 @@ export function WorkoutLogger() {
                 <Button 
                   onClick={postWorkoutToProfile}
                   disabled={postingToProfile}
-                  className="font-medium bg-blue-600 hover:bg-blue-700 text-white mr-3"
+                  className="font-medium bg-blue-600 hover:bg-blue-700 pink:bg-pink-600 pink:hover:bg-pink-700 text-white mr-3"
                 >
                   {postingToProfile ? 'Posting...' : 'Post to Profile'}
                 </Button>

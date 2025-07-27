@@ -2,33 +2,33 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 
-type Theme = 'light' | 'dark' | 'system'
+type Theme = 'light' | 'dark' | 'system' | 'pink'
 
 interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
-  resolvedTheme: 'light' | 'dark'
+  resolvedTheme: 'light' | 'dark' | 'pink'
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark' | 'pink'>('light')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     // Load theme from localStorage on mount
     const savedTheme = localStorage.getItem('theme') as Theme
-    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
+    if (savedTheme && ['light', 'dark', 'system', 'pink'].includes(savedTheme)) {
       setThemeState(savedTheme)
     }
   }, [])
 
   useEffect(() => {
     const updateResolvedTheme = () => {
-      let newResolvedTheme: 'light' | 'dark'
+      let newResolvedTheme: 'light' | 'dark' | 'pink'
       
       if (theme === 'system') {
         newResolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setResolvedTheme(newResolvedTheme)
       
       // Update document class and data attribute
-      document.documentElement.classList.remove('light', 'dark')
+      document.documentElement.classList.remove('light', 'dark', 'pink')
       document.documentElement.classList.add(newResolvedTheme)
       document.documentElement.setAttribute('data-theme', newResolvedTheme)
     }

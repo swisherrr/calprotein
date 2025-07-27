@@ -23,6 +23,11 @@ export default {
   },
   plugins: [
     addVariablesForColors,
+    function({ addVariant }: any) {
+      addVariant('pink', '&.pink')
+      addVariant('pink-hover', '&.pink:hover')
+      addVariant('pink-focus', '&.pink:focus')
+    }
   ],
 } satisfies Config;
 

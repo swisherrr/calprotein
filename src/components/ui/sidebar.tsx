@@ -93,7 +93,7 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-screen px-4 py-4 hidden md:flex md:flex-col bg-gray-100 dark:bg-black w-[300px] shrink-0 sticky top-0",
+          "h-screen px-4 py-4 hidden md:flex md:flex-col bg-gray-100 dark:bg-black pink:bg-pink-100 w-[300px] shrink-0 sticky top-0",
           className
         )}
         animate={{
@@ -120,7 +120,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-gray-100 dark:bg-black w-full border-b border-gray-200 dark:border-gray-800 z-50"
+          "fixed top-0 left-0 right-0 h-16 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-gray-100 dark:bg-black pink:bg-pink-100 w-full border-b border-gray-200 dark:border-gray-800 pink:border-pink-200 z-50"
         )}
         {...props}
       >
@@ -132,7 +132,7 @@ export const MobileSidebar = ({
         {/* Hamburger menu on the right */}
         <div className="flex items-center">
           <Menu
-            className="text-neutral-800 dark:text-neutral-200 h-6 w-6"
+            className="text-neutral-800 dark:text-neutral-200 pink:text-neutral-800 h-6 w-6"
             onClick={() => setOpen(!open)}
           />
         </div>
@@ -148,12 +148,12 @@ export const MobileSidebar = ({
                 ease: "easeInOut",
               }}
               className={cn(
-                "fixed h-full w-full inset-0 bg-gray-100 dark:bg-black p-10 pb-32 z-[100] flex flex-col justify-between",
+                "fixed h-full w-full inset-0 bg-gray-100 dark:bg-black pink:bg-pink-100 p-10 pb-32 z-[100] flex flex-col justify-between",
                 className
               )}
             >
               <div
-                className="absolute right-10 top-10 z-50 text-neutral-800 dark:text-neutral-200"
+                className="absolute right-10 top-10 z-50 text-neutral-800 dark:text-neutral-200 pink:text-neutral-800"
                 onClick={() => setOpen(!open)}
               >
                 <X />

@@ -6,6 +6,7 @@ import { DemoProvider } from "@/components/providers/demo-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from 'sonner'
 import { LayoutWrapper } from "@/components/layout-wrapper"
+
 import Link from "next/link"
 
 const inter = Inter({

@@ -72,8 +72,8 @@ export function ProgressBanners() {
   const getProteinColor = (protein: number) => {
     if (protein === 0) return 'bg-gray-200 dark:bg-gray-700' // No entries
     const proteinDiff = settings.daily_protein - protein
-    if (protein >= settings.daily_protein) return 'bg-blue-600 dark:bg-blue-500' // At or above target
-    if (proteinDiff <= 10) return 'bg-blue-400 dark:bg-blue-600' // Within 10g under target
+    if (protein >= settings.daily_protein) return 'bg-blue-600 dark:bg-blue-500 pink:bg-pink-600' // At or above target
+    if (proteinDiff <= 10) return 'bg-blue-400 dark:bg-blue-600 pink:bg-pink-500' // Within 10g under target
     return 'bg-gray-300 dark:bg-gray-600' // More than 10g under target
   }
 

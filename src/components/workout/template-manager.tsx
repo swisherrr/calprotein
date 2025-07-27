@@ -221,7 +221,7 @@ export function TemplateManager() {
                         </Select.Trigger>
                         <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
                           <Select.Viewport>
-                            <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">Add Custom Exercise</Select.Item>
+                            <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 pink:text-pink-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 pink:hover:bg-pink-50">Add Custom Exercise</Select.Item>
                             {getCombinedExerciseGroups(customExercises).map((group) => (
                               <Select.Group key={group.label}>
                                 <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.label}</Select.Label>
@@ -410,7 +410,7 @@ export function TemplateManager() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
+          <div className="bg-white dark:bg-black pink:bg-pink-50 border border-gray-200 dark:border-gray-800 pink:border-pink-200 rounded-lg p-6">
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -452,7 +452,7 @@ export function TemplateManager() {
                           </Select.Trigger>
                           <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
                             <Select.Viewport>
-                              <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">Add Custom Exercise</Select.Item>
+                              <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 pink:text-pink-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 pink:hover:bg-pink-50">Add Custom Exercise</Select.Item>
                               {getCombinedExerciseGroups(customExercises).map((group) => (
                                 <Select.Group key={group.label}>
                                   <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.label}</Select.Label>

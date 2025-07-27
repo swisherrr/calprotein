@@ -66,7 +66,7 @@ export function MobileBottomNavbar() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 z-50 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black pink:bg-pink-50 border-t border-gray-200 dark:border-gray-800 pink:border-pink-200 z-50 md:hidden">
       <div className="flex items-center justify-around px-2 py-2">
         {navItems.map((item) => {
           return (
@@ -76,8 +76,8 @@ export function MobileBottomNavbar() {
               className={cn(
                 "flex items-center justify-center py-3 px-4 rounded-lg transition-colors duration-200",
                 item.isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? "text-blue-600 dark:text-blue-400 pink:text-pink-600"
+                  : "text-gray-600 dark:text-gray-400 pink:text-gray-600 hover:text-gray-900 dark:hover:text-gray-100 pink:hover:text-gray-900"
               )}
             >
               <div className="relative">

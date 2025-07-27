@@ -93,7 +93,7 @@ export function CustomExerciseManager() {
 
       {/* Add Custom Exercise Form */}
       {showAddForm && (
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 pink:bg-pink-50 border border-blue-200 dark:border-blue-800 pink:border-pink-200 rounded-lg">
           <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
             Add Custom Exercise
           </h4>

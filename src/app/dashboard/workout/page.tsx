@@ -182,7 +182,7 @@ export default function WorkoutPage() {
         <h1 className="text-3xl font-bold">Workout Logger</h1>
         <Button 
           onClick={() => alert('Check In clicked')}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold"
+                          className="bg-blue-500 hover:bg-blue-600 pink:bg-pink-600 pink:hover:bg-pink-700 text-white px-6 py-2 rounded-lg font-semibold"
         >
           Check In
         </Button>
@@ -197,7 +197,7 @@ export default function WorkoutPage() {
               onClick={() => handleLoadTemplate(day)}
               className={`p-4 rounded-lg border text-center transition-colors ${
                 selectedDay === day
-                  ? "bg-blue-500 text-white border-blue-600"
+                  ? "bg-blue-500 text-white border-blue-600 pink:bg-pink-600 pink:border-pink-600"
                   : "bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
               }`}
             >
@@ -264,7 +264,7 @@ export default function WorkoutPage() {
 
                   {/* Custom Exercise Form - Inline */}
                   {customExerciseIndex === index && (
-                    <div className="col-span-4 mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="col-span-4 mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 pink:bg-pink-50 border border-blue-200 dark:border-blue-800 pink:border-pink-200 rounded-lg">
                       <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
                         Add Custom Exercise
                       </h4>

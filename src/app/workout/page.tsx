@@ -23,7 +23,7 @@ export default function WorkoutPage() {
             onClick={() => setActiveTab("templates")}
             className={`min-w-[110px] sm:min-w-[180px] px-4 sm:px-8 py-2.5 sm:py-3.5 font-medium transition-all duration-200 border-0 text-sm sm:text-base rounded-md ${
               activeTab === "templates"
-                ? "bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-gray-100 shadow-sm"
+                ? "bg-gray-100 dark:bg-blue-900 pink:bg-pink-600 text-gray-900 dark:text-gray-100 pink:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             }`}
           >
@@ -33,7 +33,7 @@ export default function WorkoutPage() {
             onClick={() => setActiveTab("workout")}
             className={`min-w-[110px] sm:min-w-[180px] px-4 sm:px-8 py-2.5 sm:py-3.5 font-medium transition-all duration-200 border-0 text-sm sm:text-base rounded-md ${
               activeTab === "workout"
-                ? "bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-gray-100 shadow-sm"
+                ? "bg-gray-100 dark:bg-blue-900 pink:bg-pink-600 text-gray-900 dark:text-gray-100 pink:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             }`}
           >
@@ -43,7 +43,7 @@ export default function WorkoutPage() {
             onClick={() => setActiveTab("data")}
             className={`min-w-[110px] sm:min-w-[180px] px-4 sm:px-8 py-2.5 sm:py-3.5 font-medium transition-all duration-200 border-0 text-sm sm:text-base rounded-md ${
               activeTab === "data"
-                ? "bg-gray-100 dark:bg-blue-900 text-gray-900 dark:text-gray-100 shadow-sm"
+                ? "bg-gray-100 dark:bg-blue-900 pink:bg-pink-600 text-gray-900 dark:text-gray-100 pink:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             }`}
           >

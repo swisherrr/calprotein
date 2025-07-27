@@ -197,6 +197,254 @@ h3 {
   @apply bg-gray-900 border-gray-800;
 }
 
+/* Pink theme support */
+html.pink {
+  --pink-50: #fef7fb;
+  --pink-100: #fdf2f8;
+  --pink-200: #fce7f3;
+  --pink-300: #fbcfe8;
+  --pink-400: #f9a8d4;
+  --pink-500: #f472b6;
+  --pink-600: #ec4899;
+  --pink-700: #db2777;
+  --pink-800: #be185d;
+  --pink-900: #9d174d;
+}
+
+.pink body {
+  color: #1d1d1f;
+  background-color: #ffffff;
+}
+
+/* Pink theme base styles */
+.pink {
+  background-color: #fef7fb !important;
+}
+
+.pink * {
+  border-color: #fce7f3 !important;
+}
+
+/* Force specific elements to be pink */
+.pink button[class*="bg-blue"] {
+  background-color: var(--pink-600) !important;
+}
+
+.pink button[class*="bg-blue"]:hover {
+  background-color: var(--pink-700) !important;
+}
+
+.pink .bg-gray-100 {
+  background-color: var(--pink-50) !important;
+}
+
+/* Force navbar to be pink */
+.pink [class*="bg-gray-100"] {
+  background-color: var(--pink-50) !important;
+}
+
+/* Force all blue buttons to be pink */
+.pink [class*="bg-blue-600"] {
+  background-color: var(--pink-600) !important;
+}
+
+.pink [class*="bg-blue-700"] {
+  background-color: var(--pink-700) !important;
+}
+
+.pink [class*="hover:bg-blue-700"]:hover {
+  background-color: var(--pink-700) !important;
+}
+
+/* Ensure ghost buttons (three-dot menu, eye button) have transparent background until hovered */
+.pink button[class*="variant-ghost"] {
+  background-color: transparent !important;
+}
+
+.pink button[class*="variant-ghost"]:hover {
+  background-color: var(--pink-100) !important;
+}
+
+/* Specific override for profile page buttons */
+.pink button[class*="h-8 w-8 p-0"] {
+  background-color: transparent !important;
+}
+
+.pink button[class*="h-8 w-8 p-0"]:hover {
+  background-color: var(--pink-100) !important;
+}
+
+/* Force pink background on specific elements */
+.pink .bg-gray-50 {
+  background-color: var(--pink-100) !important;
+}
+
+.pink .bg-gray-900 {
+  background-color: var(--pink-100) !important;
+}
+
+/* Force mobile bottom navbar to be pink */
+.pink [class*="fixed bottom-0"] {
+  background-color: var(--pink-50) !important;
+}
+
+/* More specific targeting for mobile navbar */
+.pink .fixed.bottom-0 {
+  background-color: var(--pink-50) !important;
+}
+
+/* Force total volume and duration boxes to be pink */
+.pink [class*="text-center p-2 bg-gray-50"] {
+  background-color: var(--pink-100) !important;
+}
+
+.pink [class*="text-center p-2 bg-gray-900"] {
+  background-color: var(--pink-100) !important;
+}
+
+/* More specific targeting for the volume/duration boxes */
+.pink .text-center.p-2.bg-gray-50 {
+  background-color: var(--pink-100) !important;
+}
+
+.pink .text-center.p-2.bg-gray-900 {
+  background-color: var(--pink-100) !important;
+}
+
+/* Target any element with pink:bg-pink-100 class */
+.pink .pink\:bg-pink-100 {
+  background-color: var(--pink-100) !important;
+}
+
+/* Target any element with pink:bg-pink-50 class */
+.pink .pink\:bg-pink-50 {
+  background-color: var(--pink-50) !important;
+}
+
+/* Pink theme specific overrides */
+.pink .bg-white {
+  background-color: white !important;
+}
+
+/* Pink theme specific styles */
+.pink .bg-pink-50 {
+  background-color: var(--pink-50) !important;
+}
+
+.pink .bg-pink-100 {
+  background-color: var(--pink-100) !important;
+}
+
+.pink .bg-pink-200 {
+  background-color: var(--pink-200) !important;
+}
+
+.pink .bg-pink-600 {
+  background-color: var(--pink-600) !important;
+}
+
+.pink .bg-pink-700 {
+  background-color: var(--pink-700) !important;
+}
+
+.pink .bg-pink-800 {
+  background-color: var(--pink-800) !important;
+}
+
+.pink .bg-pink-900 {
+  background-color: var(--pink-900) !important;
+}
+
+.pink .border-pink-100 {
+  border-color: var(--pink-100) !important;
+}
+
+.pink .border-pink-200 {
+  border-color: var(--pink-200) !important;
+}
+
+.pink .border-pink-300 {
+  border-color: var(--pink-300) !important;
+}
+
+.pink .text-pink-400 {
+  color: var(--pink-400) !important;
+}
+
+.pink .text-pink-500 {
+  color: var(--pink-500) !important;
+}
+
+.pink .text-pink-600 {
+  color: var(--pink-600) !important;
+}
+
+.pink .text-pink-700 {
+  color: var(--pink-700) !important;
+}
+
+.pink .text-pink-800 {
+  color: var(--pink-800) !important;
+}
+
+/* Hover states */
+.pink .hover\:bg-pink-700:hover {
+  background-color: var(--pink-700) !important;
+}
+
+.pink .hover\:border-pink-300:hover {
+  border-color: var(--pink-300) !important;
+}
+
+.pink .hover\:text-pink-800:hover {
+  color: var(--pink-800) !important;
+}
+
+/* Opacity variations */
+.pink .bg-pink-50\/50 {
+  background-color: rgba(253, 242, 248, 0.5) !important;
+}
+
+.pink .bg-pink-900\/20 {
+  background-color: rgba(131, 24, 67, 0.2) !important;
+}
+
+/* Button overrides */
+.pink .btn-apple {
+  background-color: var(--pink-600) !important;
+  color: white !important;
+}
+
+.pink .btn-apple:hover {
+  background-color: var(--pink-700) !important;
+}
+
+.pink .btn-apple-outline {
+  border-color: var(--pink-600) !important;
+  color: var(--pink-600) !important;
+}
+
+.pink .btn-apple-outline:hover {
+  background-color: var(--pink-600) !important;
+  color: white !important;
+}
+
+.pink .input-apple {
+  border-color: #e5e7eb !important;
+  background-color: white !important;
+  color: black !important;
+}
+
+.pink .input-apple:focus {
+  border-color: var(--pink-600) !important;
+  box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1) !important;
+}
+
+.pink .card-apple {
+  background-color: white !important;
+  border-color: #f3f4f6 !important;
+}
+
 /* Matrix-style workout text effect */
 .matrix-container {
   position: relative;
