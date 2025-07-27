@@ -59,6 +59,9 @@ export default function ProfilePage() {
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null)
   const [showWorkoutMenu, setShowWorkoutMenu] = useState(false)
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set())
+  const [expandedTemplatesArray, setExpandedTemplatesArray] = useState<string[]>([])
+  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(new Set())
+  const [expandedWorkoutsArray, setExpandedWorkoutsArray] = useState<string[]>([])
 
   const [cropArea, setCropArea] = useState({ x: 50, y: 50, width: 80, height: 80 })
   const [isDragging, setIsDragging] = useState(false)
@@ -602,14 +605,11 @@ export default function ProfilePage() {
   }
 
   const toggleTemplateExpansion = (templateId: string) => {
-    setExpandedTemplates(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(templateId)) {
-        newSet.delete(templateId);
-      } else {
-        newSet.add(templateId);
-      }
-      return newSet;
+    setExpandedTemplatesArray(prev => {
+      const newArray = prev.includes(templateId) 
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId];
+      return newArray;
     });
   };
 
@@ -642,6 +642,15 @@ export default function ProfilePage() {
       setHiddenTemplates(hiddenTemplates)
     }
   }
+
+  const toggleWorkoutExpansion = (workoutId: string) => {
+    setExpandedWorkoutsArray(prev => {
+      const newArray = prev.includes(workoutId) 
+        ? prev.filter(id => id !== workoutId)
+        : [...prev, workoutId];
+      return newArray;
+    });
+  };
 
   const handleProfilePictureFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -788,28 +797,31 @@ export default function ProfilePage() {
               Loading templates...
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
               {templates.map((template) => {
                 const isHidden = hiddenTemplates.has(template.id)
-                const isExpanded = expandedTemplates.has(template.id)
+                const isExpanded = expandedTemplatesArray.includes(template.id)
                 return (
                   <div
                     key={template.id}
-                    className={`border rounded-lg transition-colors ${
+                    className={`border rounded-lg transition-colors relative ${
                       isHidden 
                         ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
+                    style={{ height: isExpanded ? 'auto' : '110px' }}
                   >
-                    {/* Header - Always visible */}
-                    <div 
-                      className="p-4 cursor-pointer flex justify-between items-center"
-                      onClick={() => toggleTemplateExpansion(template.id)}
-                    >
-                      <h3 className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {template.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
+                                          {/* Header - Always visible */}
+                      <div 
+                        className="p-4 cursor-pointer flex justify-between items-start"
+                        onClick={() => toggleTemplateExpansion(template.id)}
+                      >
+                        <div className="flex-1 min-h-0">
+                          <h3 className={`font-medium line-clamp-2 ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                            {template.name}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -877,27 +889,36 @@ export default function ProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Logged Workouts</h2>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
             {sharedWorkouts
               .filter(workout => !deletedWorkouts.has(workout.id))
               .map((workout) => {
                 const isHidden = hiddenWorkouts.has(workout.id)
+                const isExpanded = expandedWorkoutsArray.includes(workout.id)
                 return (
                 <div
                   key={workout.id}
-                  className={`p-4 border rounded-lg transition-colors ${
+                  className={`border rounded-lg transition-colors relative ${
                     isHidden 
                       ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/50' 
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
+                  style={{ height: isExpanded ? 'auto' : '200px' }}
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                  {/* Header - Always visible */}
+                  <div 
+                    className="p-4 cursor-pointer flex justify-between items-start"
+                    onClick={() => toggleWorkoutExpansion(workout.id)}
+                  >
+                    <div className="flex-1 min-h-0">
+                      <h3 className={`font-medium line-clamp-2 ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
                         {workout.template_name}
                       </h3>
+                      <p className={`text-xs mt-1 ${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-500'}`}>
+                        {new Date(workout.created_at).toLocaleDateString()} at {new Date(workout.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -906,56 +927,69 @@ export default function ProfilePage() {
                           setSelectedWorkout(workout)
                           setShowWorkoutMenu(true)
                         }}
-                        className="h-6 w-6 p-0 text-gray-500 dark:text-gray-400 hover:bg-transparent dark:hover:bg-transparent"
+                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         title="More options"
                       >
                         ⋯
                       </Button>
+                      <div className="text-gray-400 dark:text-gray-500">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  {/* Workout Stats */}
-                  <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                    <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                      <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {workout.total_volume.toLocaleString()}
-                      </div>
-                      <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>lbs</div>
-                    </div>
-                    <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                      <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {workout.duration}
-                      </div>
-                      <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>duration</div>
-                    </div>
-                  </div>
-                  
-                  {/* Exercise Breakdown */}
-                  <div className="space-y-2 mb-3">
-                    <h4 className={`text-sm font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>Exercises</h4>
-                    {workout.exercise_stats?.map((exercise: any, index: number) => (
-                      <div key={index} className="text-xs">
+                  {/* Workout Stats - Always visible */}
+                  <div className="px-4 pb-4" style={{ position: isExpanded ? 'static' : 'absolute', bottom: isExpanded ? 'auto' : '16px', left: '16px', right: '16px', top: isExpanded ? 'auto' : '120px' }}>
+                    <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
                         <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                          {exercise.name}
+                          {workout.total_volume.toLocaleString()}
                         </div>
-                        <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
-                          {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
-                        </div>
-                        <div className={`font-medium ${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-blue-600 dark:text-blue-400'}`}>
-                          Volume: {exercise.volume.toLocaleString()} lbs
-                        </div>
+                        <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>lbs</div>
                       </div>
-                    ))}
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                          {workout.duration}
+                        </div>
+                        <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>duration</div>
+                      </div>
+                    </div>
                   </div>
                   
-                  <p className={`text-xs border-t pt-2 ${
-                    isHidden 
-                      ? 'text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600' 
-                      : 'text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700'
-                  }`}>
-                    {new Date(workout.created_at).toLocaleDateString()} at {new Date(workout.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    {isHidden && <span className="ml-2">(Hidden)</span>}
-                  </p>
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                      {/* Exercise Breakdown */}
+                      <div className="space-y-2 mb-3 mt-3">
+                        <h4 className={`text-sm font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>Exercises</h4>
+                        {workout.exercise_stats?.map((exercise: any, index: number) => (
+                          <div key={index} className="text-xs">
+                            <div className={`font-medium ${isHidden ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                              {exercise.name}
+                            </div>
+                            <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
+                              {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
+                            </div>
+                            <div className={`font-medium ${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-blue-600 dark:text-blue-400'}`}>
+                              Volume: {exercise.volume.toLocaleString()} lbs
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <p className={`text-xs border-t pt-2 ${
+                        isHidden 
+                          ? 'text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600' 
+                          : 'text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700'
+                      }`}>
+                        {isHidden && <span className="mr-2">(Hidden)</span>}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )})}
           </div>

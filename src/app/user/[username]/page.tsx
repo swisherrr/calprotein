@@ -65,6 +65,9 @@ export default function UserProfilePage() {
   const [progressPictures, setProgressPictures] = useState<any[]>([]);
   const [progressPicturesLoading, setProgressPicturesLoading] = useState(true);
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set());
+  const [expandedTemplatesArray, setExpandedTemplatesArray] = useState<string[]>([]);
+  const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(new Set());
+  const [expandedWorkoutsArray, setExpandedWorkoutsArray] = useState<string[]>([]);
 
   // Fetch followers/following and follow status
   const fetchFollowData = useCallback(async (profileUserId: string) => {
@@ -320,14 +323,20 @@ export default function UserProfilePage() {
   };
 
   const toggleTemplateExpansion = (templateId: string) => {
-    setExpandedTemplates(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(templateId)) {
-        newSet.delete(templateId);
-      } else {
-        newSet.add(templateId);
-      }
-      return newSet;
+    setExpandedTemplatesArray(prev => {
+      const newArray = prev.includes(templateId) 
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId];
+      return newArray;
+    });
+  };
+
+  const toggleWorkoutExpansion = (workoutId: string) => {
+    setExpandedWorkoutsArray(prev => {
+      const newArray = prev.includes(workoutId) 
+        ? prev.filter(id => id !== workoutId)
+        : [...prev, workoutId];
+      return newArray;
     });
   };
 
@@ -485,7 +494,7 @@ export default function UserProfilePage() {
     );
   }
 
-  const canViewTemplates = !userProfile.private_account || currentUser?.id === userProfile.user_id || followStatus === 'accepted';
+  const canViewTemplates = userProfile && (!userProfile.private_account || currentUser?.id === userProfile.user_id || followStatus === 'accepted');
 
   return (
     <div className="flex flex-col items-center pt-16 min-h-screen bg-white dark:bg-black">
@@ -552,20 +561,23 @@ export default function UserProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Workout Templates</h2>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
             {templates.map((template) => {
-              const isExpanded = expandedTemplates.has(template.id);
+              const isExpanded = expandedTemplatesArray.includes(template.id);
               return (
                 <div
                   key={template.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors relative"
+                  style={{ height: isExpanded ? 'auto' : '110px' }}
                 >
                   {/* Header - Always visible */}
                   <div 
-                    className="p-4 cursor-pointer flex justify-between items-center"
+                    className="p-4 cursor-pointer flex justify-between items-start"
                     onClick={() => toggleTemplateExpansion(template.id)}
                   >
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{template.name}</h3>
+                    <div className="flex-1 min-h-0">
+                      <h3 className="font-medium line-clamp-2 text-gray-900 dark:text-gray-100">{template.name}</h3>
+                    </div>
                     <div className="flex items-center gap-2">
                       {currentUser && currentUser.id !== userProfile.user_id && (
                         <Button
@@ -630,54 +642,78 @@ export default function UserProfilePage() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Logged Workouts</h2>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sharedWorkouts.map((workout) => (
-              <div
-                key={workout.id}
-                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-              >
-                <div className="mb-3">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100">{workout.template_name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">
-                    {new Date(workout.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                
-                {/* Workout Stats */}
-                <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                  <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {workout.total_volume.toLocaleString()}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
+            {sharedWorkouts.map((workout) => {
+              const isExpanded = expandedWorkoutsArray.includes(workout.id);
+              return (
+                <div
+                  key={workout.id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors relative"
+                  style={{ height: isExpanded ? 'auto' : '200px' }}
+                >
+                  {/* Header - Always visible */}
+                  <div 
+                    className="p-4 cursor-pointer flex justify-between items-start"
+                    onClick={() => toggleWorkoutExpansion(workout.id)}
+                  >
+                    <div className="flex-1 min-h-0">
+                      <h3 className="font-medium line-clamp-2 text-gray-900 dark:text-gray-100">{workout.template_name}</h3>
+                      <p className="text-xs mt-1 text-gray-500 dark:text-gray-500">
+                        {new Date(workout.created_at).toLocaleDateString()} at {new Date(workout.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
                     </div>
-                    <div className="text-gray-500 dark:text-gray-400">lbs</div>
+                    <div className="text-gray-400 dark:text-gray-500">
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </div>
                   </div>
-                  <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {workout.duration}
+                  
+                  {/* Workout Stats - Always visible */}
+                  <div className="px-4 pb-4" style={{ position: isExpanded ? 'static' : 'absolute', bottom: isExpanded ? 'auto' : '16px', left: '16px', right: '16px', top: isExpanded ? 'auto' : '120px' }}>
+                    <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {workout.total_volume.toLocaleString()}
+                        </div>
+                        <div className="text-gray-500 dark:text-gray-400">lbs</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {workout.duration}
+                        </div>
+                        <div className="text-gray-500 dark:text-gray-400">duration</div>
+                      </div>
                     </div>
-                    <div className="text-gray-500 dark:text-gray-400">duration</div>
                   </div>
-                </div>
-                
-                {/* Exercise Breakdown */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Exercises</h4>
-                  {workout.exercise_stats?.map((exercise: any, index: number) => (
-                    <div key={index} className="text-xs">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {exercise.name}
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400">
-                        {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
-                      </div>
-                      <div className="text-blue-600 dark:text-blue-400 font-medium">
-                        Volume: {exercise.volume.toLocaleString()} lbs
+                  
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                      {/* Exercise Breakdown */}
+                      <div className="space-y-2 mb-3 mt-3">
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Exercises</h4>
+                        {workout.exercise_stats?.map((exercise: any, index: number) => (
+                          <div key={index} className="text-xs">
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {exercise.name}
+                            </div>
+                            <div className="text-gray-600 dark:text-gray-400">
+                              {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
+                            </div>
+                            <div className="text-blue-600 dark:text-blue-400 font-medium">
+                              Volume: {exercise.volume.toLocaleString()} lbs
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -720,7 +756,7 @@ export default function UserProfilePage() {
       )}
 
       {/* Show message when templates are private and user can't view them */}
-      {!canViewTemplates && currentUser && currentUser.id !== userProfile.user_id && (followStatus === 'none' || followStatus === 'pending') && (
+      {!canViewTemplates && currentUser && userProfile && currentUser.id !== userProfile.user_id && (followStatus === 'none' || followStatus === 'pending') && (
         <div className="w-full max-w-4xl px-4">
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
