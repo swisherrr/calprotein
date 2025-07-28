@@ -88,7 +88,12 @@ export function MobileBottomNavbar() {
                     className="h-6 w-6"
                   />
                 ) : (
-                  <item.icon className="h-6 w-6" />
+                  <item.icon className={cn(
+                    "h-6 w-6",
+                    item.isActive
+                      ? "text-blue-600 dark:text-blue-400 pink:text-pink-600"
+                      : "text-gray-600 dark:text-gray-400 pink:text-gray-600"
+                  )} />
                 )}
               </div>
             </a>

@@ -293,6 +293,19 @@ html.pink {
   background-color: var(--pink-50) !important;
 }
 
+/* Force mobile navbar active tab icons to be pink */
+.pink .fixed.bottom-0 a[class*="text-blue-600"] {
+  color: var(--pink-600) !important;
+}
+
+.pink .fixed.bottom-0 a[class*="text-blue-600"] svg {
+  color: var(--pink-600) !important;
+}
+
+.pink .fixed.bottom-0 a[class*="text-blue-600"] * {
+  color: var(--pink-600) !important;
+}
+
 /* Force total volume and duration boxes to be pink */
 .pink [class*="text-center p-2 bg-gray-50"] {
   background-color: var(--pink-100) !important;
