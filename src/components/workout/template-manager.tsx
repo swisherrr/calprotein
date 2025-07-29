@@ -14,7 +14,84 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { StarFilledIcon } from '@radix-ui/react-icons';
 import { ChevronLeftIcon } from '@radix-ui/react-icons';
 import { Cross2Icon } from '@radix-ui/react-icons';
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { CustomExerciseManager } from './custom-exercise-manager';
+
+interface TemplateCardProps {
+  template: WorkoutTemplate
+  onEdit: (template: WorkoutTemplate) => void
+  onDelete: (templateId: string) => void
+}
+
+function TemplateCard({ template, onEdit, onDelete }: TemplateCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            {template.name}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onEdit(template)}
+            variant="outline"
+            size="sm"
+          >
+            Edit
+          </Button>
+          <Button
+            onClick={() => onDelete(template.id!)}
+            variant="outline"
+            size="sm"
+            className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+      
+      <div 
+        className="flex items-center justify-between cursor-pointer text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mt-4"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="text-sm">View exercises</span>
+        {isExpanded ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+      </div>
+      
+      {isExpanded && (
+        <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {template.exercises.map((exercise, index) => (
+            <div key={index} className="text-sm">
+              <div className="font-medium text-gray-900 dark:text-gray-100">
+                {exercise.name}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400">
+                {exercise.sets || 0} sets
+                {exercise.setData && exercise.setData.length > 0 && (
+                  <span className="ml-2">
+                    ({exercise.setData.map((set: any, setIndex: number) => 
+                      `${set.weight}lbs × ${set.reps}`
+                    ).join(', ')})
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface Exercise {
   name: string
@@ -652,58 +729,7 @@ export function TemplateManager() {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Your Templates</h2>
               <div className="grid gap-4">
                 {templates.map((template) => (
-                  <div
-                    key={template.id}
-                    className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                          {template.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleEditTemplate(template)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteTemplate(template.id!)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {template.exercises.map((exercise, index) => (
-                        <div key={index} className="text-sm">
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
-                            {exercise.name}
-                          </div>
-                          <div className="text-gray-600 dark:text-gray-400">
-                            {exercise.sets || 0} sets
-                            {exercise.setData && exercise.setData.length > 0 && (
-                              <span className="ml-2">
-                                ({exercise.setData.map((set: any, setIndex: number) => 
-                                  `${set.weight}lbs × ${set.reps}`
-                                ).join(', ')})
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <TemplateCard key={template.id} template={template} onEdit={handleEditTemplate} onDelete={handleDeleteTemplate} />
                 ))}
               </div>
             </div>

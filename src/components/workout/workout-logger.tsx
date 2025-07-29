@@ -10,6 +10,7 @@ import { useWorkoutLogs } from "@/hooks/use-workout-logs"
 import { useUserSettings } from "@/hooks/use-user-settings"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 interface Set {
   reps?: number
@@ -46,6 +47,62 @@ interface PersonalRecord {
   maxWeight: number
   maxReps: number
   maxVolume: number
+}
+
+interface WorkoutTemplateCardProps {
+  template: WorkoutTemplate
+  onStartWorkout: (template: WorkoutTemplate) => void
+}
+
+function WorkoutTemplateCard({ template, onStartWorkout }: WorkoutTemplateCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  return (
+    <div className="p-6 bg-white dark:bg-black pink:bg-pink-50 border border-gray-200 dark:border-gray-800 pink:border-pink-200 rounded-lg">
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
+        <div className="flex justify-center">
+          <Button 
+            onClick={() => onStartWorkout(template)} 
+            className="font-medium bg-blue-600 text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 pink:bg-pink-800 pink:hover:bg-pink-900 rounded-full mt-2"
+          >
+            Start Workout
+          </Button>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+      
+      <div 
+        className="flex items-center justify-between cursor-pointer text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="text-sm">View exercises</span>
+        {isExpanded ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+      </div>
+      
+      {isExpanded && (
+        <div className="space-y-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h4 className="text-lg font-medium text-gray-800 dark:text-gray-200 text-center mb-6">
+            Exercises
+          </h4>
+          {template.exercises.map((exercise, idx) => (
+            <div key={idx} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+              <span className="text-lg font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
+              <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-black px-4 py-2 rounded-full text-sm font-medium">
+                {exercise.sets} sets
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Timer component
@@ -884,7 +941,7 @@ export function WorkoutLogger() {
         <div className="grid gap-6">
           {templates.map((template, index) => (
             <div key={template.id} className="p-6 bg-white dark:bg-black pink:bg-pink-50 border border-gray-200 dark:border-gray-800 pink:border-pink-200 rounded-lg">
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
                 <div className="flex justify-center">
                   <Button 
@@ -894,6 +951,9 @@ export function WorkoutLogger() {
                     Loading...
                   </Button>
                 </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
+                </p>
               </div>
             </div>
           ))}
@@ -975,33 +1035,11 @@ export function WorkoutLogger() {
 
         <div className="grid gap-6">
           {templates.map((template, index) => (
-            <div key={template.id} className="p-6 bg-white dark:bg-black pink:bg-pink-50 border border-gray-200 dark:border-gray-800 pink:border-pink-200 rounded-lg">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{template.name}</h3>
-                <div className="flex justify-center">
-                  <Button 
-                    onClick={() => startWorkout(template)} 
-                    className="font-medium bg-blue-600 text-white hover:bg-blue-600 dark:bg-blue-900 dark:hover:bg-blue-800 pink:bg-pink-800 pink:hover:bg-pink-900 rounded-full mt-2"
-                  >
-                    Start Workout
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h4 className="text-lg font-medium text-gray-800 dark:text-gray-200 text-center mb-6">
-                  Exercises
-                </h4>
-                {template.exercises.map((exercise, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                    <span className="text-lg font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
-                    <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-black px-4 py-2 rounded-full text-sm font-medium">
-                      {exercise.sets} sets
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <WorkoutTemplateCard 
+              key={template.id} 
+              template={template} 
+              onStartWorkout={startWorkout} 
+            />
           ))}
         </div>
       </div>
