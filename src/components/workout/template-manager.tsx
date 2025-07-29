@@ -13,6 +13,7 @@ import * as Select from '@radix-ui/react-select';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { StarFilledIcon } from '@radix-ui/react-icons';
 import { ChevronLeftIcon } from '@radix-ui/react-icons';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { CustomExerciseManager } from './custom-exercise-manager';
 
 interface Exercise {
@@ -83,6 +84,13 @@ export function TemplateManager() {
       exercises: [...prev.exercises, { name: "", sets: 0, setData: [] }]
     }))
   }
+
+  const handleRemoveExercise = (indexToRemove: number) => {
+    setCurrentTemplate(prev => ({
+      ...prev,
+      exercises: prev.exercises.filter((_, index) => index !== indexToRemove)
+    }));
+  };
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string | number) => {
 
@@ -197,7 +205,18 @@ export function TemplateManager() {
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
               {currentTemplate.exercises.map((exercise, index) => (
-                <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+                <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg relative">
+                  {/* Remove Exercise Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveExercise(index)}
+                    className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                    title="Remove exercise"
+                  >
+                    <Cross2Icon className="h-4 w-4" />
+                  </Button>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -428,7 +447,18 @@ export function TemplateManager() {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
                 {currentTemplate.exercises.map((exercise, index) => (
-                  <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
+                  <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg relative">
+                    {/* Remove Exercise Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveExercise(index)}
+                      className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                      title="Remove exercise"
+                    >
+                      <Cross2Icon className="h-4 w-4" />
+                    </Button>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">

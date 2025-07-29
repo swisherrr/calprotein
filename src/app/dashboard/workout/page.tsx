@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { EXERCISE_GROUPS, getCombinedExerciseGroups } from "@/lib/exercises"
 import { useCustomExercises } from "@/hooks/use-custom-exercises"
+import { Cross2Icon } from '@radix-ui/react-icons'
 
 interface Exercise {
   name: string
@@ -74,6 +75,11 @@ export default function WorkoutPage() {
 
   const handleAddExercise = () => {
     setExercises([...exercises, { name: "", sets: 0, reps: 0, weight: 0 }])
+  }
+
+  const handleRemoveExercise = (indexToRemove: number) => {
+    setExercises(exercises.filter((_, index) => index !== indexToRemove))
+    setTotalVolume(calculateVolume(exercises.filter((_, index) => index !== indexToRemove)))
   }
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string | number) => {
@@ -213,7 +219,17 @@ export default function WorkoutPage() {
           {exercises.length > 0 ? (
             <div className="space-y-4">
               {exercises.map((exercise, index) => (
-                <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg bg-white dark:bg-gray-800">
+                <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg bg-white dark:bg-gray-800 relative">
+                  {/* Remove Exercise Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveExercise(index)}
+                    className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                    title="Remove exercise"
+                  >
+                    <Cross2Icon className="h-4 w-4" />
+                  </Button>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Exercise</label>
                     <select
