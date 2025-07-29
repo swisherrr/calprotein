@@ -9,8 +9,13 @@ import { useWorkoutTemplates } from "@/hooks/use-workout-templates"
 import { useWorkoutLogs } from "@/hooks/use-workout-logs"
 import { useUserSettings } from "@/hooks/use-user-settings"
 import { useLocalStorage } from "@/hooks/use-local-storage"
+import { useCustomExercises } from "@/hooks/use-custom-exercises"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus } from "lucide-react"
+import { getCombinedExerciseGroups } from "@/lib/exercises"
+import * as Select from '@radix-ui/react-select';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { StarFilledIcon } from '@radix-ui/react-icons';
 
 interface Set {
   reps?: number
@@ -53,6 +58,12 @@ interface WorkoutTemplateCardProps {
   template: WorkoutTemplate
   onStartWorkout: (template: WorkoutTemplate) => void
 }
+
+const getExerciseLabel = (value: string, customExercises: any[]) => {
+  if (!value) return '';
+  const isCustom = customExercises.some(ex => ex.exercise_name === value);
+  return isCustom ? `${value} ⭐` : value;
+};
 
 function WorkoutTemplateCard({ template, onStartWorkout }: WorkoutTemplateCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -167,6 +178,7 @@ export function WorkoutLogger() {
   const { isDemoMode, demoData } = useDemo()
   const { templates, loading: templatesLoading } = useWorkoutTemplates()
   const { logs, addLog } = useWorkoutLogs()
+  const { customExercises } = useCustomExercises()
   
   // Use localStorage for persistent workout state
   const [currentWorkout, setCurrentWorkout] = useLocalStorage<WorkoutLog | null>('currentWorkout', null)
@@ -202,6 +214,9 @@ export function WorkoutLogger() {
   const [completedTemplateName, setCompletedTemplateName] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false)
+  const [newExerciseName, setNewExerciseName] = useState('')
+  const [newExerciseSets, setNewExerciseSets] = useState(1)
 
   // Set client flag on mount to prevent hydration mismatch
   useEffect(() => {
@@ -575,6 +590,30 @@ export function WorkoutLogger() {
     setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
   }
 
+  const addExerciseToWorkout = () => {
+    if (!currentWorkout || !newExerciseName.trim()) return
+
+    const newExercise: Exercise = {
+      name: newExerciseName.trim(),
+      sets: newExerciseSets,
+      setData: Array(newExerciseSets).fill(null).map(() => ({ 
+        reps: undefined, 
+        weight: undefined 
+      })),
+      volume: 0
+    }
+
+    const newExercises = [...currentWorkout.exercises, newExercise]
+    setCurrentWorkout({ ...currentWorkout, exercises: newExercises })
+
+    // Reset form
+    setNewExerciseName('')
+    setNewExerciseSets(1)
+    setShowAddExerciseDialog(false)
+  }
+
+
+
   const finishWorkout = async () => {
     if (!currentWorkout) return
 
@@ -865,6 +904,18 @@ export function WorkoutLogger() {
                 </div>
               </div>
             ))}
+            
+            {/* Add Exercise Button */}
+            <div className="text-center mt-8">
+              <Button
+                onClick={() => setShowAddExerciseDialog(true)}
+                variant="outline"
+                className="flex items-center space-x-2 text-lg px-8 py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add Exercise</span>
+              </Button>
+            </div>
           </div>
 
           <div className="text-center mt-12">
@@ -923,7 +974,82 @@ export function WorkoutLogger() {
         </div>
       </div>
 
+      {/* Add Exercise Dialog */}
+      <Dialog open={showAddExerciseDialog} onOpenChange={setShowAddExerciseDialog}>
+        <DialogContent className="max-w-md bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-center text-gray-900 dark:text-gray-100">Add Exercise</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Exercise Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Exercise Name
+              </label>
+              <Select.Root value={newExerciseName} onValueChange={setNewExerciseName}>
+                <Select.Trigger className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+                  <Select.Value placeholder="Select exercise">{getExerciseLabel(newExerciseName, customExercises)}</Select.Value>
+                  <Select.Icon>
+                    <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
+                  </Select.Icon>
+                </Select.Trigger>
+                <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+                  <Select.Viewport>
+                    {getCombinedExerciseGroups(customExercises).map((group) => (
+                      <Select.Group key={group.label}>
+                        <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.label}</Select.Label>
+                        {group.exercises.map((exerciseName) => {
+                          const isCustom = customExercises.some(ex => ex.exercise_name === exerciseName);
+                          return (
+                            <Select.Item key={exerciseName} value={exerciseName} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between">
+                              <span>{exerciseName}</span>
+                              {isCustom && <StarFilledIcon className="ml-2 h-4 w-4 text-yellow-400" />}
+                            </Select.Item>
+                          );
+                        })}
+                      </Select.Group>
+                    ))}
+                  </Select.Viewport>
+                </Select.Content>
+              </Select.Root>
+            </div>
 
+            {/* Sets */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Number of Sets
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={newExerciseSets}
+                onChange={(e) => setNewExerciseSets(parseInt(e.target.value) || 1)}
+                className="input-apple"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3 pt-4">
+              <Button
+                onClick={addExerciseToWorkout}
+                disabled={!newExerciseName.trim()}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Add Exercise
+              </Button>
+              <Button
+                onClick={() => setShowAddExerciseDialog(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       </>
     )
   }
