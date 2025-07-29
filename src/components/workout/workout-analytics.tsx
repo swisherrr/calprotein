@@ -205,10 +205,12 @@ export function WorkoutAnalytics() {
 
   // Update getTotalVolumeData etc. to use filteredWorkoutData
   const getTotalVolumeData = (): ChartData[] => {
-    return filteredWorkoutData.map(workout => ({
-      date: workout.date,
-      volume: workout.total_volume
-    }))
+    return filteredWorkoutData
+      .filter(workout => workout.total_volume > 0) // Filter out workouts with 0 volume
+      .map(workout => ({
+        date: workout.date,
+        volume: workout.total_volume
+      }))
   }
   const getMuscleGroupData = (): ChartData[] => {
     if (!selectedMuscleGroup) return []
@@ -462,19 +464,24 @@ export function WorkoutAnalytics() {
           <div className="card-apple text-center dark:bg-black" style={{ borderRadius: 0 }}>
             <h3 className="text-base sm:text-lg font-semibold mb-2">Total Workouts</h3>
             <p className="text-2xl sm:text-3xl font-bold text-blue-800">
-              {workoutData.length}
+              {workoutData.filter(workout => workout.total_volume > 0).length}
             </p>
           </div>
           <div className="card-apple text-center dark:bg-black" style={{ borderRadius: 0 }}>
             <h3 className="text-base sm:text-lg font-semibold mb-2">Total Volume</h3>
             <p className="text-2xl sm:text-3xl font-bold text-blue-800">
-              {workoutData.reduce((total, workout) => total + workout.total_volume, 0).toLocaleString()} lbs
+              {workoutData.filter(workout => workout.total_volume > 0).reduce((total, workout) => total + workout.total_volume, 0).toLocaleString()} lbs
             </p>
           </div>
           <div className="card-apple text-center sm:col-span-2 lg:col-span-1 dark:bg-black" style={{ borderRadius: 0 }}>
             <h3 className="text-base sm:text-lg font-semibold mb-2">Avg Volume/Workout</h3>
             <p className="text-2xl sm:text-3xl font-bold text-blue-800">
-              {Math.round(workoutData.reduce((total, workout) => total + workout.total_volume, 0) / workoutData.length).toLocaleString()} lbs
+              {(() => {
+                const validWorkouts = workoutData.filter(workout => workout.total_volume > 0);
+                return validWorkouts.length > 0 
+                  ? Math.round(validWorkouts.reduce((total, workout) => total + workout.total_volume, 0) / validWorkouts.length).toLocaleString()
+                  : '0';
+              })()} lbs
             </p>
           </div>
         </div>
