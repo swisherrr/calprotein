@@ -100,9 +100,7 @@ interface Exercise {
 }
 
 const MUSCLE_GROUPS = [
-  "Upper Chest",
-  "Middle Chest",
-  "Lower Chest",
+  "Chest",
   "Lats",
   "Upper Back",
   "Lower Back",

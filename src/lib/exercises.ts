@@ -1,9 +1,8 @@
 // Predefined list of exercises organized by muscle groups
 export const EXERCISE_LIST = [
-  // Upper Chest
+  // Chest
   "Smith Incline Press",
   "Low to High Cable Fly",
-  // Middle Chest
   "High to Low Cable Fly",
   // Lats
   "Lat Pulldown",
@@ -51,16 +50,8 @@ export const EXERCISE_LIST = [
 // Exercise groups for dropdown organization
 export const EXERCISE_GROUPS = [
   {
-    label: "Upper Chest",
-    exercises: ["Smith Incline Press", "Low to High Cable Fly"]
-  },
-  {
-    label: "Middle Chest",
-    exercises: ["High to Low Cable Fly"]
-  },
-  {
-    label: "Lower Chest",
-    exercises: ["Smith Incline Press"] // Add lower chest exercises here
+    label: "Chest",
+    exercises: ["Smith Incline Press", "Low to High Cable Fly", "High to Low Cable Fly"]
   },
   {
     label: "Lats",

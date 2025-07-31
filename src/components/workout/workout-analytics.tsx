@@ -76,9 +76,7 @@ export function WorkoutAnalytics() {
     Abductors: 'Legs',
     Calves: 'Legs',
     // Chest
-    'Upper Chest': 'Chest',
-    'Middle Chest': 'Chest',
-    'Lower Chest': 'Chest',
+    Chest: 'Chest',
     // Back
     Lats: 'Back',
     'Upper Back': 'Back',

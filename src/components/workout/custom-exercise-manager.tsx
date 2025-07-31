@@ -5,9 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useCustomExercises } from '@/hooks/use-custom-exercises'
 
 const MUSCLE_GROUPS = [
-  "Upper Chest",
-  "Middle Chest",
-  "Lower Chest",
+  "Chest",
   "Lats",
   "Upper Back",
   "Lower Back",
