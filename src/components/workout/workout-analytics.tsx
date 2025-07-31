@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ScatterChart } from "@mui/x-charts/ScatterChart"
+import { LineChart } from "@mui/x-charts/LineChart"
 import { supabase } from "@/lib/supabase"
 import { EXERCISE_GROUPS, getCombinedExerciseGroups } from "@/lib/exercises"
 import { useCustomExercises } from "@/hooks/use-custom-exercises"
@@ -262,10 +262,14 @@ export function WorkoutAnalytics() {
   }
 
   const formatChartData = (data: ChartData[], isMobile: boolean) => {
+    // Sort data by date to ensure proper line connections
+    const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
     if (chartType === "total-volume") {
       return {
         xAxis: [{
           scaleType: 'time' as const,
+          data: sortedData.map(d => new Date(d.date).getTime()),
           valueFormatter: (value: number) => {
             const date = new Date(value)
             return isMobile 
@@ -275,20 +279,21 @@ export function WorkoutAnalytics() {
         }],
         series: [{
           label: 'Total Volume (lbs)',
-          data: data.map((d, idx) => ({
-            id: idx,
-            x: new Date(d.date).getTime(),
-            y: d.volume
-          })),
+          data: sortedData.map(d => d.volume),
           color: '#3b82f6'
         }]
       }
     } else {
-      const exercises = getUniqueExercises(data);
+      const exercises = getUniqueExercises(sortedData);
       const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
+      
+      // Get all unique dates for x-axis
+      const allDates = [...new Set(sortedData.map(d => d.date))].sort();
+      
       return {
         xAxis: [{
           scaleType: 'time' as const,
+          data: allDates.map(d => new Date(d).getTime()),
           valueFormatter: (value: number) => {
             const date = new Date(value)
             return isMobile 
@@ -296,17 +301,24 @@ export function WorkoutAnalytics() {
               : date.toLocaleDateString()
           }
         }],
-        series: exercises.map((exercise, index) => ({
-          label: exercise,
-          data: data
+        series: exercises.map((exercise, index) => {
+          // Create a map of date to volume for this exercise
+          const exerciseDataMap = new Map();
+          sortedData
             .filter(d => d.exercise === exercise)
-            .map((d, idx) => ({
-              id: `${exercise}-${idx}`,
-              x: new Date(d.date).getTime(),
-              y: d.volume
-            })),
-          color: colors[index % colors.length]
-        }))
+            .forEach(d => {
+              exerciseDataMap.set(d.date, d.volume);
+            });
+          
+          // Map volumes to the same order as x-axis dates, filling gaps with null
+          const exerciseData = allDates.map(date => exerciseDataMap.get(date) || null);
+          
+          return {
+            label: exercise,
+            data: exerciseData,
+            color: colors[index % colors.length]
+          };
+        })
       }
     }
   }
@@ -439,12 +451,32 @@ export function WorkoutAnalytics() {
         {/* Chart */}
         <div className="bg-white border-2 border-gray-200 rounded-none p-4 sm:p-8">
           <div className="h-64 sm:h-96">
-            <ScatterChart
+            <LineChart
               xAxis={chartConfig.xAxis}
               series={chartConfig.series}
               height={chartHeight}
               margin={margins}
-              tooltip={{ trigger: 'none' }}
+              tooltip={{ 
+                trigger: 'item',
+                slotProps: {
+                  popper: {
+                    sx: {
+                      '& .MuiTooltip-tooltip': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.87)',
+                        color: 'white',
+                        fontSize: '12px',
+                        padding: '8px 12px',
+                        borderRadius: '4px'
+                      }
+                    }
+                  }
+                }
+              }}
+              slotProps={{
+                legend: {
+                  hidden: chartType === "all-exercises"
+                }
+              }}
             />
           </div>
           {/* Average Percent Increase Display */}
