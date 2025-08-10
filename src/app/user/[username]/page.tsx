@@ -710,7 +710,7 @@ export default function UserProfilePage() {
                               {exercise.name}
                             </div>
                             <div className="text-gray-600 dark:text-gray-400">
-                              {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
+                              {exercise.totalSets} sets • {exercise.totalReps} reps • {Math.round(exercise.totalWeight / exercise.totalSets)} lbs
                             </div>
                             <div className="text-blue-600 dark:text-blue-400 font-medium">
                               Volume: {exercise.volume.toLocaleString()} lbs

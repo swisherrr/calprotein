@@ -972,7 +972,7 @@ export default function ProfilePage() {
                               {exercise.name}
                             </div>
                             <div className={`${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-400'}`}>
-                              {exercise.totalSets} sets • {exercise.totalReps} reps • {exercise.totalWeight} lbs
+                              {exercise.totalSets} sets • {exercise.totalReps} reps • {Math.round(exercise.totalWeight / exercise.totalSets)} lbs
                             </div>
                             <div className={`font-medium ${isHidden ? 'text-gray-400 dark:text-gray-500' : 'text-blue-600 dark:text-blue-400'}`}>
                               Volume: {exercise.volume.toLocaleString()} lbs
