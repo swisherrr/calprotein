@@ -13,6 +13,7 @@ interface DemoData {
   workoutTemplates: any[]
   workoutLogs: any[]
   customExercises: any[]
+  bodyMeasurements: any[]
   settings: any
 }
 
@@ -144,6 +145,20 @@ const initialDemoData: DemoData = {
       exercise_name: 'Custom Push-ups',
       muscle_group: 'Chest',
       created_at: new Date().toISOString()
+    }
+  ],
+  bodyMeasurements: [
+    {
+      id: 'demo-measurement-1',
+      user_id: 'demo-user',
+      measurement_date: new Date().toISOString().split('T')[0],
+      weight_lbs: 175.5,
+      bicep_circumference_inches: 14.5,
+      chest_circumference_inches: 42.0,
+      waist_circumference_inches: 32.5,
+      body_fat_percentage: 15.2,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ],
   settings: {

@@ -8,6 +8,9 @@ import { useCustomExercises } from "@/hooks/use-custom-exercises"
 import { startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subYears, isSameMonth, isSameYear, isWithinInterval, parseISO } from 'date-fns'
 import * as Select from '@radix-ui/react-select';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { BodyMeasurementsLogger } from "./body-measurements-logger"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 interface WorkoutData {
   id: string
@@ -57,6 +60,7 @@ function useResponsiveDimensions() {
 }
 
 export function WorkoutAnalytics() {
+  const [showBodyMeasurements, setShowBodyMeasurements] = useState(false)
   const [workoutData, setWorkoutData] = useState<WorkoutData[]>([])
   const [loading, setLoading] = useState(true)
   const { chartHeight, margins, isMobile } = useResponsiveDimensions()
@@ -514,6 +518,26 @@ export function WorkoutAnalytics() {
               })()} lbs
             </p>
           </div>
+        </div>
+
+        {/* Body Measurements Section */}
+        <div className="mt-8">
+          <div className="text-center mb-4">
+            <Button 
+              onClick={() => setShowBodyMeasurements(!showBodyMeasurements)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold"
+            >
+              <Plus className={`w-5 h-5 mr-2 transition-transform ${showBodyMeasurements ? 'rotate-45' : ''}`} />
+              {showBodyMeasurements ? 'Hide Body Measurements' : 'Log Body Measurements'}
+            </Button>
+          </div>
+
+          {/* Expandable Body Measurements Form */}
+          {showBodyMeasurements && (
+            <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mt-4">
+              <BodyMeasurementsLogger onClose={() => setShowBodyMeasurements(false)} />
+            </div>
+          )}
         </div>
       </div>
     </div>
