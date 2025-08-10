@@ -216,7 +216,7 @@ export function WorkoutLogger() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false)
   const [newExerciseName, setNewExerciseName] = useState('')
-  const [newExerciseSets, setNewExerciseSets] = useState(1)
+  const [newExerciseSets, setNewExerciseSets] = useState<number | string>(1)
 
   // Set client flag on mount to prevent hydration mismatch
   useEffect(() => {
@@ -593,10 +593,13 @@ export function WorkoutLogger() {
   const addExerciseToWorkout = () => {
     if (!currentWorkout || !newExerciseName.trim()) return
 
+    // Ensure sets is a valid number, default to 1 if invalid
+    const setsValue = typeof newExerciseSets === 'string' ? parseInt(newExerciseSets) || 1 : newExerciseSets
+
     const newExercise: Exercise = {
       name: newExerciseName.trim(),
-      sets: newExerciseSets,
-      setData: Array(newExerciseSets).fill(null).map(() => ({ 
+      sets: setsValue,
+      setData: Array(setsValue).fill(null).map(() => ({ 
         reps: undefined, 
         weight: undefined 
       })),
@@ -1025,7 +1028,15 @@ export function WorkoutLogger() {
                 min="1"
                 max="20"
                 value={newExerciseSets}
-                onChange={(e) => setNewExerciseSets(parseInt(e.target.value) || 1)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    setNewExerciseSets('');
+                  } else {
+                    const parsed = parseInt(value);
+                    setNewExerciseSets(isNaN(parsed) ? '' : parsed);
+                  }
+                }}
                 className="input-apple"
               />
             </div>
