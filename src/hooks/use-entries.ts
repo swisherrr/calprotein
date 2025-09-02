@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useDemo } from '@/components/providers/demo-provider'
 
@@ -15,31 +15,35 @@ export function useEntries() {
   const [loading, setLoading] = useState(true)
   const { isDemoMode, demoData, updateDemoData } = useDemo()
 
-  useEffect(() => {
-    if (isDemoMode) {
-      setEntries(demoData.entries)
-      setLoading(false)
-    } else {
-      fetchEntries()
-    }
-  }, [isDemoMode, demoData.entries])
-
-  const fetchEntries = async () => {
+  const fetchEntries = useCallback(async (date?: Date) => {
     try {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('Not authenticated')
 
-      const { data: entries, error } = await supabase
+      let query = supabase
         .from('entries')
         .select('*')
         .eq('user_id', userData.user.id)
         .order('created_at', { ascending: false })
 
+      // If a specific date is provided, filter by that date
+      if (date) {
+        const startOfDay = new Date(date)
+        startOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(date)
+        endOfDay.setHours(23, 59, 59, 999)
+        
+        query = query
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString())
+      }
+
+      const { data: entries, error } = await query
+
       if (error) {
         console.error('Error fetching entries:', error)
         throw error
       }
-
 
       setEntries(entries || [])
     } catch (error) {
@@ -47,14 +51,23 @@ export function useEntries() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const addEntry = async (entry: Omit<Entry, 'id' | 'created_at' | 'user_id'>) => {
+  useEffect(() => {
+    if (isDemoMode) {
+      setEntries(demoData.entries)
+      setLoading(false)
+    } else {
+      fetchEntries()
+    }
+  }, [isDemoMode, demoData.entries, fetchEntries])
+
+  const addEntry = useCallback(async (entry: Omit<Entry, 'id' | 'created_at' | 'user_id'>, date?: Date) => {
     if (isDemoMode) {
       const newEntry = {
         id: Date.now(),
         ...entry,
-        created_at: new Date().toISOString()
+        created_at: date ? date.toISOString() : new Date().toISOString()
       }
       
       const updatedEntries = [newEntry, ...demoData.entries]
@@ -67,12 +80,19 @@ export function useEntries() {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('Not authenticated')
 
+      const entryData = {
+        ...entry,
+        user_id: userData.user.id
+      }
+
+      // If a specific date is provided, use that date
+      if (date) {
+        entryData.created_at = date.toISOString()
+      }
+
       const { data, error } = await supabase
         .from('entries')
-        .insert([{
-          ...entry,
-          user_id: userData.user.id
-        }])
+        .insert([entryData])
         .select()
         .single()
 
@@ -90,12 +110,13 @@ export function useEntries() {
       console.error('Error adding entry:', error)
       throw error
     }
-  }
+  }, [isDemoMode, demoData.entries, updateDemoData])
 
   return {
     entries,
     loading,
     addEntry,
+    fetchEntries,
     refresh: fetchEntries
   }
 } 

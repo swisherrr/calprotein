@@ -6,9 +6,11 @@ import { useUsuals } from "@/hooks/use-usuals"
 import { Plus, X } from "lucide-react"
 
 export function UsualsSection({
-  onAdd
+  onAdd,
+  selectedDate
 }: {
-  onAdd: (calories: number, protein: number, name: string) => void
+  onAdd: (calories: number, protein: number, name: string, date?: Date) => void
+  selectedDate: Date
 }) {
   const { usuals, loading, addUsual, deleteUsual } = useUsuals()
   const [showAddForm, setShowAddForm] = useState(false)
@@ -39,7 +41,7 @@ export function UsualsSection({
         ? selectedUsuals[0].name 
         : `${selectedUsuals.map(item => item.name).join(", ")}`
 
-      await onAdd(totalCalories, totalProtein, name)
+      await onAdd(totalCalories, totalProtein, name, selectedDate)
       setSelectedItems([])
     } catch (error) {
       console.error('Failed to add selected items:', error)

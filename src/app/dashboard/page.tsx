@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Pen } from "lucide-react"
+import { Pen, ChevronLeft, ChevronRight } from "lucide-react"
 import { UsualsSection } from "@/components/dashboard/usuals-section"
 import { ManualEntry } from "@/components/dashboard/manual-entry"
 import { useEntries, Entry } from "@/hooks/use-entries"
 import { useUserSettings } from "@/hooks/use-user-settings"
+import { useDateNavigation } from "@/hooks/use-date-navigation"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
@@ -26,8 +27,16 @@ function calculateGradient(current: number, target: number) {
 }
 
 export default function DashboardPage() {
-  const { entries, loading: entriesLoading, addEntry } = useEntries()
+  const { entries, loading: entriesLoading, addEntry, fetchEntries } = useEntries()
   const { settings, loading: settingsLoading, updateSettings } = useUserSettings()
+  const { 
+    selectedDate, 
+    goToPreviousDay, 
+    goToNextDay, 
+    formatDate, 
+    isToday, 
+    canGoForward 
+  } = useDateNavigation()
   const [editingCalories, setEditingCalories] = useState(false)
   const [editingProtein, setEditingProtein] = useState(false)
   const [showAllEntries, setShowAllEntries] = useState(false)
@@ -42,36 +51,42 @@ export default function DashboardPage() {
       setNewProtein(settings.daily_protein.toString())
     }
   }, [settings])
+
+  // Fetch entries for the selected date
+  useEffect(() => {
+    if (!entriesLoading) {
+      fetchEntries(selectedDate)
+    }
+  }, [selectedDate, fetchEntries])
   
-  // Calculate totals from entries for today only
-  const todayEntries = entries.filter(entry => {
+  // Calculate totals from entries for the selected date
+  const dateEntries = entries.filter(entry => {
     const entryDate = new Date(entry.created_at)
-    const today = new Date()
-    return entryDate.toDateString() === today.toDateString()
+    return entryDate.toDateString() === selectedDate.toDateString()
   })
   
-  const totalCalories = todayEntries.reduce((sum, entry) => sum + entry.calories, 0)
-  const totalProtein = todayEntries.reduce((sum, entry) => sum + entry.protein, 0)
+  const totalCalories = dateEntries.reduce((sum, entry) => sum + entry.calories, 0)
+  const totalProtein = dateEntries.reduce((sum, entry) => sum + entry.protein, 0)
 
-  const handleUsualsAdd = async (calories: number, protein: number, name: string) => {
+  const handleUsualsAdd = async (calories: number, protein: number, name: string, date?: Date) => {
     try {
       await addEntry({
         name: name,
         calories,
         protein
-      })
+      }, date)
     } catch (error) {
       console.error('Failed to add usuals:', error)
     }
   }
 
-  const handleManualAdd = async (name: string, calories: number, protein: number) => {
+  const handleManualAdd = async (name: string, calories: number, protein: number, date?: Date) => {
     try {
       await addEntry({
         name: name || "Unnamed entry",
         calories,
         protein
-      })
+      }, date)
     } catch (error) {
       console.error('Failed to add manual entry:', error)
     }
@@ -97,9 +112,9 @@ export default function DashboardPage() {
     }
   }
 
-  const handleReset = async (entries: Entry[], addEntry: (entry: any) => Promise<any>) => {
+  const handleReset = async (entries: Entry[]) => {
     try {
-      // Add a negative entry that cancels out all today's entries
+      // Add a negative entry that cancels out all selected date's entries
       const totalCals = entries.reduce((sum, entry) => sum + entry.calories, 0)
       const totalProt = entries.reduce((sum, entry) => sum + entry.protein, 0)
       
@@ -108,7 +123,7 @@ export default function DashboardPage() {
           name: "Reset",
           calories: -totalCals,
           protein: -totalProt
-        })
+        }, selectedDate)
       }
     } catch (error) {
       console.error('Failed to reset:', error)
@@ -131,6 +146,27 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        {/* Date Navigation */}
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={goToPreviousDay}
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {formatDate(selectedDate)}
+          </span>
+          
+          <button
+            onClick={goToNextDay}
+            disabled={!canGoForward(selectedDate)}
+            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -142,22 +178,26 @@ export default function DashboardPage() {
               } as any}
             >
               <div className="flex justify-between items-start mb-2">
-                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Today's Calories</h2>
+                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                  {isToday(selectedDate) ? "Today's Calories" : `${formatDate(selectedDate)} Calories`}
+                </h2>
                 <div className="flex gap-2">
                   {totalCalories > 0 && (
                     <button
-                      onClick={() => handleReset(todayEntries, addEntry)}
+                      onClick={() => handleReset(dateEntries)}
                       className="text-gray-400 hover:text-red-500 text-sm"
                     >
                       Reset
                     </button>
                   )}
-                  <button 
-                    onClick={() => setEditingCalories(true)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <Pen className="h-4 w-4" />
-                  </button>
+                  {isToday(selectedDate) && (
+                    <button 
+                      onClick={() => setEditingCalories(true)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <Pen className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -182,18 +222,20 @@ export default function DashboardPage() {
                 <div className="flex gap-2">
                   {totalProtein > 0 && (
                     <button
-                      onClick={() => handleReset(todayEntries, addEntry)}
+                      onClick={() => handleReset(dateEntries)}
                       className="text-gray-400 hover:text-red-500 text-sm"
                     >
                       Reset
                     </button>
                   )}
-                  <button 
-                    onClick={() => setEditingProtein(true)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <Pen className="h-4 w-4" />
-                  </button>
+                  {isToday(selectedDate) && (
+                    <button 
+                      onClick={() => setEditingProtein(true)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <Pen className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -214,8 +256,10 @@ export default function DashboardPage() {
             
             <div className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Recent Entries</h2>
-                {todayEntries.length > 0 && (
+                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                  {isToday(selectedDate) ? "Recent Entries" : `${formatDate(selectedDate)} Entries`}
+                </h2>
+                {dateEntries.length > 0 && (
                   <Dialog open={showAllEntries} onOpenChange={setShowAllEntries}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="text-xs">
@@ -224,10 +268,12 @@ export default function DashboardPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-md max-h-[80vh] bg-white dark:bg-black border border-gray-200 dark:border-gray-800">
                       <DialogHeader>
-                        <DialogTitle className="text-gray-900 dark:text-gray-100">Today's Entries</DialogTitle>
+                        <DialogTitle className="text-gray-900 dark:text-gray-100">
+                          {isToday(selectedDate) ? "Today's Entries" : `${formatDate(selectedDate)} Entries`}
+                        </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-2">
-                        {todayEntries.map((entry) => (
+                        {dateEntries.map((entry) => (
                           <div key={entry.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
                             <div>
                               <span className="font-medium text-gray-900 dark:text-gray-100">{entry.name}</span>
@@ -248,23 +294,23 @@ export default function DashboardPage() {
                   </Dialog>
                 )}
               </div>
-              {todayEntries.length > 0 ? (
+              {dateEntries.length > 0 ? (
                 <div className="space-y-2">
-                  {todayEntries.slice(-3).map((entry) => (
+                  {dateEntries.slice(-3).map((entry) => (
                     <div key={entry.id} className="text-sm text-gray-600 dark:text-gray-400">
                       {entry.name}: {entry.calories}cal, {entry.protein}g protein
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 dark:text-gray-400">No entries yet</p>
+                <p className="text-gray-500 dark:text-gray-400">No entries for this date</p>
               )}
             </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <UsualsSection onAdd={handleUsualsAdd} />
-            <ManualEntry onAdd={handleManualAdd} />
+            <UsualsSection onAdd={handleUsualsAdd} selectedDate={selectedDate} />
+            <ManualEntry onAdd={handleManualAdd} selectedDate={selectedDate} />
           </div>
       </div>
     </div>

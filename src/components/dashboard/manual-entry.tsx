@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button"
 type EntryMode = "simple" | "byWeight"
 
 export function ManualEntry({
-  onAdd
+  onAdd,
+  selectedDate
 }: {
-  onAdd: (name: string, calories: number, protein: number) => void
+  onAdd: (name: string, calories: number, protein: number, date?: Date) => void
+  selectedDate: Date
 }) {
   const [mode, setMode] = useState<EntryMode>("simple")
   const [name, setName] = useState("")
@@ -24,7 +26,8 @@ export function ManualEntry({
       onAdd(
         name,
         Number(calories),
-        Number(protein)
+        Number(protein),
+        selectedDate
       )
     } else {
       // Calculate proportional calories and protein based on portion
@@ -32,7 +35,8 @@ export function ManualEntry({
       onAdd(
         name,
         Math.round(Number(calories) * ratio),
-        Math.round(Number(protein) * ratio)
+        Math.round(Number(protein) * ratio),
+        selectedDate
       )
     }
 
