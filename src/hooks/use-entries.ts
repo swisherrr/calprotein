@@ -10,10 +10,24 @@ export type Entry = {
   created_at: string
 }
 
-export function useEntries() {
+export function useEntries(resetHour: number = 0) {
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
   const { isDemoMode, demoData, updateDemoData } = useDemo()
+
+  // Get the current "day" based on user's reset time
+  const getCurrentDay = useCallback((date: Date, hour: number) => {
+    const currentHour = date.getHours()
+    
+    // If current time is before reset hour, we're still in "yesterday"
+    if (currentHour < hour) {
+      const yesterday = new Date(date)
+      yesterday.setDate(date.getDate() - 1)
+      return yesterday
+    }
+    
+    return date
+  }, [])
 
   const fetchEntries = useCallback(async (date?: Date) => {
     try {
@@ -26,12 +40,12 @@ export function useEntries() {
         .eq('user_id', userData.user.id)
         .order('created_at', { ascending: false })
 
-      // If a specific date is provided, filter by that date
+      // If a specific date is provided, filter by that date considering reset time
       if (date) {
         const startOfDay = new Date(date)
-        startOfDay.setHours(0, 0, 0, 0)
+        startOfDay.setHours(resetHour, 0, 0, 0)
         const endOfDay = new Date(date)
-        endOfDay.setHours(23, 59, 59, 999)
+        endOfDay.setHours(resetHour + 23, 59, 59, 999)
         
         query = query
           .gte('created_at', startOfDay.toISOString())
@@ -51,7 +65,7 @@ export function useEntries() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [resetHour])
 
   useEffect(() => {
     if (isDemoMode) {

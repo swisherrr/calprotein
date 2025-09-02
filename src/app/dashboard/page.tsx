@@ -27,8 +27,8 @@ function calculateGradient(current: number, target: number) {
 }
 
 export default function DashboardPage() {
-  const { entries, loading: entriesLoading, addEntry, fetchEntries } = useEntries()
   const { settings, loading: settingsLoading, updateSettings } = useUserSettings()
+  const { entries, loading: entriesLoading, addEntry, fetchEntries } = useEntries(settings?.dashboard_reset_hour || 0)
   const { 
     selectedDate, 
     goToPreviousDay, 
@@ -36,7 +36,7 @@ export default function DashboardPage() {
     formatDate, 
     isToday, 
     canGoForward 
-  } = useDateNavigation()
+  } = useDateNavigation(settings?.dashboard_reset_hour || 0)
   const [editingCalories, setEditingCalories] = useState(false)
   const [editingProtein, setEditingProtein] = useState(false)
   const [showAllEntries, setShowAllEntries] = useState(false)

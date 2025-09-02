@@ -130,6 +130,14 @@ export default function SettingsPage() {
     }
   }
 
+  const handleDashboardResetTimeChange = async (hour: number) => {
+    try {
+      await updateSettings({ dashboard_reset_hour: hour })
+    } catch (error) {
+      console.error('Error updating dashboard reset time setting:', error)
+    }
+  }
+
   const handleTogglePrivateAccount = async (v: boolean) => {
     setPrivateAccount(v)
     if (!isDemoMode) {
@@ -226,6 +234,48 @@ export default function SettingsPage() {
           value={settings?.display_workout_average !== false} 
           onChange={handleToggleWorkoutDisplay} 
         />
+
+        {/* Dashboard Reset Time Setting */}
+        <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+          <div className="flex-1 pr-4">
+            <span className="text-base text-gray-800 dark:text-gray-200 font-medium block mb-1">Dashboard Reset Time</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Set when your daily calorie and protein trackers reset to zero. Useful for night workers or late sleepers.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={settings?.dashboard_reset_hour || 0}
+              onChange={(e) => handleDashboardResetTimeChange(parseInt(e.target.value))}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            >
+              <option value={0}>12:00 AM (Midnight)</option>
+              <option value={1}>1:00 AM</option>
+              <option value={2}>2:00 AM</option>
+              <option value={3}>3:00 AM</option>
+              <option value={4}>4:00 AM</option>
+              <option value={5}>5:00 AM</option>
+              <option value={6}>6:00 AM</option>
+              <option value={7}>7:00 AM</option>
+              <option value={8}>8:00 AM</option>
+              <option value={9}>9:00 AM</option>
+              <option value={10}>10:00 AM</option>
+              <option value={11}>11:00 AM</option>
+              <option value={12}>12:00 PM (Noon)</option>
+              <option value={13}>1:00 PM</option>
+              <option value={14}>2:00 PM</option>
+              <option value={15}>3:00 PM</option>
+              <option value={16}>4:00 PM</option>
+              <option value={17}>5:00 PM</option>
+              <option value={18}>6:00 PM</option>
+              <option value={19}>7:00 PM</option>
+              <option value={20}>8:00 PM</option>
+              <option value={21}>9:00 PM</option>
+              <option value={22}>10:00 PM</option>
+              <option value={23}>11:00 PM</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
