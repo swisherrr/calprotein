@@ -155,7 +155,11 @@ export default function DashboardPage() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className={`text-sm ${
+            isToday(selectedDate) 
+              ? 'text-gray-500 dark:text-gray-400' 
+              : 'text-red-500 dark:text-red-400 font-medium'
+          }`}>
             {formatDate(selectedDate)}
           </span>
           
