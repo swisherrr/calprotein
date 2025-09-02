@@ -94,7 +94,13 @@ export function useEntries(resetHour: number = 0) {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('Not authenticated')
 
-      const entryData = {
+      const entryData: {
+        name: string
+        calories: number
+        protein: number
+        user_id: string
+        created_at?: string
+      } = {
         ...entry,
         user_id: userData.user.id
       }
