@@ -11,6 +11,7 @@ import {
   Users,
   Search,
   Bell,
+  History,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,13 @@ export function Navbar() {
       ),
     },
     {
+      label: "History",
+      href: "/history",
+      icon: (
+        <History className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
       label: "Feed",
       href: "/feed",
       icon: (
@@ -155,6 +163,13 @@ export function Navbar() {
       href: "/settings",
       icon: (
         <Settings className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ),
+    },
+    {
+      label: "History",
+      href: "/history",
+      icon: (
+        <History className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
     },
   ];

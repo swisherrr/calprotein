@@ -8,6 +8,7 @@ import {
   Search,
   Dumbbell,
   BarChart3,
+  History,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useDemo } from "@/components/providers/demo-provider";
@@ -48,7 +49,7 @@ export function MobileBottomNavbar() {
     {
       label: "Profile",
       href: "/profile",
-      icon: "profile",
+      icon: ProfilePicture,
       isActive: pathname === "/profile",
     },
     {
@@ -81,7 +82,7 @@ export function MobileBottomNavbar() {
               )}
             >
               <div className="relative">
-                {item.icon === "profile" ? (
+                {item.label === "Profile" ? (
                   <ProfilePicture
                     userId={currentUser?.id}
                     size="sm"

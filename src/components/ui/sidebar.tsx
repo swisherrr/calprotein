@@ -129,7 +129,7 @@ export const MobileSidebar = ({
           {logo}
         </div>
         
-        {/* Hamburger menu on the right */}
+        {/*  menu on the right */}
         <div className="flex items-center">
           <Menu
             className="text-neutral-800 dark:text-neutral-200 pink:text-neutral-800 h-6 w-6"
