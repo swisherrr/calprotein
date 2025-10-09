@@ -63,6 +63,25 @@ function useResponsiveDimensions() {
   return dimensions
 }
 
+// Function to get margins based on whether legend is shown
+function getChartMargins(isMobile: boolean, shouldHideLegend: boolean) {
+  if (shouldHideLegend) {
+    return {
+      top: 20,
+      bottom: isMobile ? 50 : 30,
+      left: isMobile ? 50 : 40,
+      right: isMobile ? 30 : 20
+    }
+  }
+  // Extra bottom margin for legend
+  return {
+    top: 20,
+    bottom: isMobile ? 90 : 80,
+    left: isMobile ? 50 : 40,
+    right: isMobile ? 30 : 20
+  }
+}
+
 // Calculate estimated 1RM using Epley formula
 function calculateEstimated1RM(weight: number, reps: number): number {
   if (reps === 1) return weight
@@ -460,7 +479,9 @@ export function WorkoutAnalytics() {
   const chartConfig = formatChartData(chartData, isMobile)
   const avgPercentIncrease = getAveragePercentIncrease(chartData)
   
-  // Debug logging
+  // Determine if legend should be hidden based on number of series
+  const shouldHideLegend = chartType === "all-exercises" || chartConfig.series.length > 4
+  const chartMargins = getChartMargins(isMobile, shouldHideLegend)
   
 
   return (
@@ -542,7 +563,7 @@ export function WorkoutAnalytics() {
               xAxis={chartConfig.xAxis}
               series={chartConfig.series}
               height={chartHeight}
-              margin={margins}
+              margin={chartMargins}
               tooltip={{ 
                 trigger: 'item',
                 slotProps: {
@@ -561,7 +582,17 @@ export function WorkoutAnalytics() {
               }}
               slotProps={{
                 legend: {
-                  hidden: chartType === "all-exercises"
+                  hidden: shouldHideLegend,
+                  direction: 'row',
+                  position: { vertical: 'bottom', horizontal: 'middle' },
+                  padding: 0,
+                  itemMarkWidth: 10,
+                  itemMarkHeight: 10,
+                  markGap: 5,
+                  itemGap: 10,
+                  labelStyle: {
+                    fontSize: isMobile ? 10 : 12,
+                  }
                 }
               }}
             />
