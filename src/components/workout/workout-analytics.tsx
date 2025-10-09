@@ -19,6 +19,10 @@ interface WorkoutData {
   exercises: Array<{
     name: string
     volume: number
+    setData?: Array<{
+      reps?: number
+      weight?: number
+    }>
   }>
 }
 
@@ -57,6 +61,27 @@ function useResponsiveDimensions() {
   }, [])
 
   return dimensions
+}
+
+// Calculate estimated 1RM using Epley formula
+function calculateEstimated1RM(weight: number, reps: number): number {
+  if (reps === 1) return weight
+  if (reps === 0 || weight === 0) return 0
+  return weight * (1 + reps / 30)
+}
+
+// Get the best estimated 1RM from all sets in an exercise
+function getBestEstimated1RM(setData: Array<{ reps?: number; weight?: number }>): number {
+  let best1RM = 0
+  for (const set of setData) {
+    if (set.weight && set.reps) {
+      const estimated = calculateEstimated1RM(set.weight, set.reps)
+      if (estimated > best1RM) {
+        best1RM = estimated
+      }
+    }
+  }
+  return best1RM
 }
 
 export function WorkoutAnalytics() {
@@ -98,7 +123,7 @@ export function WorkoutAnalytics() {
 
   // Single dropdown options
   const chartOptions = [
-    { value: 'total-volume', label: 'Total Volume Over Time' },
+    { value: 'total-volume', label: 'Overall Progress' },
     { value: 'all-exercises', label: 'All Exercises' },
   ]
 
@@ -121,6 +146,7 @@ export function WorkoutAnalytics() {
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>("")
   const [dropdownValue, setDropdownValue] = useState('total-volume')
   const [timeframeValue, setTimeframeValue] = useState('all')
+  const [metricType, setMetricType] = useState<'volume' | '1rm'>('volume')
   useEffect(() => {
     if (dropdownValue.startsWith('muscle-group:')) {
       setChartType('muscle-groups')
@@ -149,6 +175,7 @@ export function WorkoutAnalytics() {
 
       if (error) throw error
 
+      // Ensure exercises have setData (it should be included in the jsonb column)
       setWorkoutData(data || [])
     } catch (error) {
       console.error('Error loading workout data:', error)
@@ -207,12 +234,30 @@ export function WorkoutAnalytics() {
 
   // Update getTotalVolumeData etc. to use filteredWorkoutData
   const getTotalVolumeData = (): ChartData[] => {
-    return filteredWorkoutData
-      .filter(workout => workout.total_volume > 0) // Filter out workouts with 0 volume
-      .map(workout => ({
-        date: workout.date,
-        volume: workout.total_volume
-      }))
+    if (metricType === 'volume') {
+      return filteredWorkoutData
+        .filter(workout => workout.total_volume > 0) // Filter out workouts with 0 volume
+        .map(workout => ({
+          date: workout.date,
+          volume: workout.total_volume
+        }))
+    } else {
+      // For 1RM, calculate the sum of best 1RMs for all exercises in each workout
+      return filteredWorkoutData
+        .map(workout => {
+          let total1RM = 0
+          workout.exercises.forEach(exercise => {
+            if (exercise.setData && exercise.setData.length > 0) {
+              total1RM += getBestEstimated1RM(exercise.setData)
+            }
+          })
+          return {
+            date: workout.date,
+            volume: total1RM
+          }
+        })
+        .filter(data => data.volume > 0)
+    }
   }
   const getMuscleGroupData = (): ChartData[] => {
     if (!selectedMuscleGroup) return []
@@ -221,12 +266,23 @@ export function WorkoutAnalytics() {
     const chartData: ChartData[] = []
     filteredWorkoutData.forEach(workout => {
       workout.exercises.forEach(exercise => {
-        if (exercisesInGroup.includes(exercise.name) && exercise.volume && exercise.volume > 0) {
-          chartData.push({
-            date: workout.date,
-            volume: exercise.volume,
-            exercise: exercise.name
-          })
+        if (exercisesInGroup.includes(exercise.name)) {
+          let value = 0
+          if (metricType === 'volume') {
+            value = exercise.volume || 0
+          } else {
+            // For 1RM, get the best estimated 1RM from setData
+            if (exercise.setData && exercise.setData.length > 0) {
+              value = getBestEstimated1RM(exercise.setData)
+            }
+          }
+          if (value > 0) {
+            chartData.push({
+              date: workout.date,
+              volume: value,
+              exercise: exercise.name
+            })
+          }
         }
       })
     })
@@ -236,10 +292,19 @@ export function WorkoutAnalytics() {
     const chartData: ChartData[] = []
     filteredWorkoutData.forEach(workout => {
       workout.exercises.forEach(exercise => {
-        if (exercise.volume && exercise.volume > 0) {
+        let value = 0
+        if (metricType === 'volume') {
+          value = exercise.volume || 0
+        } else {
+          // For 1RM, get the best estimated 1RM from setData
+          if (exercise.setData && exercise.setData.length > 0) {
+            value = getBestEstimated1RM(exercise.setData)
+          }
+        }
+        if (value > 0) {
           chartData.push({
             date: workout.date,
-            volume: exercise.volume,
+            volume: value,
             exercise: exercise.name
           })
         }
@@ -269,6 +334,10 @@ export function WorkoutAnalytics() {
     // Sort data by date to ensure proper line connections
     const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
+    const yAxisLabel = metricType === 'volume' 
+      ? 'Volume (lbs)' 
+      : 'Estimated 1RM (lbs)'
+    
     if (chartType === "total-volume") {
       return {
         xAxis: [{
@@ -282,7 +351,7 @@ export function WorkoutAnalytics() {
           }
         }],
         series: [{
-          label: 'Total Volume (lbs)',
+          label: metricType === 'volume' ? 'Total Volume (lbs)' : 'Total Est. 1RM (lbs)',
           data: sortedData.map(d => d.volume),
           color: '#3b82f6'
         }]
@@ -340,7 +409,7 @@ export function WorkoutAnalytics() {
 
   // Helper to get label for current value
   const getChartLabel = (value: string) => {
-    if (value === 'total-volume') return 'Total Volume Over Time';
+    if (value === 'total-volume') return 'Overall Progress';
     if (value === 'all-exercises') return 'All Exercises';
     for (const broad of Object.values(broadGroups)) {
       const found = broad.options.find(opt => opt.value === value);
@@ -400,22 +469,22 @@ export function WorkoutAnalytics() {
         <div className="text-center mb-8">
           <h1 className="mb-4">Workout Analytics</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 font-light">
-            Track your progress and volume over time
+            Track your strength progression and volume over time
           </p>
         </div>
 
-        {/* Chart and Timeframe Dropdowns */}
+        {/* Chart, Timeframe, and Metric Dropdowns */}
         <div className="mb-4 flex flex-col sm:flex-row justify-center gap-2 sm:gap-6 dark:bg-black">
           <Select.Root value={dropdownValue} onValueChange={setDropdownValue} defaultValue={dropdownValue || 'total-volume'}>
-            <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+            <Select.Trigger className="min-w-[200px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
               <Select.Value>{getChartLabel(dropdownValue)}</Select.Value>
               <Select.Icon>
                 <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
               </Select.Icon>
             </Select.Trigger>
-            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[200px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
               <Select.Viewport>
-                <Select.Item value="total-volume" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Total Volume Over Time</Select.Item>
+                <Select.Item value="total-volume" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Overall Progress</Select.Item>
                 <Select.Item value="all-exercises" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">All Exercises</Select.Item>
                 {Object.values(broadGroups).map(broad => (
                   <Select.Group key={broad.label}>
@@ -431,13 +500,13 @@ export function WorkoutAnalytics() {
             </Select.Content>
           </Select.Root>
           <Select.Root value={timeframeValue} onValueChange={setTimeframeValue} defaultValue={timeframeValue || 'all'}>
-            <Select.Trigger className="min-w-[300px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+            <Select.Trigger className="min-w-[200px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
               <Select.Value>{getPeriodLabel(timeframeValue)}</Select.Value>
               <Select.Icon>
                 <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
               </Select.Icon>
             </Select.Trigger>
-            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[200px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
               <Select.Viewport>
                 <Select.Item value="all" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">All Time</Select.Item>
                 <Select.Item value="week" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Past Week</Select.Item>
@@ -447,6 +516,20 @@ export function WorkoutAnalytics() {
                   <Select.Item key={opt.value} value={opt.value} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">{opt.label}</Select.Item>
                 ))}
                 <Select.Item value="prev-year" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">{currentYear - 1}</Select.Item>
+              </Select.Viewport>
+            </Select.Content>
+          </Select.Root>
+          <Select.Root value={metricType} onValueChange={(value) => setMetricType(value as 'volume' | '1rm')}>
+            <Select.Trigger className="min-w-[200px] w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+              <Select.Value>{metricType === 'volume' ? 'Volume' : '1RM (Epley)'}</Select.Value>
+              <Select.Icon>
+                <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[200px] bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
+              <Select.Viewport>
+                <Select.Item value="volume" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">Volume</Select.Item>
+                <Select.Item value="1rm" className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">1RM (Epley)</Select.Item>
               </Select.Viewport>
             </Select.Content>
           </Select.Root>
