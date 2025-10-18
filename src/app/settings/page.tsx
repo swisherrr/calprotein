@@ -138,6 +138,14 @@ export default function SettingsPage() {
     }
   }
 
+  const handleRestTimerChange = async (seconds: number) => {
+    try {
+      await updateSettings({ rest_timer_duration: seconds })
+    } catch (error) {
+      console.error('Error updating rest timer setting:', error)
+    }
+  }
+
   const handleTogglePrivateAccount = async (v: boolean) => {
     setPrivateAccount(v)
     if (!isDemoMode) {
@@ -236,7 +244,7 @@ export default function SettingsPage() {
         />
 
         {/* Dashboard Reset Time Setting */}
-        <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+        <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex-1 pr-4">
             <span className="text-base text-gray-800 dark:text-gray-200 font-medium block mb-1">Dashboard Reset Time</span>
             <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -273,6 +281,33 @@ export default function SettingsPage() {
               <option value={21}>9:00 PM</option>
               <option value={22}>10:00 PM</option>
               <option value={23}>11:00 PM</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Rest Timer Duration Setting */}
+        <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+          <div className="flex-1 pr-4">
+            <span className="text-base text-gray-800 dark:text-gray-200 font-medium block mb-1">Rest Timer Duration</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Set how long the workout timer stays red when clicked. Use this to time your rest periods between sets.
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={settings?.rest_timer_duration || 120}
+              onChange={(e) => handleRestTimerChange(parseInt(e.target.value))}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            >
+              <option value={30}>30 seconds</option>
+              <option value={45}>45 seconds</option>
+              <option value={60}>1 minute</option>
+              <option value={90}>1.5 minutes</option>
+              <option value={120}>2 minutes</option>
+              <option value={150}>2.5 minutes</option>
+              <option value={180}>3 minutes</option>
+              <option value={240}>4 minutes</option>
+              <option value={300}>5 minutes</option>
             </select>
           </div>
         </div>

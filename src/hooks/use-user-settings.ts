@@ -9,6 +9,7 @@ export type UserSettings = {
   auto_load_weight: boolean
   display_workout_average: boolean
   dashboard_reset_hour: number
+  rest_timer_duration: number // in seconds
 }
 
 export function useUserSettings() {
@@ -18,7 +19,8 @@ export function useUserSettings() {
     auto_load_reps: false,
     auto_load_weight: false,
     display_workout_average: true,
-    dashboard_reset_hour: 0
+    dashboard_reset_hour: 0,
+    rest_timer_duration: 120 // default 2 minutes
   })
   const [loading, setLoading] = useState(true)
   const { isDemoMode, demoData, updateDemoData } = useDemo()
@@ -31,7 +33,8 @@ export function useUserSettings() {
         auto_load_reps: demoData.settings.auto_load_reps || false,
         auto_load_weight: demoData.settings.auto_load_weight || false,
         display_workout_average: demoData.settings.display_workout_average !== undefined ? demoData.settings.display_workout_average : true,
-        dashboard_reset_hour: demoData.settings.dashboard_reset_hour || 0
+        dashboard_reset_hour: demoData.settings.dashboard_reset_hour || 0,
+        rest_timer_duration: demoData.settings.rest_timer_duration || 120
       })
       setLoading(false)
     } else {
@@ -62,7 +65,8 @@ export function useUserSettings() {
               auto_load_reps: false,
               auto_load_weight: false,
               display_workout_average: true,
-              dashboard_reset_hour: 0
+              dashboard_reset_hour: 0,
+              rest_timer_duration: 120
             }])
             .select()
             .single()
@@ -90,7 +94,8 @@ export function useUserSettings() {
         auto_load_reps: newSettings.auto_load_reps ?? settings.auto_load_reps,
         auto_load_weight: newSettings.auto_load_weight ?? settings.auto_load_weight,
         display_workout_average: newSettings.display_workout_average ?? settings.display_workout_average,
-        dashboard_reset_hour: newSettings.dashboard_reset_hour ?? settings.dashboard_reset_hour
+        dashboard_reset_hour: newSettings.dashboard_reset_hour ?? settings.dashboard_reset_hour,
+        rest_timer_duration: newSettings.rest_timer_duration ?? settings.rest_timer_duration
       }
       
       updateDemoData({
@@ -129,6 +134,7 @@ export function useUserSettings() {
             auto_load_weight: false,
             display_workout_average: true,
             dashboard_reset_hour: 0,
+            rest_timer_duration: 120,
             ...newSettings
           }])
           .select()

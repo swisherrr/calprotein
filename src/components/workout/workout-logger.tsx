@@ -117,7 +117,7 @@ function WorkoutTemplateCard({ template, onStartWorkout }: WorkoutTemplateCardPr
 }
 
 // Timer component
-function WorkoutTimer({ startTime }: { startTime: string }) {
+function WorkoutTimer({ startTime, restTimerDuration }: { startTime: string, restTimerDuration: number }) {
   const [elapsed, setElapsed] = useState(0)
   const [isRed, setIsRed] = useState(false)
 
@@ -135,7 +135,7 @@ function WorkoutTimer({ startTime }: { startTime: string }) {
     setIsRed(true)
     setTimeout(() => {
       setIsRed(false)
-    }, 2 * 60 * 1000) // 2 minutes
+    }, restTimerDuration * 1000) // Convert seconds to milliseconds
   }
 
   const formatTime = (ms: number) => {
@@ -768,7 +768,7 @@ export function WorkoutLogger() {
               <p className="text-xl text-gray-600 dark:text-gray-400 font-light mb-4">
                 {selectedTemplate?.name}
               </p>
-              <WorkoutTimer startTime={currentWorkout.start_time} />
+              <WorkoutTimer startTime={currentWorkout.start_time} restTimerDuration={settings?.rest_timer_duration || 120} />
             </div>
 
           <div className="space-y-6">
