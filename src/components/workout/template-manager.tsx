@@ -14,8 +14,25 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { StarFilledIcon } from '@radix-ui/react-icons';
 import { ChevronLeftIcon } from '@radix-ui/react-icons';
 import { Cross2Icon } from '@radix-ui/react-icons';
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import { CustomExerciseManager } from './custom-exercise-manager';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TemplateCardProps {
   template: WorkoutTemplate
@@ -99,6 +116,244 @@ interface Exercise {
   setData: any[]
 }
 
+interface SortableExerciseCardProps {
+  exercise: Exercise
+  index: number
+  customExercises: any[]
+  customExerciseIndex: number | null
+  customExerciseName: string
+  customMuscleGroup: string
+  onExerciseChange: (index: number, field: keyof Exercise, value: string | number) => void
+  onRemoveExercise: (index: number) => void
+  setCustomExerciseIndex: (index: number | null) => void
+  setCustomExerciseName: (name: string) => void
+  setCustomMuscleGroup: (group: string) => void
+  handleCustomExerciseSubmit: (index: number) => void
+}
+
+function SortableExerciseCard({
+  exercise,
+  index,
+  customExercises,
+  customExerciseIndex,
+  customExerciseName,
+  customMuscleGroup,
+  onExerciseChange,
+  onRemoveExercise,
+  setCustomExerciseIndex,
+  setCustomExerciseName,
+  setCustomMuscleGroup,
+  handleCustomExerciseSubmit,
+}: SortableExerciseCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `exercise-${index}` })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg relative"
+    >
+      {/* Drag Handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute left-2 top-4 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+        title="Drag to reorder"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+
+      {/* Remove Exercise Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemoveExercise(index)}
+        className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+        title="Remove exercise"
+      >
+        <Cross2Icon className="h-4 w-4" />
+      </Button>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Exercise Name
+          </label>
+          <Select.Root
+            value={exercise.name}
+            onValueChange={(value) => {
+              if (value === 'custom') {
+                setCustomExerciseIndex(index)
+                setCustomExerciseName("")
+                setCustomMuscleGroup("")
+              } else {
+                onExerciseChange(index, "name", value)
+                if (customExerciseIndex === index) setCustomExerciseIndex(null)
+              }
+            }}
+          >
+            <Select.Trigger className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
+              <Select.Value placeholder="Select exercise">
+                {getExerciseLabel(exercise.name, customExercises)}
+              </Select.Value>
+              <Select.Icon>
+                <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Content
+              position="popper"
+              sideOffset={4}
+              className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto"
+            >
+              <Select.Viewport>
+                <Select.Item
+                  value="custom"
+                  className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 pink:text-pink-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 pink:hover:bg-pink-50"
+                >
+                  Add Custom Exercise
+                </Select.Item>
+                {getCombinedExerciseGroups(customExercises).map((group) => (
+                  <Select.Group key={group.label}>
+                    <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {group.label}
+                    </Select.Label>
+                    {group.exercises.map((exerciseName) => {
+                      const isCustom = customExercises.some(
+                        (ex) => ex.exercise_name === exerciseName
+                      )
+                      return (
+                        <Select.Item
+                          key={exerciseName}
+                          value={exerciseName}
+                          className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between"
+                        >
+                          <span>{exerciseName}</span>
+                          {isCustom && (
+                            <StarFilledIcon className="ml-2 h-4 w-4 text-yellow-400" />
+                          )}
+                        </Select.Item>
+                      )
+                    })}
+                  </Select.Group>
+                ))}
+              </Select.Viewport>
+            </Select.Content>
+          </Select.Root>
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sets
+          </label>
+          <input
+            type="number"
+            value={exercise.sets}
+            onChange={(e) =>
+              onExerciseChange(index, "sets", parseInt(e.target.value))
+            }
+            className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
+            placeholder="0"
+          />
+        </div>
+      </div>
+
+      {/* Custom Exercise Form - Inline */}
+      {customExerciseIndex === index && (
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
+            Add Custom Exercise
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                Exercise Name
+              </label>
+              <input
+                type="text"
+                value={customExerciseName}
+                onChange={(e) => setCustomExerciseName(e.target.value)}
+                className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
+                placeholder="e.g., Custom Deadlift"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                Muscle Group
+              </label>
+              <Select.Root
+                value={customMuscleGroup}
+                onValueChange={setCustomMuscleGroup}
+              >
+                <Select.Trigger className="min-w-[300px] w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm flex items-center justify-between">
+                  <Select.Value placeholder="Select group">
+                    {getMuscleGroupLabel(customMuscleGroup)}
+                  </Select.Value>
+                  <Select.Icon>
+                    <ChevronDownIcon className="ml-2 h-4 w-4 text-blue-400" />
+                  </Select.Icon>
+                </Select.Trigger>
+                <Select.Content
+                  position="popper"
+                  sideOffset={4}
+                  className="z-50 min-w-[300px] bg-white dark:bg-black border border-blue-300 dark:border-blue-600 rounded-md shadow-lg max-h-80 overflow-y-auto"
+                >
+                  <Select.Viewport>
+                    {MUSCLE_GROUPS.map((group) => (
+                      <Select.Item
+                        key={group}
+                        value={group}
+                        className="px-3 py-2 cursor-pointer text-blue-900 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                      >
+                        {group}
+                      </Select.Item>
+                    ))}
+                  </Select.Viewport>
+                </Select.Content>
+              </Select.Root>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-3">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setCustomExerciseIndex(null)
+                setCustomExerciseName("")
+                setCustomMuscleGroup("")
+              }}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleCustomExerciseSubmit(index)}
+              disabled={!customExerciseName.trim() || !customMuscleGroup}
+              className="text-xs"
+            >
+              Add Exercise
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const MUSCLE_GROUPS = [
   "Chest",
   "Lats",
@@ -152,6 +407,30 @@ export function TemplateManager() {
   const [customExerciseName, setCustomExerciseName] = useState("")
   const [customMuscleGroup, setCustomMuscleGroup] = useState("")
   const [showCustomExerciseManager, setShowCustomExerciseManager] = useState(false);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) {
+      return
+    }
+
+    setCurrentTemplate((prev) => {
+      const activeIndex = parseInt(active.id.toString().replace('exercise-', ''))
+      const overIndex = parseInt(over.id.toString().replace('exercise-', ''))
+
+      const newExercises = arrayMove(prev.exercises, activeIndex, overIndex)
+      return { ...prev, exercises: newExercises }
+    })
+  }
 
   const handleAddExercise = () => {
     setCurrentTemplate(prev => ({
@@ -279,145 +558,34 @@ export function TemplateManager() {
 
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={currentTemplate.exercises.map((_, index) => `exercise-${index}`)}
+                  strategy={verticalListSortingStrategy}
+                >
               {currentTemplate.exercises.map((exercise, index) => (
-                <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg relative">
-                  {/* Remove Exercise Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveExercise(index)}
-                    className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                    title="Remove exercise"
-                  >
-                    <Cross2Icon className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Exercise Name
-                      </label>
-                      <Select.Root value={exercise.name} onValueChange={(value) => {
-                        if (value === 'custom') {
-                          setCustomExerciseIndex(index);
-                          setCustomExerciseName("");
-                          setCustomMuscleGroup("");
-                        } else {
-                          handleExerciseChange(index, "name", value);
-                          if (customExerciseIndex === index) setCustomExerciseIndex(null);
-                        }
-                      }}>
-                        <Select.Trigger className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
-                          <Select.Value placeholder="Select exercise">{getExerciseLabel(exercise.name, customExercises)}</Select.Value>
-                          <Select.Icon>
-                            <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
-                          </Select.Icon>
-                        </Select.Trigger>
-                        <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
-                          <Select.Viewport>
-                            <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 pink:text-pink-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 pink:hover:bg-pink-50">Add Custom Exercise</Select.Item>
-                            {getCombinedExerciseGroups(customExercises).map((group) => (
-                              <Select.Group key={group.label}>
-                                <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.label}</Select.Label>
-                                {group.exercises.map((exerciseName) => {
-                                  const isCustom = customExercises.some(ex => ex.exercise_name === exerciseName);
-                                  return (
-                                    <Select.Item key={exerciseName} value={exerciseName} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between">
-                                      <span>{exerciseName}</span>
-                                      {isCustom && <StarFilledIcon className="ml-2 h-4 w-4 text-yellow-400" />}
-                                    </Select.Item>
-                                  );
-                                })}
-                              </Select.Group>
-                            ))}
-                          </Select.Viewport>
-                        </Select.Content>
-                      </Select.Root>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Sets
-                      </label>
-                      <input
-                        type="number"
-                        value={exercise.sets}
-                        onChange={(e) => handleExerciseChange(index, "sets", parseInt(e.target.value))}
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Custom Exercise Form - Inline */}
-                  {customExerciseIndex === index && (
-                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
-                        Add Custom Exercise
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                            Exercise Name
-                          </label>
-                          <input
-                            type="text"
-                            value={customExerciseName}
-                            onChange={(e) => setCustomExerciseName(e.target.value)}
-                            className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
-                            placeholder="e.g., Custom Deadlift"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                            Muscle Group
-                          </label>
-                          <Select.Root value={customMuscleGroup} onValueChange={setCustomMuscleGroup}>
-                            <Select.Trigger className="min-w-[300px] w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm flex items-center justify-between">
-                              <Select.Value placeholder="Select group">{getMuscleGroupLabel(customMuscleGroup)}</Select.Value>
-                              <Select.Icon>
-                                <ChevronDownIcon className="ml-2 h-4 w-4 text-blue-400" />
-                              </Select.Icon>
-                            </Select.Trigger>
-                            <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-blue-300 dark:border-blue-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
-                              <Select.Viewport>
-                                {MUSCLE_GROUPS.map((group) => (
-                                  <Select.Item key={group} value={group} className="px-3 py-2 cursor-pointer text-blue-900 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/20">
-                                    {group}
-                                  </Select.Item>
-                                ))}
-                              </Select.Viewport>
-                            </Select.Content>
-                          </Select.Root>
-                        </div>
-                      </div>
-                      <div className="flex justify-end gap-2 mt-3">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
-                            setCustomExerciseIndex(null)
-                            setCustomExerciseName("")
-                            setCustomMuscleGroup("")
-                          }}
-                          className="text-xs"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCustomExerciseSubmit(index)}
-                          disabled={!customExerciseName.trim() || !customMuscleGroup}
-                          className="text-xs"
-                        >
-                          Add Exercise
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    <SortableExerciseCard
+                      key={`exercise-${index}`}
+                      exercise={exercise}
+                      index={index}
+                      customExercises={customExercises}
+                      customExerciseIndex={customExerciseIndex}
+                      customExerciseName={customExerciseName}
+                      customMuscleGroup={customMuscleGroup}
+                      onExerciseChange={handleExerciseChange}
+                      onRemoveExercise={handleRemoveExercise}
+                      setCustomExerciseIndex={setCustomExerciseIndex}
+                      setCustomExerciseName={setCustomExerciseName}
+                      setCustomMuscleGroup={setCustomMuscleGroup}
+                      handleCustomExerciseSubmit={handleCustomExerciseSubmit}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
             </div>
 
             <div className="flex flex-col gap-4 pt-4">
@@ -521,145 +689,34 @@ export function TemplateManager() {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">Exercises</h3>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={currentTemplate.exercises.map((_, index) => `exercise-${index}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
                 {currentTemplate.exercises.map((exercise, index) => (
-                  <div key={index} className="p-4 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg relative">
-                    {/* Remove Exercise Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveExercise(index)}
-                      className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                      title="Remove exercise"
-                    >
-                      <Cross2Icon className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Exercise Name
-                        </label>
-                        <Select.Root value={exercise.name} onValueChange={(value) => {
-                          if (value === 'custom') {
-                            setCustomExerciseIndex(index);
-                            setCustomExerciseName("");
-                            setCustomMuscleGroup("");
-                          } else {
-                            handleExerciseChange(index, "name", value);
-                            if (customExerciseIndex === index) setCustomExerciseIndex(null);
-                          }
-                        }}>
-                          <Select.Trigger className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100 flex items-center justify-between">
-                            <Select.Value placeholder="Select exercise">{getExerciseLabel(exercise.name, customExercises)}</Select.Value>
-                            <Select.Icon>
-                              <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-400" />
-                            </Select.Icon>
-                          </Select.Trigger>
-                          <Select.Content position="popper" sideOffset={4} className="z-50 w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
-                            <Select.Viewport>
-                              <Select.Item value="custom" className="px-3 py-2 cursor-pointer text-blue-600 dark:text-blue-400 pink:text-pink-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 pink:hover:bg-pink-50">Add Custom Exercise</Select.Item>
-                              {getCombinedExerciseGroups(customExercises).map((group) => (
-                                <Select.Group key={group.label}>
-                                  <Select.Label className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{group.label}</Select.Label>
-                                  {group.exercises.map((exerciseName) => {
-                                    const isCustom = customExercises.some(ex => ex.exercise_name === exerciseName);
-                                    return (
-                                      <Select.Item key={exerciseName} value={exerciseName} className="px-3 py-2 cursor-pointer text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between">
-                                        <span>{exerciseName}</span>
-                                        {isCustom && <StarFilledIcon className="ml-2 h-4 w-4 text-yellow-400" />}
-                                      </Select.Item>
-                                    );
-                                  })}
-                                </Select.Group>
-                              ))}
-                            </Select.Viewport>
-                          </Select.Content>
-                        </Select.Root>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Sets
-                        </label>
-                        <input
-                          type="number"
-                          value={exercise.sets}
-                          onChange={(e) => handleExerciseChange(index, "sets", parseInt(e.target.value))}
-                          className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-black text-gray-900 dark:text-gray-100"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Custom Exercise Form - Inline */}
-                    {customExerciseIndex === index && (
-                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
-                          Add Custom Exercise
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                              Exercise Name
-                            </label>
-                            <input
-                              type="text"
-                              value={customExerciseName}
-                              onChange={(e) => setCustomExerciseName(e.target.value)}
-                              className="w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm"
-                              placeholder="e.g., Custom Deadlift"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-                              Muscle Group
-                            </label>
-                            <Select.Root value={customMuscleGroup} onValueChange={setCustomMuscleGroup}>
-                              <Select.Trigger className="min-w-[300px] w-full rounded-md border border-blue-300 dark:border-blue-600 px-3 py-2 bg-white dark:bg-black text-blue-900 dark:text-blue-100 text-sm flex items-center justify-between">
-                                <Select.Value placeholder="Select group">{getMuscleGroupLabel(customMuscleGroup)}</Select.Value>
-                                <Select.Icon>
-                                  <ChevronDownIcon className="ml-2 h-4 w-4 text-blue-400" />
-                                </Select.Icon>
-                              </Select.Trigger>
-                              <Select.Content position="popper" sideOffset={4} className="z-50 min-w-[300px] bg-white dark:bg-black border border-blue-300 dark:border-blue-600 rounded-md shadow-lg max-h-80 overflow-y-auto">
-                                <Select.Viewport>
-                                  {MUSCLE_GROUPS.map((group) => (
-                                    <Select.Item key={group} value={group} className="px-3 py-2 cursor-pointer text-blue-900 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/20">
-                                      {group}
-                                    </Select.Item>
-                                  ))}
-                                </Select.Viewport>
-                              </Select.Content>
-                            </Select.Root>
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2 mt-3">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => {
-                              setCustomExerciseIndex(null)
-                              setCustomExerciseName("")
-                              setCustomMuscleGroup("")
-                            }}
-                            className="text-xs"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCustomExerciseSubmit(index)}
-                            disabled={!customExerciseName.trim() || !customMuscleGroup}
-                            className="text-xs"
-                          >
-                            Add Exercise
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      <SortableExerciseCard
+                        key={`exercise-${index}`}
+                        exercise={exercise}
+                        index={index}
+                        customExercises={customExercises}
+                        customExerciseIndex={customExerciseIndex}
+                        customExerciseName={customExerciseName}
+                        customMuscleGroup={customMuscleGroup}
+                        onExerciseChange={handleExerciseChange}
+                        onRemoveExercise={handleRemoveExercise}
+                        setCustomExerciseIndex={setCustomExerciseIndex}
+                        setCustomExerciseName={setCustomExerciseName}
+                        setCustomMuscleGroup={setCustomMuscleGroup}
+                        handleCustomExerciseSubmit={handleCustomExerciseSubmit}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
 
               <div className="flex flex-col gap-4 pt-4">
