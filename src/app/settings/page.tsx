@@ -219,32 +219,11 @@ export default function SettingsPage() {
         <ThemeSelector />
       </div>
 
-      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Workout Settings</h2>
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Dashboard Settings</h2>
         
-        <SettingToggle 
-          label="Auto load reps" 
-          description="When enabled, entering reps in the first set will automatically fill the same number of reps for all remaining sets in that exercise."
-          value={settings?.auto_load_reps || false} 
-          onChange={handleToggleReps} 
-        />
-        
-        <SettingToggle 
-          label="Auto load weight" 
-          description="When enabled, entering weight in the first set will automatically fill the same weight for all remaining sets in that exercise."
-          value={settings?.auto_load_weight || false} 
-          onChange={handleToggleWeight} 
-        />
-        
-        <SettingToggle 
-          label="Display workout average" 
-          description="When enabled, previous workout data shows average reps/weight. When disabled, shows individual set data."
-          value={settings?.display_workout_average !== false} 
-          onChange={handleToggleWorkoutDisplay} 
-        />
-
         {/* Dashboard Reset Time Setting */}
-        <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
           <div className="flex-1 pr-4">
             <span className="text-base text-gray-800 dark:text-gray-200 font-medium block mb-1">Dashboard Reset Time</span>
             <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -284,6 +263,31 @@ export default function SettingsPage() {
             </select>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Workout Settings</h2>
+        
+        <SettingToggle 
+          label="Auto load reps" 
+          description="When enabled, entering reps in the first set will automatically fill the same number of reps for all remaining sets in that exercise."
+          value={settings?.auto_load_reps || false} 
+          onChange={handleToggleReps} 
+        />
+        
+        <SettingToggle 
+          label="Auto load weight" 
+          description="When enabled, entering weight in the first set will automatically fill the same weight for all remaining sets in that exercise."
+          value={settings?.auto_load_weight || false} 
+          onChange={handleToggleWeight} 
+        />
+        
+        <SettingToggle 
+          label="Display workout average" 
+          description="When enabled, previous workout data shows average reps/weight. When disabled, shows individual set data."
+          value={settings?.display_workout_average !== false} 
+          onChange={handleToggleWorkoutDisplay} 
+        />
 
         {/* Rest Timer Duration Setting */}
         <div className="flex items-start justify-between py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
@@ -313,7 +317,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
         <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Privacy Settings</h2>
         <SettingToggle 
           label="Private Account" 
